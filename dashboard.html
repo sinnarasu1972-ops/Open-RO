@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open RO Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        h1 { color: #333; font-size: 32px; margin: 0; }
+        #companyLogo { 
+            height: 60px; 
+            object-fit: contain; 
+            max-width: 200px;
+        }
+        .tabs { display: flex; gap: 10px; }
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .tab-button.active { background: #667eea; color: white; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .stat-label { color: #999; font-size: 12px; text-transform: uppercase; margin-bottom: 10px; }
+        .stat-value { font-size: 28px; font-weight: bold; color: #667eea; }
+        .filters-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .filter-group label { display: block; font-size: 12px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .table-section { 
+            background: white; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .table-wrapper {
+            overflow-x: scroll !important;
+            overflow-y: auto;
+            max-height: 500px;
+            border-radius: 0 0 10px 10px;
+            display: block;
+            scroll-behavior: smooth;
+            padding-bottom: 5px;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            width: 15px;
+            height: 15px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #e8e8e8;
+            border-radius: 10px;
+            margin: 0 5px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 10px;
+            min-height: 40px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #333;
+        }
+        /* For Firefox */
+        .table-wrapper {
+            scrollbar-width: thick;
+            scrollbar-color: #666 #e8e8e8;
+        }
+        .table-header { padding: 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .table-info { font-size: 13px; color: #666; }
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .export-btn:hover { background: #229954; }
+        .records-select { width: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; min-width: 2000px; table-layout: fixed; }
+        thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+        th { 
+            padding: 12px; 
+            text-align: left; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #333; 
+            white-space: nowrap;
+            min-width: 80px;
+            width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        td { 
+            padding: 12px; 
+            border-bottom: 1px solid #eee; 
+            font-size: 12px; 
+            color: #555; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+            vertical-align: top;
+            width: 80px;
+            min-width: 80px;
+        }
+        /* Wider columns for text content */
+        th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }  /* RO ID / RO Number */
+        th:nth-child(2), td:nth-child(2) { width: 90px; min-width: 90px; }   /* RO Date */
+        th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }  /* SA Name / Branch */
+        th:nth-child(4), td:nth-child(4) { width: 90px; min-width: 90px; }   /* Branch / Status */
+        th:nth-child(5), td:nth-child(5) { width: 90px; min-width: 90px; }   /* Status / Model Group */
+        th:nth-child(6), td:nth-child(6) { width: 100px; min-width: 100px; } /* Model Group / VH No */
+        th:nth-child(7), td:nth-child(7) { width: 100px; min-width: 100px; } /* VH No / Reg Number / Chassis No */
+        th:nth-child(8), td:nth-child(8) { width: 100px; min-width: 100px; } /* Chassis No / Age */
+        th:nth-child(9), td:nth-child(9) { width: 90px; min-width: 90px; }   /* MJob / Days */
+        th:nth-child(10), td:nth-child(10) { width: 90px; min-width: 90px; } /* TAT / KM */
+        th:nth-child(11), td:nth-child(11) { width: 400px; min-width: 400px; } /* Remarks */
+        th:nth-child(12), td:nth-child(12) { width: 300px; min-width: 300px; } /* Pending Reason */
+        /* Ensure Remarks and Pending Reason columns wrap text */
+        td:nth-child(11), td:nth-child(12) { 
+            word-break: break-word; 
+            white-space: normal;
+            max-width: 400px;
+        }
+        td:nth-child(12) { max-width: 300px; }
+        tr:hover { background: #f9f9f9; }
+        tbody tr { height: auto; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-open { background: #fef3e2; color: #e67e22; }
+        .badge-closed { background: #e8f5e9; color: #27ae60; }
+        .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
+        .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
+        .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
+        .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <img id="companyLogo" src="./logo.jpg" alt="Company Logo" 
+                     style="height: 60px; object-fit: contain; display: none;"
+                     onerror="this.style.display='none';">
+                <h1>Open RO Dashboard</h1>
+            </div>
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
+                <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
+                <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total ROs</div>
+                <div class="stat-value" id="total">1118</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Mechanical</div>
+                <div class="stat-value" id="mech">429</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Bodyshop</div>
+                <div class="stat-value" id="body">367</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Accessories</div>
+                <div class="stat-value" id="acc">210</div>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Branch</label>
+                    <select id="branch" onchange="loadData()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>RO Status</label>
+                    <select id="status" onchange="loadData()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Age Bucket</label>
+                    <select id="age" onchange="loadData()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="mjobFilter" style="display:none;">
+                    <label>MJob Type</label>
+                    <select id="mjob" onchange="loadData()">
+                        <option>All</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                    <div class="table-info" id="tableInfo">Loading data...</div>
+                    <select class="records-select" id="recordsPerPage" onchange="loadData()">
+                        <option value="10">10 Records</option>
+                        <option value="20">20 Records</option>
+                        <option value="50" selected>50 Records</option>
+                        <option value="100">&gt;50 Records</option>
+                    </select>
+                </div>
+                <button class="export-btn" onclick="exportToCSV()">📥 Export Filtered Data to Excel</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead id="tableHead">
+                        <tr id="headerRow">
+                            <th>RO Number</th>
+                            <th>RO Date</th>
+                            <th>Branch</th>
+                            <th>Status</th>
+                            <th>SA Name</th>
+                            <th>VH No</th>
+                            <th>Model Group</th>
+                            <th>Chassis No</th>
+                            <th>MJob</th>
+                            <th>TAT (Days)</th>
+                            <th>Remarks</th>
+                            <th>Pending Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 40px;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentTab = 'mechanical';
+        let allData = [];
+
+        const branchAbbreviations = {
+            'KOLHAPUR_WS': 'KOL',
+            'WAGHOLI': 'WAG',
+            'NAGPUR_KAMPTHEE ROAD': 'HO',
+            'AMRAVATI': 'AMT',
+            'YAVATMAL': 'YAV',
+            'NAGPUR_WARDHAMAN NGR': 'WDH',
+            'CHIKHALI': 'CHI',
+            'CHAUFULA_SZZ': 'CHA',
+            'SHIKRAPUR_SZS': 'SHI',
+            'KOLHAPUR_SH': 'KHS'
+        };
+
+        function abbreviateBranch(branch) {
+            return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
+        }
+
+        window.onload = function() {
+            loadStats();
+            loadFilters();
+            loadData();
+        };
+
+        function extractMJob(remark) {
+            if (!remark) return 'Not Categorized';
+            const matches = remark.match(/\bM[1-4]\b/g);
+            if (matches && matches.length > 0) {
+                return matches[0];
+            }
+            return 'Not Categorized';
+        }
+
+        function getLastEightChars(text) {
+            if (!text) return '-';
+            const str = String(text).trim();
+            return str.length > 8 ? str.slice(-8) : str;
+        }
+
+        function calculateTAT(roDate) {
+            if (!roDate) return 0;
+            const date = new Date(roDate);
+            const today = new Date();
+            const diffTime = Math.abs(today - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function getTATStyle(mjob, tat) {
+            let isAlert = false;
+            
+            if (mjob === 'M1' && tat > 1) isAlert = true;
+            else if (mjob === 'M2' && tat > 5) isAlert = true;
+            else if (mjob === 'M3' && tat > 9) isAlert = true;
+            else if (mjob === 'M4' && tat > 25) isAlert = true;
+            
+            return isAlert ? 'tat-alert' : 'tat-normal';
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/statistics`);
+                const data = await response.json();
+                document.getElementById('total').textContent = data.total_vehicles;
+                document.getElementById('mech').textContent = data.mechanical_count;
+                document.getElementById('body').textContent = data.bodyshop_count;
+                document.getElementById('acc').textContent = data.accessories_count;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('tableInfo').innerHTML = '<div class="error">❌ Cannot connect to server</div>';
+            }
+        }
+
+        async function loadFilters() {
+            try {
+                const response = await fetch(`${API_URL}/api/filter-options/${currentTab}`);
+                const data = await response.json();
+                
+                document.getElementById('branch').innerHTML = '<option>All</option>' + 
+                    data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
+                
+                document.getElementById('status').innerHTML = '<option>All</option>' + 
+                    data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
+                
+                document.getElementById('age').innerHTML = '<option>All</option>' + 
+                    data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
+
+                const mjobFilter = document.getElementById('mjobFilter');
+                if (currentTab === 'bodyshop' && data.mjobs) {
+                    mjobFilter.style.display = 'block';
+                    // Add "Not Categorized" if not already in the list
+                    let mjobOptions = data.mjobs.filter(m => m !== 'All');
+                    if (!mjobOptions.includes('Not Categorized')) {
+                        mjobOptions.push('Not Categorized');
+                    }
+                    // Set "Not Categorized" as default selected
+                    document.getElementById('mjob').innerHTML = '<option value="All">All</option>' + 
+                        '<option value="Not Categorized" selected>Not Categorized</option>' +
+                        mjobOptions.filter(m => m !== 'Not Categorized').map(m => `<option>${m}</option>`).join('');
+                    
+                    // Trigger loadData to apply the filter
+                    loadData();
+                } else {
+                    mjobFilter.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading filters:', error);
+            }
+        }
+
+        async function loadData() {
+            try {
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+                const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
+
+                let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
+                if (branch !== 'All') url += `&branch=${branch}`;
+                if (status !== 'All') url += `&ro_status=${status}`;
+                if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
+                
+                if (currentTab === 'bodyshop') {
+                    const mjob = document.getElementById('mjob').value;
+                    if (mjob !== 'All') url += `&mjob=${mjob}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+                allData = data.vehicles;
+
+                document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles`;
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                data.vehicles.forEach(v => {
+                    const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
+                    const branchAbbr = abbreviateBranch(v.branch);
+                    
+                    if (currentTab === 'bodyshop') {
+                        const mjob = extractMJob(v.ro_remarks);
+                        const chassis = getLastEightChars(v.vin || '-');
+                        const tat = calculateTAT(v.ro_date);
+                        const tatStyle = getTATStyle(mjob, tat);
+                        const saName = v.service_adviser || '-';
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td>${v.ro_date}</td>
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${saName}</td>
+                                <td><strong>${v.reg_number}</strong></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${chassis}</td>
+                                <td><span class="mjob-badge">${mjob}</span></td>
+                                <td><span class="${tatStyle}">${tat} days</span></td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td>${v.ro_date}</td>
+                                <td>${v.service_adviser || '-'}</td>
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${v.reg_number}</td>
+                                <td>${v.age_bucket}</td>
+                                <td>${v.days}</td>
+                                <td>${v.km.toLocaleString()}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                updateTableHeaders();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('tableInfo').innerHTML = '<div class="error">❌ Error loading data</div>';
+            }
+        }
+
+        function updateTableHeaders() {
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = '';
+            
+            if (currentTab === 'bodyshop') {
+                headerRow.innerHTML = `
+                    <th>RO Number</th>
+                    <th>RO Date</th>
+                    <th>Branch</th>
+                    <th>Status</th>
+                    <th>SA Name</th>
+                    <th>VH No</th>
+                    <th>Model Group</th>
+                    <th>Chassis No</th>
+                    <th>MJob</th>
+                    <th>TAT (Days)</th>
+                    <th>Remarks</th>
+                    <th>Pending Reason</th>
+                `;
+            } else {
+                headerRow.innerHTML = `
+                    <th>RO ID</th>
+                    <th>RO Date</th>
+                    <th>SA Name</th>
+                    <th>Branch</th>
+                    <th>Status</th>
+                    <th>Model Group</th>
+                    <th>Reg Number</th>
+                    <th>Age</th>
+                    <th>Days</th>
+                    <th>KM</th>
+                    <th>Remarks</th>
+                    <th>Pending Reason</th>
+                `;
+            }
+        }
+
+        function switchTab(event, tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            loadFilters();
+            loadData();
+        }
+
+        // Export to CSV - Export ALL columns from original data
+        async function exportToCSV() {
+            try {
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+
+                // Show loading message
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '⏳ Preparing export...';
+                btn.disabled = true;
+
+                // Fetch ALL filtered data with ALL columns from new export endpoint
+                let url = `${API_URL}/api/export/${currentTab}`;
+                if (branch !== 'All') url += `?branch=${branch}`;
+                let separator = (branch !== 'All') ? '&' : '?';
+                if (status !== 'All') url += `${separator}ro_status=${status}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
+                
+                if (currentTab === 'bodyshop') {
+                    const mjob = document.getElementById('mjob').value;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (mjob !== 'All') url += `${separator}mjob=${mjob}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+                const exportData = data.vehicles;
+
+                if (exportData.length === 0) {
+                    alert('No data to export!');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Get all column names from first row
+                const allColumns = Object.keys(exportData[0]);
+                const headers = allColumns;
+
+                // Build CSV rows
+                let csv = [];
+                csv.push(headers.join(','));
+
+                exportData.forEach(row => {
+                    let csvRow = headers.map(col => {
+                        let value = row[col] || '-';
+                        // Escape quotes and handle commas
+                        value = String(value).replace(/"/g, '""');
+                        return `"${value}"`;
+                    });
+                    csv.push(csvRow.join(','));
+                });
+
+                // Create and download file
+                const csvContent = csv.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url_obj = URL.createObjectURL(blob);
+                const fileName = `RO_Dashboard_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
+                
+                link.href = url_obj;
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(url_obj);
+
+                // Show success message
+                btn.textContent = '✅ Exported!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Error exporting data: ' + error.message);
+                event.target.textContent = '📥 Export Filtered Data to Excel';
+                event.target.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
