@@ -1,13 +1,11 @@
 services:
   - type: web
     name: open-ro-dashboard
-    env: python
-    plan: free
-    pythonVersion: 3.12
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    buildCommand: pip install -r requirements.txt
+    runtime: python
+    pythonVersion: "3.12"
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: gunicorn -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 main:app
     envVars:
-      - key: PORT
-        value: 8000
       - key: PYTHONUNBUFFERED
-        value: true
+        value: "1"
+    healthCheckPath: /health
