@@ -378,15 +378,13 @@
                     data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
 
                 const mjobFilter = document.getElementById('mjobFilter');
-                if (currentTab === 'bodyshop' && data.mjobs) {
+                if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
-                    let mjobOptions = data.mjobs.filter(m => m !== 'All');
-                    if (!mjobOptions.includes('Not Categorized')) {
-                        mjobOptions.push('Not Categorized');
-                    }
-                    document.getElementById('mjob').innerHTML = '<option value="All">All</option>' + 
-                        '<option value="Not Categorized" selected>Not Categorized</option>' +
-                        mjobOptions.filter(m => m !== 'Not Categorized').map(m => `<option>${m}</option>`).join('');
+                    // Always show M1, M2, M3, M4, and Not Categorized for Bodyshop
+                    const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
+                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
+                        `<option value="${m}">${m}</option>`
+                    ).join('');
                     
                     loadData();
                 } else {
