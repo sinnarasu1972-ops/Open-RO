@@ -36,6 +36,16 @@ load_data()
 
 # ==================== HELPERS ====================
 
+def extract_mjob(remark):
+    """Extract MJob (M1, M2, M3, M4) from remarks"""
+    if not remark:
+        return 'Not Categorized'
+    remark_str = str(remark).upper()
+    matches = re.findall(r'\bM[1-4]\b', remark_str)
+    if matches:
+        return matches[0]
+    return 'Not Categorized'
+
 def convert_row(row):
     """Convert pandas row to dict"""
     try:
@@ -62,15 +72,32 @@ def convert_row(row):
         print(traceback.format_exc())
         raise
 
-def apply_filters(df, branch, ro_status, age_bucket):
-    """Apply filters"""
+def apply_filters(df, branch, ro_status, age_bucket, mjob=None):
+    """Apply filters to dataframe"""
     result = df.copy()
+    
     if branch and branch != "All":
         result = result[result['Branch'] == branch]
+    
     if ro_status and ro_status != "All":
         result = result[result['RO Status'] == ro_status]
+    
     if age_bucket and age_bucket != "All":
         result = result[result['Age Bucket'] == age_bucket]
+    
+    # Apply MJob filter if provided
+    if mjob and mjob != "All":
+        if mjob == "Not Categorized":
+            # Filter for rows where MJob is Not Categorized
+            result = result[result['RO Remarks'].apply(
+                lambda x: extract_mjob(x) == 'Not Categorized'
+            )]
+        else:
+            # Filter for rows where MJob matches (M1, M2, M3, M4)
+            result = result[result['RO Remarks'].apply(
+                lambda x: extract_mjob(x) == mjob
+            )]
+    
     return result
 
 # ==================== APP ====================
@@ -130,7 +157,7 @@ async def bs_filters():
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
-            "mjobs": ["All", "Not Categorized"]
+            "mjobs": ["All", "M1", "M2", "M3", "M4", "Not Categorized"]
         }
     except Exception as e:
         print(f"ERROR in bs_filters: {str(e)}")
@@ -208,7 +235,7 @@ async def get_bodyshop(
 ):
     """Get bodyshop vehicles"""
     try:
-        print(f"DEBUG: get_bodyshop called")
+        print(f"DEBUG: get_bodyshop called with branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}, mjob={mjob}")
         
         if df_global.empty:
             print("DEBUG: df_global is empty!")
@@ -218,7 +245,11 @@ async def get_bodyshop(
         print(f"DEBUG: After service filter: {len(df)} rows")
         
         total = len(df)
-        df = apply_filters(df, branch, ro_status, age_bucket)
+        
+        # Apply filters including MJob
+        df = apply_filters(df, branch, ro_status, age_bucket, mjob)
+        print(f"DEBUG: After apply_filters with mjob={mjob}: {len(df)} rows")
+        
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
         
@@ -264,7 +295,12 @@ async def get_accessories(
         return {"error": str(e), "total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/export/mechanical")
-async def export_mech(branch: Optional[str] = Query("All"), ro_status: Optional[str] = Query("All"), age_bucket: Optional[str] = Query("All")):
+async def export_mech(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All")
+):
+    """Export mechanical vehicles"""
     try:
         if df_global.empty:
             return {"vehicles": []}
@@ -273,22 +309,35 @@ async def export_mech(branch: Optional[str] = Query("All"), ro_status: Optional[
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
+        print(f"ERROR in export_mech: {str(e)}")
         return {"error": str(e)}
 
 @app.get("/api/export/bodyshop")
-async def export_bs(branch: Optional[str] = Query("All"), ro_status: Optional[str] = Query("All"), age_bucket: Optional[str] = Query("All"), mjob: Optional[str] = Query("All")):
+async def export_bs(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    mjob: Optional[str] = Query("All")
+):
+    """Export bodyshop vehicles"""
     try:
         if df_global.empty:
             return {"vehicles": []}
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
-        df = apply_filters(df, branch, ro_status, age_bucket)
+        df = apply_filters(df, branch, ro_status, age_bucket, mjob)
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
+        print(f"ERROR in export_bs: {str(e)}")
         return {"error": str(e)}
 
 @app.get("/api/export/accessories")
-async def export_acc(branch: Optional[str] = Query("All"), ro_status: Optional[str] = Query("All"), age_bucket: Optional[str] = Query("All")):
+async def export_acc(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All")
+):
+    """Export accessories vehicles"""
     try:
         if df_global.empty:
             return {"vehicles": []}
@@ -297,6 +346,7 @@ async def export_acc(branch: Optional[str] = Query("All"), ro_status: Optional[s
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
+        print(f"ERROR in export_acc: {str(e)}")
         return {"error": str(e)}
 
 @app.get("/")
