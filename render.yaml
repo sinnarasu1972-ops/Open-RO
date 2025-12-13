@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: open-ro-dashboard
+    env: python
+    plan: free
+    pythonVersion: 3.11
+    startCommand: python main.py
+    buildCommand: pip install -r requirements.txt
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PYTHONUNBUFFERED
+        value: true
