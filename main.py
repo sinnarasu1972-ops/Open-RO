@@ -57,7 +57,7 @@ def extract_mjobs(remark):
 
 def get_mjob_category(remark):
     """
-    Categorize a remark as M1, M2, M3, M4, or "Not Categorized"
+    Categorize a remark as M1, M2, M3, M4, M/4, or "Not Categorized"
     """
     mjobs = extract_mjobs(remark)
     if mjobs:
