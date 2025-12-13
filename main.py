@@ -45,14 +45,16 @@ load_data()
 def extract_mjobs(remark):
     """
     Extract MJob codes from remarks
+    Supports: M1, M2, M3, M4, M/4
     Returns list of MJob codes found, or None if not found
     """
     if pd.isna(remark) or remark == '-' or remark == '':
         return None
     
-    # Convert to string and search for M1, M2, M3, M4
+    # Convert to string and search for M1, M2, M3, M4, M/4
     remark_str = str(remark).strip()
-    matches = re.findall(r'\bM[1-4]\b', remark_str)
+    # Match M1, M2, M3, M4, M/4 (with or without slash)
+    matches = re.findall(r'\bM/?[1-4]\b', remark_str)
     return matches if matches else None
 
 def get_mjob_category(remark):
@@ -110,8 +112,13 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None):
             # Filter for rows where MJob is NOT found (Not Categorized)
             result = result[result['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
         else:
-            # Filter for rows where MJob matches (M1, M2, M3, M4)
-            result = result[result['RO Remarks'].apply(lambda x: mjob in (extract_mjobs(x) or []))]
+            # Filter for rows where MJob matches (M1, M2, M3, M4, M/4)
+            # Normalize M/4 to match both M4 and M/4
+            search_mjob = mjob.upper()
+            result = result[result['RO Remarks'].apply(
+                lambda x: any(m.upper() in [search_mjob, search_mjob.replace('/', '')] 
+                            for m in (extract_mjobs(x) or []))
+            )]
     
     return result
 
@@ -179,15 +186,19 @@ async def bs_filters():
             if extracted:
                 mjobs_set.update(extracted)
         
-        mjobs_list = sorted(['All'] + sorted(list(mjobs_set)))
+        # Sort mjobs: put All first, then Not Categorized, then M1-M4 in order
+        mjobs_sorted = ['All', 'Not Categorized']
+        for m in ['M1', 'M2', 'M3', 'M4', 'M/4']:
+            if m in mjobs_set:
+                mjobs_sorted.append(m)
         
-        print(f"DEBUG: Found MJob options: {mjobs_list}")
+        print(f"DEBUG: Found MJob options: {mjobs_sorted}")
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
-            "mjobs": mjobs_list
+            "mjobs": mjobs_sorted
         }
     except Exception as e:
         print(f"Error in bs_filters: {str(e)}")
