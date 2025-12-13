@@ -1,18 +1,17 @@
 import os
 import pandas as pd
 import re
-import traceback
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 # ==================== CONFIGURATION ====================
 
 PORT = int(os.getenv('PORT', 8000))
 HOST = '0.0.0.0'
 
-# ==================== DATA ====================
+# ==================== GLOBAL DATA ====================
 
 df_global = None
 
@@ -20,34 +19,54 @@ def load_data():
     """Load Excel file"""
     global df_global
     try:
+        excel_file = None
         for fn in ['Open RO.xlsx', 'Open_RO.xlsx', 'open_ro.xlsx']:
             if os.path.exists(fn):
-                print(f"✓ Loading: {fn}")
-                df_global = pd.read_excel(fn)
-                print(f"✓ Loaded {len(df_global)} rows")
-                return
-        print("⚠ Excel file not found")
-        df_global = pd.DataFrame()
+                excel_file = fn
+                break
+        
+        if excel_file is None:
+            print("⚠ Excel file not found")
+            df_global = pd.DataFrame()
+            return
+        
+        print(f"✓ Loading: {excel_file}")
+        df_global = pd.read_excel(excel_file)
+        print(f"✓ Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
+        print(f"✓ Columns: {list(df_global.columns)}")
     except Exception as e:
-        print(f"✗ Error loading Excel: {str(e)}")
+        print(f"✗ Error: {str(e)}")
         df_global = pd.DataFrame()
 
 load_data()
 
-# ==================== HELPERS ====================
+# ==================== HELPER FUNCTIONS ====================
 
-def extract_mjob(remark):
-    """Extract MJob (M1, M2, M3, M4) from remarks"""
-    if not remark:
-        return 'Not Categorized'
-    remark_str = str(remark).upper()
+def extract_mjobs(remark):
+    """
+    Extract MJob codes from remarks
+    Returns list of MJob codes found, or None if not found
+    """
+    if pd.isna(remark) or remark == '-' or remark == '':
+        return None
+    
+    # Convert to string and search for M1, M2, M3, M4
+    remark_str = str(remark).strip()
     matches = re.findall(r'\bM[1-4]\b', remark_str)
-    if matches:
-        return matches[0]
-    return 'Not Categorized'
+    return matches if matches else None
 
-def convert_row(row):
-    """Convert pandas row to dict"""
+def get_mjob_category(remark):
+    """
+    Categorize a remark as M1, M2, M3, M4, or "Not Categorized"
+    """
+    mjobs = extract_mjobs(remark)
+    if mjobs:
+        # Return first match if multiple found
+        return mjobs[0]
+    return "Not Categorized"
+
+def convert_row(row) -> Dict[str, Any]:
+    """Convert pandas row to JSON-safe dict"""
     try:
         return {
             'ro_id': str(row['RO ID']).strip() if pd.notna(row['RO ID']) else '-',
@@ -68,14 +87,14 @@ def convert_row(row):
             'pendncy_resn_desc': str(row['PENDNCY_RESN_DESC']).strip() if pd.notna(row['PENDNCY_RESN_DESC']) else '-',
         }
     except Exception as e:
-        print(f"ERROR in convert_row: {str(e)}")
-        print(traceback.format_exc())
+        print(f"Error converting row: {str(e)}")
         raise
 
 def apply_filters(df, branch, ro_status, age_bucket, mjob=None):
     """Apply filters to dataframe"""
     result = df.copy()
     
+    # Apply basic filters
     if branch and branch != "All":
         result = result[result['Branch'] == branch]
     
@@ -85,18 +104,14 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None):
     if age_bucket and age_bucket != "All":
         result = result[result['Age Bucket'] == age_bucket]
     
-    # Apply MJob filter if provided
+    # Apply MJob filter
     if mjob and mjob != "All":
         if mjob == "Not Categorized":
-            # Filter for rows where MJob is Not Categorized
-            result = result[result['RO Remarks'].apply(
-                lambda x: extract_mjob(x) == 'Not Categorized'
-            )]
+            # Filter for rows where MJob is NOT found (Not Categorized)
+            result = result[result['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
         else:
             # Filter for rows where MJob matches (M1, M2, M3, M4)
-            result = result[result['RO Remarks'].apply(
-                lambda x: extract_mjob(x) == mjob
-            )]
+            result = result[result['RO Remarks'].apply(lambda x: mjob in (extract_mjobs(x) or []))]
     
     return result
 
@@ -112,14 +127,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==================== API ====================
+# ==================== API ENDPOINTS ====================
 
 @app.get("/api/dashboard/statistics")
 async def statistics():
-    """Statistics"""
+    """Dashboard statistics"""
     try:
         if df_global.empty:
             return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+        
         return {
             "total_vehicles": int(len(df_global)),
             "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])])),
@@ -127,8 +143,8 @@ async def statistics():
             "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']))
         }
     except Exception as e:
-        print(f"ERROR in statistics: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in statistics: {str(e)}")
+        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
 
 @app.get("/api/filter-options/mechanical")
 async def mech_filters():
@@ -136,6 +152,7 @@ async def mech_filters():
     try:
         if df_global.empty:
             return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
+        
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -143,25 +160,40 @@ async def mech_filters():
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()])
         }
     except Exception as e:
-        print(f"ERROR in mech_filters: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in mech_filters: {str(e)}")
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
 
 @app.get("/api/filter-options/bodyshop")
 async def bs_filters():
-    """Bodyshop filters"""
+    """Bodyshop filters - dynamically extracts MJob options"""
     try:
         if df_global.empty:
             return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
+        
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        
+        # Extract unique MJob codes from remarks
+        mjobs_set = set(['Not Categorized'])
+        for remark in df['RO Remarks'].dropna():
+            extracted = extract_mjobs(remark)
+            if extracted:
+                mjobs_set.update(extracted)
+        
+        mjobs_list = sorted(['All'] + sorted(list(mjobs_set)))
+        
+        print(f"DEBUG: Found MJob options: {mjobs_list}")
+        
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
-            "mjobs": ["All", "M1", "M2", "M3", "M4", "Not Categorized"]
+            "mjobs": mjobs_list
         }
     except Exception as e:
-        print(f"ERROR in bs_filters: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in bs_filters: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
 
 @app.get("/api/filter-options/accessories")
 async def acc_filters():
@@ -169,6 +201,7 @@ async def acc_filters():
     try:
         if df_global.empty:
             return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
+        
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -176,8 +209,8 @@ async def acc_filters():
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()])
         }
     except Exception as e:
-        print(f"ERROR in acc_filters: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in acc_filters: {str(e)}")
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
 
 @app.get("/api/vehicles/mechanical")
 async def get_mechanical(
@@ -189,40 +222,24 @@ async def get_mechanical(
 ):
     """Get mechanical vehicles"""
     try:
-        print(f"DEBUG: get_mechanical called with branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}")
-        
         if df_global.empty:
-            print("DEBUG: df_global is empty!")
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        print(f"DEBUG: df_global has {len(df_global)} rows")
-        
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
-        print(f"DEBUG: After service filter: {len(df)} rows")
-        
         total = len(df)
         df = apply_filters(df, branch, ro_status, age_bucket)
-        print(f"DEBUG: After apply_filters: {len(df)} rows")
-        
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
-        print(f"DEBUG: After pagination: {len(df)} rows")
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        vehicles = []
-        for idx, row in df.iterrows():
-            try:
-                v = convert_row(row)
-                vehicles.append(v)
-            except Exception as e:
-                print(f"ERROR converting row {idx}: {str(e)}")
-                raise
+        print(f"DEBUG: Mechanical - Total: {total}, Filtered: {filtered}, Returned: {len(vehicles)}")
         
-        print(f"DEBUG: Successfully converted {len(vehicles)} vehicles")
-        return {"total_count": int(total), "filtered_count": int(filtered), "vehicles": vehicles}
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
-        print(f"ERROR in get_mechanical: {str(e)}")
-        print(traceback.format_exc())
-        return {"error": str(e), "traceback": traceback.format_exc(), "total_count": 0, "filtered_count": 0, "vehicles": []}
+        print(f"Error in get_mechanical: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/bodyshop")
 async def get_bodyshop(
@@ -233,41 +250,33 @@ async def get_bodyshop(
     skip: int = Query(0),
     limit: int = Query(50)
 ):
-    """Get bodyshop vehicles"""
+    """Get bodyshop vehicles with MJob filtering"""
     try:
-        print(f"DEBUG: get_bodyshop called with branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}, mjob={mjob}")
-        
         if df_global.empty:
-            print("DEBUG: df_global is empty!")
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
-        print(f"DEBUG: After service filter: {len(df)} rows")
+        print(f"DEBUG: get_bodyshop called with mjob='{mjob}'")
         
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
         total = len(df)
         
-        # Apply filters including MJob
+        # Apply basic filters
         df = apply_filters(df, branch, ro_status, age_bucket, mjob)
-        print(f"DEBUG: After apply_filters with mjob={mjob}: {len(df)} rows")
         
         filtered = len(df)
+        print(f"DEBUG: Bodyshop - Total: {total}, Filtered (after mjob): {filtered}")
+        
         df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        vehicles = []
-        for idx, row in df.iterrows():
-            try:
-                v = convert_row(row)
-                vehicles.append(v)
-            except Exception as e:
-                print(f"ERROR converting row {idx}: {str(e)}")
-                raise
+        print(f"DEBUG: Bodyshop - Returned: {len(vehicles)}")
         
-        print(f"DEBUG: Successfully converted {len(vehicles)} vehicles")
-        return {"total_count": int(total), "filtered_count": int(filtered), "vehicles": vehicles}
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
-        print(f"ERROR in get_bodyshop: {str(e)}")
-        print(traceback.format_exc())
-        return {"error": str(e), "traceback": traceback.format_exc(), "total_count": 0, "filtered_count": 0, "vehicles": []}
+        print(f"Error in get_bodyshop: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/accessories")
 async def get_accessories(
@@ -287,12 +296,16 @@ async def get_accessories(
         df = apply_filters(df, branch, ro_status, age_bucket)
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
-        
         vehicles = [convert_row(row) for _, row in df.iterrows()]
-        return {"total_count": int(total), "filtered_count": int(filtered), "vehicles": vehicles}
+        
+        print(f"DEBUG: Accessories - Total: {total}, Filtered: {filtered}, Returned: {len(vehicles)}")
+        
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
-        print(f"ERROR in get_accessories: {str(e)}")
-        return {"error": str(e), "total_count": 0, "filtered_count": 0, "vehicles": []}
+        print(f"Error in get_accessories: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/export/mechanical")
 async def export_mech(
@@ -309,8 +322,8 @@ async def export_mech(
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
-        print(f"ERROR in export_mech: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in export_mech: {str(e)}")
+        return {"vehicles": []}
 
 @app.get("/api/export/bodyshop")
 async def export_bs(
@@ -319,7 +332,7 @@ async def export_bs(
     age_bucket: Optional[str] = Query("All"),
     mjob: Optional[str] = Query("All")
 ):
-    """Export bodyshop vehicles"""
+    """Export bodyshop vehicles with MJob filtering"""
     try:
         if df_global.empty:
             return {"vehicles": []}
@@ -328,8 +341,8 @@ async def export_bs(
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
-        print(f"ERROR in export_bs: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in export_bs: {str(e)}")
+        return {"vehicles": []}
 
 @app.get("/api/export/accessories")
 async def export_acc(
@@ -346,8 +359,8 @@ async def export_acc(
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
-        print(f"ERROR in export_acc: {str(e)}")
-        return {"error": str(e)}
+        print(f"Error in export_acc: {str(e)}")
+        return {"vehicles": []}
 
 @app.get("/")
 async def dashboard():
