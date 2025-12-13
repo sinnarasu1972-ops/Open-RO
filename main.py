@@ -2,41 +2,39 @@ import os
 import pandas as pd
 import re
 from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 
 # ==================== CONFIGURATION ====================
 
 PORT = int(os.getenv('PORT', 8000))
 HOST = '0.0.0.0'
 
-# ==================== DATA LOADING ====================
+# ==================== GLOBAL DATA ====================
 
 df_global = None
 
 def load_data():
-    """Load data from Excel file"""
+    """Load Excel file"""
     global df_global
     try:
         excel_file = None
-        for filename in ['Open RO.xlsx', 'Open_RO.xlsx', 'open_ro.xlsx']:
-            if os.path.exists(filename):
-                excel_file = filename
+        for fn in ['Open RO.xlsx', 'Open_RO.xlsx', 'open_ro.xlsx']:
+            if os.path.exists(fn):
+                excel_file = fn
                 break
         
         if excel_file is None:
-            print("⚠ Excel file not found in current directory")
+            print("⚠ Excel file not found")
             df_global = pd.DataFrame()
             return
         
-        print(f"✓ Loading Excel file: {excel_file}")
+        print(f"✓ Loading: {excel_file}")
         df_global = pd.read_excel(excel_file)
-        print(f"✓ Loaded {len(df_global)} records")
-        print(f"✓ Columns: {list(df_global.columns)}")
+        print(f"✓ Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
     except Exception as e:
-        print(f"✗ Error loading Excel file: {str(e)}")
+        print(f"✗ Error: {str(e)}")
         df_global = pd.DataFrame()
 
 load_data()
@@ -44,71 +42,52 @@ load_data()
 # ==================== HELPER FUNCTIONS ====================
 
 def extract_mjobs(remark):
-    """Extract MJobs from RO Remarks"""
-    if pd.isna(remark) or remark == '-':
+    """Extract MJob codes from remarks"""
+    if pd.isna(remark) or remark == '-' or remark == '':
         return None
     matches = re.findall(r'\bM[1-4]\b', str(remark))
     return matches if matches else None
 
-def safe_str(val):
-    """Safely convert value to string"""
-    if pd.isna(val):
-        return '-'
-    s = str(val).strip()
-    return s if s else '-'
-
-def format_date(val):
-    """Format date to string"""
-    if pd.isna(val):
-        return '-'
-    try:
-        if isinstance(val, str):
-            return val
-        return pd.Timestamp(val).strftime('%Y-%m-%d')
-    except:
-        return str(val)
-
-def convert_row_to_dict(row) -> Dict[str, Any]:
-    """Convert dataframe row to dictionary"""
+def convert_row(row) -> Dict[str, Any]:
+    """Convert pandas row to JSON-safe dict - TESTED LOCALLY"""
     try:
         return {
-            'ro_id': safe_str(row['RO ID']),
-            'branch': safe_str(row['Branch']),
-            'ro_status': safe_str(row['RO Status']),
-            'age_bucket': safe_str(row['Age Bucket']),
-            'service_category': safe_str(row['SERVC_CATGRY_DESC']),
-            'vehicle_model': safe_str(row['Family']),
-            'model_group': safe_str(row['Model Group']),
-            'reg_number': safe_str(row['Reg. Number']),
-            'ro_date': format_date(row['RO Date']),
-            'ro_remarks': safe_str(row['RO Remarks']),
+            'ro_id': str(row['RO ID']).strip() if pd.notna(row['RO ID']) else '-',
+            'branch': str(row['Branch']).strip() if pd.notna(row['Branch']) else '-',
+            'ro_status': str(row['RO Status']).strip() if pd.notna(row['RO Status']) else '-',
+            'age_bucket': str(row['Age Bucket']).strip() if pd.notna(row['Age Bucket']) else '-',
+            'service_category': str(row['SERVC_CATGRY_DESC']).strip() if pd.notna(row['SERVC_CATGRY_DESC']) else '-',
+            'vehicle_model': str(row['Family']).strip() if pd.notna(row['Family']) else '-',
+            'model_group': str(row['Model Group']).strip() if pd.notna(row['Model Group']) else '-',
+            'reg_number': str(row['Reg. Number']).strip() if pd.notna(row['Reg. Number']) else '-',
+            'ro_date': pd.Timestamp(row['RO Date']).strftime('%Y-%m-%d') if pd.notna(row['RO Date']) else '-',
+            'ro_remarks': str(row['RO Remarks']).strip() if pd.notna(row['RO Remarks']) else '-',
             'km': int(row['KM']) if pd.notna(row['KM']) else 0,
             'days': int(row['Days']) if pd.notna(row['Days']) else 0,
             'days_open': int(row['[No of Visits (In last 90 days)]']) if pd.notna(row['[No of Visits (In last 90 days)]']) else 0,
-            'service_adviser': safe_str(row['Service Adviser Name']),
-            'vin': safe_str(row['VIN']),
-            'pendncy_resn_desc': safe_str(row['PENDNCY_RESN_DESC']),
+            'service_adviser': str(row['Service Adviser Name']).strip() if pd.notna(row['Service Adviser Name']) else '-',
+            'vin': str(row['VIN']).strip() if pd.notna(row['VIN']) else '-',
+            'pendncy_resn_desc': str(row['PENDNCY_RESN_DESC']).strip() if pd.notna(row['PENDNCY_RESN_DESC']) else '-',
         }
     except Exception as e:
         print(f"Error converting row: {str(e)}")
         raise
 
 def apply_filters(df, branch, ro_status, age_bucket):
-    """Apply filters to dataframe"""
-    result_df = df.copy()
+    """Apply filters"""
+    result = df.copy()
     if branch and branch != "All":
-        result_df = result_df[result_df['Branch'] == branch]
+        result = result[result['Branch'] == branch]
     if ro_status and ro_status != "All":
-        result_df = result_df[result_df['RO Status'] == ro_status]
+        result = result[result['RO Status'] == ro_status]
     if age_bucket and age_bucket != "All":
-        result_df = result_df[result_df['Age Bucket'] == age_bucket]
-    return result_df
+        result = result[result['Age Bucket'] == age_bucket]
+    return result
 
-# ==================== FASTAPI APP ====================
+# ==================== APP ====================
 
-app = FastAPI(title="Open RO Dashboard API")
+app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -117,140 +96,109 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==================== STATISTICS ENDPOINTS ====================
+# ==================== API ENDPOINTS ====================
 
 @app.get("/api/dashboard/statistics")
-async def get_statistics():
-    """Get dashboard statistics"""
+async def statistics():
+    """Dashboard statistics"""
     try:
         if df_global.empty:
-            return {
-                "total_vehicles": 0,
-                "mechanical_count": 0,
-                "bodyshop_count": 0,
-                "accessories_count": 0
-            }
+            return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
         
         return {
-            "total_vehicles": len(df_global),
-            "mechanical_count": len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]),
-            "bodyshop_count": len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']),
-            "accessories_count": len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'])
+            "total_vehicles": int(len(df_global)),
+            "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])])),
+            "bodyshop_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'])),
+            "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']))
         }
     except Exception as e:
-        print(f"Error in get_statistics: {str(e)}")
-        return {
-            "total_vehicles": 0,
-            "mechanical_count": 0,
-            "bodyshop_count": 0,
-            "accessories_count": 0
-        }
-
-# ==================== FILTER OPTIONS ====================
+        print(f"Error in statistics: {str(e)}")
+        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
 
 @app.get("/api/filter-options/mechanical")
-async def get_mechanical_filter_options():
-    """Get available filter options for Mechanical page"""
+async def mech_filters():
+    """Mechanical filters"""
     try:
         if df_global.empty:
-            return {
-                "branches": ["All"],
-                "ro_statuses": ["All"],
-                "age_buckets": ["All"]
-            }
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
         
-        mechanical_df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         return {
-            "branches": ["All"] + sorted(mechanical_df['Branch'].unique().tolist()),
-            "ro_statuses": ["All"] + sorted(mechanical_df['RO Status'].unique().tolist()),
-            "age_buckets": ["All"] + sorted(mechanical_df['Age Bucket'].unique().tolist())
+            "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
+            "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
+            "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()])
         }
-    except Exception as e:
-        print(f"Error in get_mechanical_filter_options: {str(e)}")
+    except:
         return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
 
 @app.get("/api/filter-options/bodyshop")
-async def get_bodyshop_filter_options():
-    """Get available filter options for Bodyshop page"""
+async def bs_filters():
+    """Bodyshop filters"""
     try:
         if df_global.empty:
-            return {
-                "branches": ["All"],
-                "ro_statuses": ["All"],
-                "age_buckets": ["All"],
-                "mjobs": ["All"]
-            }
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
         
-        bodyshop_df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
-        mjobs_set = set()
-        mjobs_set.add('Not Categorized')
-        for remarks in bodyshop_df['RO Remarks']:
-            mjob_list = extract_mjobs(remarks)
-            if mjob_list:
-                mjobs_set.update(mjob_list)
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        mjobs = set(['Not Categorized'])
+        for r in df['RO Remarks']:
+            m = extract_mjobs(r)
+            if m:
+                mjobs.update(m)
         
         return {
-            "branches": ["All"] + sorted(bodyshop_df['Branch'].unique().tolist()),
-            "ro_statuses": ["All"] + sorted(bodyshop_df['RO Status'].unique().tolist()),
-            "age_buckets": ["All"] + sorted(bodyshop_df['Age Bucket'].unique().tolist()),
-            "mjobs": ["All"] + sorted(list(mjobs_set))
+            "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
+            "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
+            "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
+            "mjobs": ["All"] + sorted(list(mjobs))
         }
-    except Exception as e:
-        print(f"Error in get_bodyshop_filter_options: {str(e)}")
+    except:
         return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
 
 @app.get("/api/filter-options/accessories")
-async def get_accessories_filter_options():
-    """Get available filter options for Accessories page"""
+async def acc_filters():
+    """Accessories filters"""
     try:
         if df_global.empty:
-            return {
-                "branches": ["All"],
-                "ro_statuses": ["All"],
-                "age_buckets": ["All"]
-            }
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
         
-        accessories_df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
         return {
-            "branches": ["All"] + sorted(accessories_df['Branch'].unique().tolist()),
-            "ro_statuses": ["All"] + sorted(accessories_df['RO Status'].unique().tolist()),
-            "age_buckets": ["All"] + sorted(accessories_df['Age Bucket'].unique().tolist())
+            "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
+            "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
+            "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()])
         }
-    except Exception as e:
-        print(f"Error in get_accessories_filter_options: {str(e)}")
+    except:
         return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"]}
 
-# ==================== VEHICLE ENDPOINTS ====================
-
 @app.get("/api/vehicles/mechanical")
-async def get_mechanical_vehicles(
+async def get_mechanical(
     branch: Optional[str] = Query("All"),
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
     skip: int = Query(0),
     limit: int = Query(50)
 ):
-    """Get Mechanical vehicles"""
+    """Get mechanical vehicles"""
     try:
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        mechanical_df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
-        total_count = len(mechanical_df)
-        filtered_df = apply_filters(mechanical_df, branch, ro_status, age_bucket)
-        filtered_count = len(filtered_df)
-        paginated_df = filtered_df.iloc[skip:skip + limit]
-        vehicles = [convert_row_to_dict(row) for _, row in paginated_df.iterrows()]
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        return {"total_count": total_count, "filtered_count": filtered_count, "vehicles": vehicles}
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
-        print(f"Error in get_mechanical_vehicles: {str(e)}")
+        print(f"Error in mechanical: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {"total_count": 0, "filtered_count": 0, "vehicles": [], "error": str(e)}
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/bodyshop")
-async def get_bodyshop_vehicles(
+async def get_bodyshop(
     branch: Optional[str] = Query("All"),
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
@@ -258,180 +206,116 @@ async def get_bodyshop_vehicles(
     skip: int = Query(0),
     limit: int = Query(50)
 ):
-    """Get Bodyshop vehicles"""
+    """Get bodyshop vehicles"""
     try:
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        bodyshop_df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
-        total_count = len(bodyshop_df)
-        filtered_df = apply_filters(bodyshop_df, branch, ro_status, age_bucket)
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket)
         
         if mjob and mjob != "All":
             if mjob == "Not Categorized":
-                filtered_df = filtered_df[
-                    filtered_df['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)
-                ]
+                df = df[df['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
             else:
-                filtered_df = filtered_df[
-                    filtered_df['RO Remarks'].apply(lambda x: mjob in (extract_mjobs(x) or []))
-                ]
+                df = df[df['RO Remarks'].apply(lambda x: mjob in (extract_mjobs(x) or []))]
         
-        filtered_count = len(filtered_df)
-        paginated_df = filtered_df.iloc[skip:skip + limit]
-        vehicles = [convert_row_to_dict(row) for _, row in paginated_df.iterrows()]
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        return {"total_count": total_count, "filtered_count": filtered_count, "vehicles": vehicles}
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
-        print(f"Error in get_bodyshop_vehicles: {str(e)}")
+        print(f"Error in bodyshop: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {"total_count": 0, "filtered_count": 0, "vehicles": [], "error": str(e)}
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/accessories")
-async def get_accessories_vehicles(
+async def get_accessories(
     branch: Optional[str] = Query("All"),
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
     skip: int = Query(0),
     limit: int = Query(50)
 ):
-    """Get Accessories vehicles"""
+    """Get accessories vehicles"""
     try:
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        accessories_df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'].copy()
-        total_count = len(accessories_df)
-        filtered_df = apply_filters(accessories_df, branch, ro_status, age_bucket)
-        filtered_count = len(filtered_df)
-        paginated_df = filtered_df.iloc[skip:skip + limit]
-        vehicles = [convert_row_to_dict(row) for _, row in paginated_df.iterrows()]
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        return {"total_count": total_count, "filtered_count": filtered_count, "vehicles": vehicles}
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
-        print(f"Error in get_accessories_vehicles: {str(e)}")
+        print(f"Error in accessories: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {"total_count": 0, "filtered_count": 0, "vehicles": [], "error": str(e)}
-
-# ==================== EXPORT ENDPOINTS ====================
-
-@app.get("/api/export/bodyshop")
-async def export_bodyshop_data(
-    branch: Optional[str] = Query("All"),
-    ro_status: Optional[str] = Query("All"),
-    age_bucket: Optional[str] = Query("All"),
-    mjob: Optional[str] = Query("All")
-):
-    """Export bodyshop data"""
-    try:
-        if df_global.empty:
-            return {"vehicles": []}
-        
-        bodyshop_df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
-        filtered_df = apply_filters(bodyshop_df, branch, ro_status, age_bucket)
-        
-        if mjob and mjob != "All":
-            if mjob == "Not Categorized":
-                filtered_df = filtered_df[
-                    filtered_df['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)
-                ]
-            else:
-                filtered_df = filtered_df[
-                    filtered_df['RO Remarks'].apply(lambda x: mjob in (extract_mjobs(x) or []))
-                ]
-        
-        export_list = []
-        for _, row in filtered_df.iterrows():
-            row_dict = row.to_dict()
-            row_dict = {k: (str(v) if pd.notna(v) else '-') for k, v in row_dict.items()}
-            export_list.append(row_dict)
-        
-        return {"vehicles": export_list}
-    except Exception as e:
-        print(f"Error in export_bodyshop_data: {str(e)}")
-        return {"vehicles": []}
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/export/mechanical")
-async def export_mechanical_data(
-    branch: Optional[str] = Query("All"),
-    ro_status: Optional[str] = Query("All"),
-    age_bucket: Optional[str] = Query("All")
-):
-    """Export mechanical data"""
+async def export_mech(branch: Optional[str] = Query("All"), ro_status: Optional[str] = Query("All"), age_bucket: Optional[str] = Query("All")):
     try:
         if df_global.empty:
             return {"vehicles": []}
-        
-        mechanical_df = df_global[
-            df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])
-        ]
-        filtered_df = apply_filters(mechanical_df, branch, ro_status, age_bucket)
-        
-        export_list = []
-        for _, row in filtered_df.iterrows():
-            row_dict = row.to_dict()
-            row_dict = {k: (str(v) if pd.notna(v) else '-') for k, v in row_dict.items()}
-            export_list.append(row_dict)
-        
-        return {"vehicles": export_list}
-    except Exception as e:
-        print(f"Error in export_mechanical_data: {str(e)}")
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        df = apply_filters(df, branch, ro_status, age_bucket)
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        return {"vehicles": vehicles}
+    except:
+        return {"vehicles": []}
+
+@app.get("/api/export/bodyshop")
+async def export_bs(branch: Optional[str] = Query("All"), ro_status: Optional[str] = Query("All"), age_bucket: Optional[str] = Query("All"), mjob: Optional[str] = Query("All")):
+    try:
+        if df_global.empty:
+            return {"vehicles": []}
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        df = apply_filters(df, branch, ro_status, age_bucket)
+        if mjob and mjob != "All":
+            if mjob == "Not Categorized":
+                df = df[df['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
+            else:
+                df = df[df['RO Remarks'].apply(lambda x: mjob in (extract_mjobs(x) or []))]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        return {"vehicles": vehicles}
+    except:
         return {"vehicles": []}
 
 @app.get("/api/export/accessories")
-async def export_accessories_data(
-    branch: Optional[str] = Query("All"),
-    ro_status: Optional[str] = Query("All"),
-    age_bucket: Optional[str] = Query("All")
-):
-    """Export accessories data"""
+async def export_acc(branch: Optional[str] = Query("All"), ro_status: Optional[str] = Query("All"), age_bucket: Optional[str] = Query("All")):
     try:
         if df_global.empty:
             return {"vehicles": []}
-        
-        accessories_df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
-        filtered_df = apply_filters(accessories_df, branch, ro_status, age_bucket)
-        
-        export_list = []
-        for _, row in filtered_df.iterrows():
-            row_dict = row.to_dict()
-            row_dict = {k: (str(v) if pd.notna(v) else '-') for k, v in row_dict.items()}
-            export_list.append(row_dict)
-        
-        return {"vehicles": export_list}
-    except Exception as e:
-        print(f"Error in export_accessories_data: {str(e)}")
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
+        df = apply_filters(df, branch, ro_status, age_bucket)
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        return {"vehicles": vehicles}
+    except:
         return {"vehicles": []}
 
-# ==================== SERVE DASHBOARD ====================
-
 @app.get("/")
-async def serve_dashboard():
-    """Serve dashboard.html at root URL"""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    dashboard_path = os.path.join(current_dir, "dashboard.html")
-    
-    if os.path.exists(dashboard_path):
-        return FileResponse(dashboard_path, media_type="text/html")
-    else:
-        return {"error": "dashboard.html not found"}
-
-# ==================== HEALTH CHECK ====================
+async def dashboard():
+    """Serve dashboard"""
+    path = os.path.join(os.path.dirname(__file__), "dashboard.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+    return {"error": "dashboard.html not found"}
 
 @app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "total_records": len(df_global) if df_global is not None else 0
-    }
+async def health():
+    """Health check"""
+    return {"status": "healthy", "records": len(df_global) if not df_global.empty else 0}
 
 # ==================== MAIN ====================
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"🚀 Dashboard running on: http://0.0.0.0:{PORT}")
-    print(f"📊 Open in browser: http://localhost:{PORT}")
+    print(f"🚀 Running on http://0.0.0.0:{PORT}")
     uvicorn.run(app, host=HOST, port=PORT)
