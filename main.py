@@ -88,57 +88,68 @@ def extract_mjobs(remark):
 
 def prepare_vehicle_data(row, include_mjob=False):
     """Convert a dataframe row to VehicleDetail"""
-    # Get Service Adviser Name from available columns
-    sa_name = '-'
-    if 'Service Adviser Name' in row and pd.notna(row['Service Adviser Name']):
-        sa_name = str(row['Service Adviser Name'])
-    elif 'SA Name' in row and pd.notna(row['SA Name']):
-        sa_name = str(row['SA Name'])
-    elif 'Adviser Name' in row and pd.notna(row['Adviser Name']):
-        sa_name = str(row['Adviser Name'])
-    
-    # Get VIN/Chassis number
-    vin = '-'
-    if 'VIN' in row and pd.notna(row['VIN']):
-        vin = str(row['VIN'])
-    elif 'Chassis No' in row and pd.notna(row['Chassis No']):
-        vin = str(row['Chassis No'])
-    
-    # Get Pending Reason Description
-    pendncy_resn = '-'
-    if 'PENDNCY_RESN_DESC' in row and pd.notna(row['PENDNCY_RESN_DESC']):
-        pendncy_resn = str(row['PENDNCY_RESN_DESC'])
-    
-    # Get Model Group from available columns
-    model_grp = '-'
-    if 'Model Group' in row and pd.notna(row['Model Group']):
-        model_grp = str(row['Model Group'])
-    elif 'VehType' in row and pd.notna(row['VehType']):
-        model_grp = str(row['VehType'])
-    elif 'Vehicle Type' in row and pd.notna(row['Vehicle Type']):
-        model_grp = str(row['Vehicle Type'])
-    
-    vehicle = VehicleDetail(
-        ro_id=str(row['RO ID']),
-        branch=str(row['Branch']),
-        ro_status=str(row['RO Status']),
-        age_bucket=str(row['Age Bucket']),
-        service_category=str(row['SERVC_CATGRY_DESC']),
-        vehicle_model=str(row['Family']),
-        model_group=model_grp,
-        reg_number=str(row['Reg. Number']),
-        ro_date=str(row['RO Date']),
-        ro_remarks=str(row['RO Remarks']),
-        km=int(row['KM']) if pd.notna(row['KM']) else 0,
-        days=int(row['Days']) if pd.notna(row['Days']) else 0,
-        days_open=int(row['[No of Visits (In last 90 days)]']) if pd.notna(row['[No of Visits (In last 90 days)]']) else 0,
-        service_adviser=sa_name,
-        vin=vin,
-        pendncy_resn_desc=pendncy_resn,
-    )
-    if include_mjob:
-        vehicle.mjob = extract_mjobs(row['RO Remarks'])
-    return vehicle
+    try:
+        # Get Service Adviser Name
+        sa_name = '-'
+        if 'Service Adviser Name' in row and pd.notna(row['Service Adviser Name']):
+            sa_name = str(row['Service Adviser Name']).strip() if str(row['Service Adviser Name']) != '-' else '-'
+        
+        # Get VIN/Chassis number
+        vin = '-'
+        if 'VIN' in row and pd.notna(row['VIN']):
+            vin_val = str(row['VIN']).strip()
+            vin = vin_val if vin_val and vin_val != '-' else '-'
+        
+        # Get Pending Reason Description
+        pendncy_resn = '-'
+        if 'PENDNCY_RESN_DESC' in row and pd.notna(row['PENDNCY_RESN_DESC']):
+            pend_val = str(row['PENDNCY_RESN_DESC']).strip()
+            pendncy_resn = pend_val if pend_val and pend_val != '-' else '-'
+        
+        # Get Model Group
+        model_grp = '-'
+        if 'Model Group' in row and pd.notna(row['Model Group']):
+            model_val = str(row['Model Group']).strip()
+            model_grp = model_val if model_val and model_val != '-' else '-'
+        
+        # Format RO Date properly
+        ro_date_str = '-'
+        if 'RO Date' in row and pd.notna(row['RO Date']):
+            try:
+                ro_date_str = pd.Timestamp(row['RO Date']).strftime('%Y-%m-%d')
+            except:
+                ro_date_str = str(row['RO Date'])
+        
+        # Get RO Remarks
+        ro_remarks = '-'
+        if 'RO Remarks' in row and pd.notna(row['RO Remarks']):
+            remarks_val = str(row['RO Remarks']).strip()
+            ro_remarks = remarks_val if remarks_val and remarks_val != '-' else '-'
+        
+        vehicle = VehicleDetail(
+            ro_id=str(row['RO ID']).strip(),
+            branch=str(row['Branch']).strip(),
+            ro_status=str(row['RO Status']).strip(),
+            age_bucket=str(row['Age Bucket']).strip(),
+            service_category=str(row['SERVC_CATGRY_DESC']).strip(),
+            vehicle_model=str(row['Family']).strip(),
+            model_group=model_grp,
+            reg_number=str(row['Reg. Number']).strip(),
+            ro_date=ro_date_str,
+            ro_remarks=ro_remarks,
+            km=int(row['KM']) if pd.notna(row['KM']) else 0,
+            days=int(row['Days']) if pd.notna(row['Days']) else 0,
+            days_open=int(row['[No of Visits (In last 90 days)]']) if pd.notna(row['[No of Visits (In last 90 days)]']) else 0,
+            service_adviser=sa_name,
+            vin=vin,
+            pendncy_resn_desc=pendncy_resn,
+        )
+        if include_mjob:
+            vehicle.mjob = extract_mjobs(ro_remarks)
+        return vehicle
+    except Exception as e:
+        print(f"Error preparing vehicle data: {str(e)}")
+        raise
 
 def apply_filters(df, branch, ro_status, age_bucket):
     """Apply filters to dataframe"""
