@@ -138,7 +138,7 @@ app.add_middleware(
 
 @app.get("/api/dashboard/statistics")
 async def statistics():
-    """Dashboard statistics"""
+    """Dashboard statistics - total counts"""
     try:
         if df_global.empty:
             return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
@@ -151,6 +151,38 @@ async def statistics():
         }
     except Exception as e:
         print(f"Error in statistics: {str(e)}")
+        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+
+@app.get("/api/dashboard/statistics/filtered")
+async def filtered_statistics(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    mjob: Optional[str] = Query("All")
+):
+    """Dashboard statistics - with dynamic filtering based on current tab and selections"""
+    try:
+        if df_global.empty:
+            return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+        
+        # Apply filters
+        filtered_df = apply_filters(df_global, branch, ro_status, age_bucket, mjob)
+        
+        # Count by service category from filtered data
+        mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        bodyshop = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        accessories = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
+        
+        return {
+            "total_vehicles": int(len(filtered_df)),
+            "mechanical_count": int(len(mechanical)),
+            "bodyshop_count": int(len(bodyshop)),
+            "accessories_count": int(len(accessories))
+        }
+    except Exception as e:
+        print(f"Error in filtered_statistics: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
 
 @app.get("/api/filter-options/mechanical")
