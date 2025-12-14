@@ -74,9 +74,19 @@
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
         .stat-label { color: #999; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; }
-        .stat-value { font-size: 24px; font-weight: bold; color: #667eea; }
+        .stat-value { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #667eea;
+            transition: all 0.3s ease;
+        }
         
         @media (max-width: 768px) {
             .stats-grid {
@@ -187,8 +197,13 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 11px;
+            transition: background 0.2s ease;
         }
         .export-btn:hover { background: #229954; }
+        .export-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
         .records-select { width: 110px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
         
         @media (max-width: 768px) {
@@ -264,6 +279,14 @@
         .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
         .loading { text-align: center; padding: 40px; color: #667eea; }
+        .stat-updating {
+            animation: pulse 0.5s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -305,25 +328,25 @@
             <div class="filters-grid">
                 <div class="filter-group">
                     <label>Branch</label>
-                    <select id="branch" onchange="loadData()">
+                    <select id="branch" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label>RO Status</label>
-                    <select id="status" onchange="loadData()">
+                    <select id="status" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label>Age Bucket</label>
-                    <select id="age" onchange="loadData()">
+                    <select id="age" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
                 </div>
                 <div class="filter-group" id="mjobFilter" style="display:none;">
                     <label>MJob Type</label>
-                    <select id="mjob" onchange="loadData()">
+                    <select id="mjob" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
                 </div>
@@ -457,6 +480,51 @@
             }
         }
 
+        async function loadFilteredStats() {
+            try {
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
+                
+                let url = `${API_URL}/api/dashboard/statistics/filtered`;
+                const params = new URLSearchParams();
+                
+                if (branch !== 'All') params.append('branch', branch);
+                if (status !== 'All') params.append('ro_status', status);
+                if (age !== 'All') params.append('age_bucket', age);
+                if (mjob !== 'All') params.append('mjob', mjob);
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+                
+                console.log('Fetching filtered stats from:', url);
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                console.log('Filtered stats loaded:', data);
+                
+                // Add animation effect
+                const cards = document.querySelectorAll('.stat-value');
+                cards.forEach(card => card.classList.add('stat-updating'));
+                
+                // Update values
+                document.getElementById('total').textContent = data.total_vehicles || 0;
+                document.getElementById('mech').textContent = data.mechanical_count || 0;
+                document.getElementById('body').textContent = data.bodyshop_count || 0;
+                document.getElementById('acc').textContent = data.accessories_count || 0;
+                
+                // Remove animation class
+                setTimeout(() => {
+                    cards.forEach(card => card.classList.remove('stat-updating'));
+                }, 500);
+            } catch (error) {
+                console.error('Error loading filtered stats:', error);
+            }
+        }
+
         async function loadFilters() {
             try {
                 const url = `${API_URL}/api/filter-options/${currentTab}`;
@@ -486,13 +554,22 @@
                     ).join('');
                     
                     loadData();
+                    loadFilteredStats();
                 } else {
                     mjobFilter.style.display = 'none';
+                    loadData();
+                    loadFilteredStats();
                 }
             } catch (error) {
                 console.error('Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
+        }
+
+        // Called whenever a filter changes
+        function onFilterChange() {
+            loadFilteredStats();  // Update stats cards
+            loadData();           // Update table data
         }
 
         async function loadData() {
@@ -631,7 +708,6 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             loadFilters();
-            loadData();
         }
 
         async function exportToCSV() {
