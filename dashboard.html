@@ -54,8 +54,15 @@
             font-weight: 600;
             flex: 1;
             min-width: 100px;
+            transition: all 0.3s ease;
         }
-        .tab-button.active { background: #667eea; color: white; }
+        .tab-button.active { 
+            background: #667eea; 
+            color: white;
+        }
+        .tab-button:hover {
+            transform: translateY(-2px);
+        }
         
         .clear-all-btn {
             padding: 10px 16px;
@@ -71,6 +78,9 @@
         }
         .clear-all-btn:hover {
             background: #c0392b;
+        }
+        .clear-all-btn:active {
+            transform: scale(0.98);
         }
         
         @media (max-width: 768px) {
@@ -114,12 +124,22 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
-        .stat-label { color: #999; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-label { 
+            color: #999; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
         .stat-value { 
             font-size: 24px; 
             font-weight: bold; 
             color: #667eea;
             transition: all 0.3s ease;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .stat-card.landed-cost-card {
@@ -171,6 +191,7 @@
             border: 1px solid #ddd; 
             border-radius: 5px; 
             font-size: 13px;
+            cursor: pointer;
         }
         
         @media (max-width: 768px) {
@@ -461,6 +482,7 @@
         
         let currentTab = 'mechanical';
         let allData = [];
+        let isLoading = false;
 
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
@@ -480,7 +502,8 @@
         }
 
         window.onload = function() {
-            console.log('Dashboard loaded, API_URL:', API_URL);
+            console.log('✅ Dashboard loaded');
+            console.log('API_URL:', API_URL);
             loadStats();
             loadFilters();
             loadData();
@@ -512,12 +535,10 @@
 
         function getTATStyle(mjob, tat) {
             let isAlert = false;
-            
             if (mjob === 'M1' && tat > 1) isAlert = true;
             else if (mjob === 'M2' && tat > 5) isAlert = true;
             else if (mjob === 'M3' && tat > 9) isAlert = true;
             else if (mjob === 'M4' && tat > 25) isAlert = true;
-            
             return isAlert ? 'tat-alert' : 'tat-normal';
         }
 
@@ -526,27 +547,43 @@
             return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
         }
 
+        // FIXED: Better stat loading with explicit error handling
         async function loadStats() {
             try {
                 const url = `${API_URL}/api/dashboard/statistics`;
-                console.log('Fetching stats from:', url);
+                console.log('📊 Loading initial stats...');
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                console.log('Stats loaded:', data);
+                console.log('📊 Stats response:', data);
                 
-                document.getElementById('total').textContent = data.total_vehicles || 0;
-                document.getElementById('mech').textContent = data.mechanical_count || 0;
-                document.getElementById('body').textContent = data.bodyshop_count || 0;
-                document.getElementById('acc').textContent = data.accessories_count || 0;
-                document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
+                // Update all stat cards
+                updateStatCards(data);
             } catch (error) {
-                console.error('Error loading stats:', error);
+                console.error('❌ Error loading stats:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
             }
         }
 
+        // FIXED: Explicit stat card update function
+        function updateStatCards(data) {
+            const total = parseInt(data.total_vehicles) || 0;
+            const mech = parseInt(data.mechanical_count) || 0;
+            const bodyshop = parseInt(data.bodyshop_count) || 0;
+            const accessories = parseInt(data.accessories_count) || 0;
+            const cost = parseFloat(data.total_landed_cost) || 0;
+
+            console.log('📈 Updating stat cards:', { total, mech, bodyshop, accessories, cost });
+
+            document.getElementById('total').textContent = total;
+            document.getElementById('mech').textContent = mech;
+            document.getElementById('body').textContent = bodyshop;
+            document.getElementById('acc').textContent = accessories;
+            document.getElementById('landedCost').textContent = formatCurrency(cost);
+        }
+
+        // FIXED: Better filtered stats loading
         async function loadFilteredStats() {
             try {
                 const branch = document.getElementById('branch').value;
@@ -558,56 +595,53 @@
                 const params = new URLSearchParams();
                 
                 params.append('service_category', currentTab);
-                
                 if (branch !== 'All') params.append('branch', branch);
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 
-                if (params.toString()) {
-                    url += '?' + params.toString();
-                }
+                const fullUrl = params.toString() ? url + '?' + params.toString() : url;
                 
-                console.log('=== LOADING FILTERED STATS ===');
-                console.log('Service Category:', currentTab);
-                console.log('URL:', url);
+                console.log('📊 Loading filtered stats...');
+                console.log('   Tab:', currentTab);
+                console.log('   URL:', fullUrl);
                 
-                const response = await fetch(url);
+                const response = await fetch(fullUrl);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                console.log('Filtered stats response:', data);
+                console.log('📊 Filtered stats response:', data);
                 
+                // Add pulse animation
                 const cards = document.querySelectorAll('.stat-value');
                 cards.forEach(card => card.classList.add('stat-updating'));
                 
-                document.getElementById('total').textContent = data.total_vehicles || 0;
-                document.getElementById('mech').textContent = data.mechanical_count || 0;
-                document.getElementById('body').textContent = data.bodyshop_count || 0;
-                document.getElementById('acc').textContent = data.accessories_count || 0;
-                document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
+                // Update stat cards
+                updateStatCards(data);
                 
-                console.log('Updated landed cost to:', formatCurrency(data.total_landed_cost || 0));
-                console.log('=== FILTERED STATS COMPLETE ===\n');
-                
+                // Remove animation
                 setTimeout(() => {
                     cards.forEach(card => card.classList.remove('stat-updating'));
                 }, 500);
+                
+                console.log('✅ Filtered stats loaded successfully');
             } catch (error) {
-                console.error('Error loading filtered stats:', error);
+                console.error('❌ Error loading filtered stats:', error);
             }
         }
 
+        // FIXED: Better filter loading
         async function loadFilters() {
             try {
                 const url = `${API_URL}/api/filter-options/${currentTab}`;
-                console.log('Fetching filters from:', url);
+                console.log('📋 Loading filters for:', currentTab);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                console.log('Filters loaded:', data);
+                console.log('📋 Filters loaded:', data);
                 
+                // Update filter dropdowns
                 document.getElementById('branch').innerHTML = '<option>All</option>' + 
                     data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
                 
@@ -617,6 +651,7 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
 
+                // Handle MJob filter (only for bodyshop)
                 const mjobFilter = document.getElementById('mjobFilter');
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
@@ -628,56 +663,57 @@
                     mjobFilter.style.display = 'none';
                 }
                 
-                loadData();
-                loadFilteredStats();
+                console.log('✅ Filters loaded successfully');
             } catch (error) {
-                console.error('Error loading filters:', error);
+                console.error('❌ Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
         }
 
         function onFilterChange() {
-            console.log('\n>>> FILTER CHANGED <<<');
-            console.log('Current Tab:', currentTab);
-            console.log('Branch:', document.getElementById('branch').value);
-            console.log('Status:', document.getElementById('status').value);
-            console.log('Age:', document.getElementById('age').value);
+            console.log('🔄 Filter changed');
+            console.log('   Tab:', currentTab);
+            console.log('   Branch:', document.getElementById('branch').value);
+            console.log('   Status:', document.getElementById('status').value);
+            console.log('   Age:', document.getElementById('age').value);
             if (currentTab === 'bodyshop') {
-                console.log('MJob:', document.getElementById('mjob').value);
+                console.log('   MJob:', document.getElementById('mjob').value);
             }
             
             loadFilteredStats();
             loadData();
         }
 
-        // CHANGED: Improved clearAllFilters function
+        // FIXED: Improved clearAllFilters function
         function clearAllFilters() {
-            console.log('\n>>> CLEARING ALL FILTERS <<<');
-            console.log('Current Tab:', currentTab);
+            console.log('🔄 CLEARING ALL FILTERS');
+            console.log('   Current Tab:', currentTab);
             
-            // Reset all filter dropdowns to "All"
+            // Reset all dropdowns to "All"
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
+            document.getElementById('mjob').value = 'All';
             
-            // Reset MJob only if on bodyshop tab
-            if (currentTab === 'bodyshop') {
-                document.getElementById('mjob').value = 'All';
-            }
+            console.log('✅ All filters reset to: All');
+            console.log('📊 Reloading data...');
             
-            console.log('All filters reset to: All');
-            
-            // Reload data with cleared filters
+            // Force reload with slight delay
             setTimeout(() => {
                 loadFilteredStats();
                 loadData();
-                console.log('>>> ALL FILTERS CLEARED AND DATA RELOADED <<<\n');
-            }, 100);
+                console.log('✅ Data reloaded after clear');
+            }, 50);
         }
 
-        // CHANGED: Improved switchTab function with filter clearing
+        // FIXED: Improved switchTab function
         function switchTab(event, tab) {
-            console.log(`\n>>> SWITCHING TAB: ${currentTab} -> ${tab} <<<`);
+            if (currentTab === tab) {
+                console.log('⚠️  Already on', tab, 'tab');
+                return;
+            }
+            
+            console.log('📑 SWITCHING TAB:', currentTab, '→', tab);
             
             currentTab = tab;
             
@@ -685,22 +721,29 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             
-            // Reset all filters to "All" when switching tabs
-            console.log('Clearing all filters for new tab');
+            // Reset all filters
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
             document.getElementById('mjob').value = 'All';
             
-            // Load fresh filters and data for new tab
+            console.log('✅ Tab switched, filters cleared');
+            console.log('📋 Loading new tab data...');
+            
+            // Load fresh filters and data
             setTimeout(() => {
                 loadFilters();
             }, 100);
-            
-            console.log(`>>> TAB SWITCHED AND FILTERS CLEARED <<<\n`);
         }
 
+        // FIXED: Better data loading
         async function loadData() {
+            if (isLoading) {
+                console.log('⚠️  Already loading, skipping...');
+                return;
+            }
+            
+            isLoading = true;
             try {
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
@@ -717,12 +760,14 @@
                     if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
                 }
 
-                console.log('Fetching data from:', url);
+                console.log('📊 Loading table data...');
+                console.log('   URL:', url);
+                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                console.log('Data loaded:', data);
+                console.log('📊 Table data loaded:', data);
                 
                 if (data.error) {
                     document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
@@ -730,8 +775,8 @@
                 }
                 
                 allData = data.vehicles;
-
                 document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
+                
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = '';
 
@@ -743,7 +788,6 @@
                 data.vehicles.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
-                    
                     const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                     
                     if (currentTab === 'bodyshop') {
@@ -792,9 +836,12 @@
                 });
 
                 updateTableHeaders();
+                console.log('✅ Table data rendered successfully');
             } catch (error) {
-                console.error('Error loading data:', error);
+                console.error('❌ Error loading data:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
+            } finally {
+                isLoading = false;
             }
         }
 
@@ -915,4 +962,3 @@
     </script>
 </body>
 </html>
-```
