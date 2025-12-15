@@ -88,6 +88,18 @@
             transition: all 0.3s ease;
         }
         
+        .stat-card.landed-cost-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stat-card.landed-cost-card .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .stat-card.landed-cost-card .stat-value {
+            color: #ffffff;
+            font-size: 22px;
+        }
+        
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -322,6 +334,10 @@
                 <div class="stat-label">Accessories</div>
                 <div class="stat-value" id="acc">-</div>
             </div>
+            <div class="stat-card landed-cost-card">
+                <div class="stat-label">Landed Cost (Total)</div>
+                <div class="stat-value" id="landedCost">-</div>
+            </div>
         </div>
 
         <div class="filters-section">
@@ -395,7 +411,6 @@
     </div>
 
     <script>
-        // ===== CRITICAL FIX: Use relative URL instead of hardcoded localhost =====
         const API_URL = window.location.origin;
         
         let currentTab = 'mechanical';
@@ -460,6 +475,11 @@
             return isAlert ? 'tat-alert' : 'tat-normal';
         }
 
+        function formatCurrency(value) {
+            if (value === undefined || value === null || value === 0) return '₹0';
+            return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+        }
+
         async function loadStats() {
             try {
                 const url = `${API_URL}/api/dashboard/statistics`;
@@ -474,6 +494,7 @@
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
                 document.getElementById('body').textContent = data.bodyshop_count || 0;
                 document.getElementById('acc').textContent = data.accessories_count || 0;
+                document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
             } catch (error) {
                 console.error('Error loading stats:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
@@ -506,17 +527,15 @@
                 const data = await response.json();
                 console.log('Filtered stats loaded:', data);
                 
-                // Add animation effect
                 const cards = document.querySelectorAll('.stat-value');
                 cards.forEach(card => card.classList.add('stat-updating'));
                 
-                // Update values
                 document.getElementById('total').textContent = data.total_vehicles || 0;
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
                 document.getElementById('body').textContent = data.bodyshop_count || 0;
                 document.getElementById('acc').textContent = data.accessories_count || 0;
+                document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
                 
-                // Remove animation class
                 setTimeout(() => {
                     cards.forEach(card => card.classList.remove('stat-updating'));
                 }, 500);
@@ -547,7 +566,6 @@
                 const mjobFilter = document.getElementById('mjobFilter');
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
-                    // Always show M1, M2, M3, M4, and Not Categorized for Bodyshop
                     const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
                     document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
                         `<option value="${m}">${m}</option>`
@@ -566,10 +584,9 @@
             }
         }
 
-        // Called whenever a filter changes
         function onFilterChange() {
-            loadFilteredStats();  // Update stats cards
-            loadData();           // Update table data
+            loadFilteredStats();
+            loadData();
         }
 
         async function loadData() {
