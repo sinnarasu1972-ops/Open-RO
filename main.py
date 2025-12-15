@@ -186,15 +186,16 @@ async def statistics():
             "total_landed_cost": 0.0
         }
 
-# ========== CHANGED: Enhanced filtered statistics with better debugging ==========
+# ========== CHANGED: Enhanced filtered statistics with service_category filtering ==========
 @app.get("/api/dashboard/statistics/filtered")
 async def filtered_statistics(
     branch: Optional[str] = Query("All"),
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
-    mjob: Optional[str] = Query("All")
+    mjob: Optional[str] = Query("All"),
+    service_category: Optional[str] = Query("All")
 ):
-    """Dashboard statistics - with dynamic filtering"""
+    """Dashboard statistics - with dynamic filtering by service category"""
     try:
         if df_global.empty:
             print("ERROR: DataFrame is empty!")
@@ -209,6 +210,7 @@ async def filtered_statistics(
         print(f"\n{'='*80}")
         print(f"FILTERED STATS REQUEST")
         print(f"{'='*80}")
+        print(f"Service Category: {service_category}")
         print(f"Filters: branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}, mjob={mjob}")
         print(f"Total rows in df_global: {len(df_global)}")
         print(f"Total landed cost before filtering: {df_global['total_landed_cost'].sum()}")
@@ -216,6 +218,18 @@ async def filtered_statistics(
         # Start with full dataframe
         filtered_df = df_global.copy()
         print(f"Starting filtered_df rows: {len(filtered_df)}")
+        
+        # ========== CHANGED: Filter by service category FIRST ==========
+        if service_category and service_category != "All":
+            if service_category == "mechanical":
+                filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+                print(f"After SERVICE_CATEGORY filter (mechanical): {len(filtered_df)} rows")
+            elif service_category == "bodyshop":
+                filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
+                print(f"After SERVICE_CATEGORY filter (bodyshop): {len(filtered_df)} rows")
+            elif service_category == "accessories":
+                filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
+                print(f"After SERVICE_CATEGORY filter (accessories): {len(filtered_df)} rows")
         
         # Apply Branch filter
         if branch and branch != "All":
@@ -245,7 +259,7 @@ async def filtered_statistics(
                 )]
                 print(f"After MJOB filter ({mjob}): {len(filtered_df)} rows")
         
-        # Count by service category
+        # Count by service category from FILTERED data
         mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         bodyshop = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
         accessories = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
