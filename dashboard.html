@@ -3,837 +3,434 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Unnati Motors Open RO Dashboard</title>
-    
-    <!-- ============================================ CSS STYLES ============================================ -->
     <style>
-        /* =============== RESET & GLOBAL STYLES =============== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            scroll-behavior: smooth;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            color: #333;
-            line-height: 1.6;
         }
-
-        .container {
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-
-        /* =============== HEADER STYLING =============== */
+        .container { max-width: 1400px; margin: 0 auto; }
         header {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            animation: slideDown 0.5s ease-out;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        h1 { color: #333; font-size: 28px; margin: 0; }
+        #companyLogo { 
+            height: 50px; 
+            object-fit: contain; 
+            max-width: 200px;
         }
-
-        h1 {
-            color: #333;
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 25px;
-            letter-spacing: -1px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
+        
         .header-wrapper {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 25px;
+            gap: 15px;
         }
-
-        .tabs {
-            display: flex;
-            gap: 12px;
-            flex: 1;
-            min-width: 320px;
-        }
-
-        .tab-button {
-            padding: 14px 24px;
-            border: 2px solid transparent;
-            background: #f5f5f5;
-            color: #333;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            flex: 1;
-            min-width: 110px;
-            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .tab-button:hover {
-            background: #e8e8e8;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        }
-
-        .tab-button:active {
-            transform: translateY(-1px);
-        }
-
-        .tab-button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .clear-all-btn {
-            padding: 14px 32px;
-            border: none;
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            white-space: nowrap;
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
-        }
-
-        .clear-all-btn:hover {
-            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.5);
-        }
-
-        .clear-all-btn:active {
-            transform: translateY(-1px);
-        }
-
-        /* =============== STATISTICS GRID =============== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            border-top: 4px solid #667eea;
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-label {
-            color: #999;
-            font-size: 12px;
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            font-weight: 800;
-            letter-spacing: 1.2px;
-            display: block;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: #667eea;
-            line-height: 1.1;
-            word-break: break-word;
-            min-height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card.landed-cost-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-top-color: #667eea;
-        }
-
-        .stat-card.landed-cost-card .stat-label {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .stat-card.landed-cost-card .stat-value {
-            color: #ffffff;
-            font-size: 28px;
-        }
-
-        /* =============== FILTERS SECTION =============== */
-        .filters-section {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            animation: slideUp 0.5s ease-out 0.1s both;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 25px;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .filter-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 800;
-            color: #333;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 13px;
-            background: white;
-            color: #333;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 20px;
-            padding-right: 40px;
-        }
-
-        select:hover {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-        }
-
-        /* =============== TABLE SECTION =============== */
-        .table-section {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin-bottom: 30px;
-            animation: slideUp 0.5s ease-out 0.2s both;
-        }
-
-        .table-header {
-            padding: 20px 25px;
-            background: linear-gradient(to right, #f8f9fa 0%, #f5f5f5 100%);
-            border-bottom: 2px solid #e0e0e0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        
+        .tabs { 
+            display: flex; 
+            gap: 8px; 
             flex-wrap: wrap;
-            gap: 20px;
+            flex: 1;
         }
-
-        .table-info {
-            font-size: 13px;
-            color: #666;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .export-btn {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            color: white;
-            padding: 12px 24px;
+        .tab-button {
+            padding: 10px 16px;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 12px;
-            transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            white-space: nowrap;
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
-        }
-
-        .export-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.5);
-        }
-
-        .export-btn:active:not(:disabled) {
-            transform: translateY(-1px);
-        }
-
-        .export-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 800px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .table-wrapper::-webkit-scrollbar {
-            width: 12px;
-            height: 12px;
-        }
-
-        .table-wrapper::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .table-wrapper::-webkit-scrollbar-thumb {
-            background: #bbb;
-            border-radius: 6px;
-        }
-
-        .table-wrapper::-webkit-scrollbar-thumb:hover {
-            background: #888;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            table-layout: auto;
-        }
-
-        thead {
-            background: #f8f9fa;
-            border-bottom: 3px solid #e0e0e0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        th {
-            padding: 16px 12px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 800;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            white-space: nowrap;
-            background: #f8f9fa;
-        }
-
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #555;
-            word-break: break-word;
-            max-width: 300px;
-        }
-
-        tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        tbody tr:hover {
-            background: #f9f9f9;
-        }
-
-        tbody tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        tbody tr:nth-child(even):hover {
             background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            flex: 1;
+            min-width: 100px;
         }
-
-        /* =============== CELL & BADGE STYLES =============== */
-        .landed-cost-cell {
-            background: linear-gradient(135deg, #f0f7ff 0%, #e8f2ff 100%);
-            color: #1967d2;
-            font-weight: 800;
-            border-radius: 4px;
-            padding: 10px 12px !important;
-            box-shadow: 0 2px 8px rgba(25, 103, 210, 0.1);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-
-        .badge-open {
-            background: #fef3e2;
-            color: #e67e22;
-        }
-
-        .badge-closed {
-            background: #e8f5e9;
-            color: #27ae60;
-        }
-
-        .badge-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .mjob-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 10px;
-            font-weight: 800;
-            background: #e8f0fe;
-            color: #1967d2;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border: 1px solid #b3d9f5;
-        }
-
-        .branch-abbr {
-            display: inline-block;
-            font-weight: 800;
-            background: #e3f2fd;
-            color: #1967d2;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            border: 1px solid #bbdefb;
-        }
-
-        .tat-alert {
-            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+        .tab-button.active { background: #667eea; color: white; }
+        
+        .clear-all-btn {
+            padding: 10px 16px;
+            border: none;
+            background: #e74c3c;
             color: white;
-            font-weight: 800;
-            padding: 8px 12px;
-            border-radius: 4px;
-            display: inline-block;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s ease;
+            white-space: nowrap;
         }
-
-        .tat-normal {
-            background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);
-            color: white;
-            font-weight: 800;
-            padding: 8px 12px;
-            border-radius: 4px;
-            display: inline-block;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+        .clear-all-btn:hover {
+            background: #c0392b;
         }
-
-        /* =============== MESSAGE STYLES =============== */
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            color: #667eea;
-            font-weight: 800;
-            font-size: 15px;
-        }
-
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 16px 18px;
-            border-radius: 8px;
-            border-left: 5px solid #c33;
-            font-weight: 700;
-            margin: 15px 0;
-        }
-
-        .success {
-            background: #e8f5e9;
-            color: #27ae60;
-            padding: 16px 18px;
-            border-radius: 8px;
-            border-left: 5px solid #27ae60;
-            font-weight: 700;
-        }
-
-        /* =============== ANIMATIONS =============== */
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.08);
-            }
-        }
-
-        .stat-updating {
-            animation: pulse 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        /* =============== RESPONSIVE DESIGN =============== */
-        @media (max-width: 1400px) {
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 20px;
-            }
-
-            .filters-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th {
-                padding: 12px 8px;
-                font-size: 10px;
-            }
-
-            td {
-                padding: 10px 8px;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            body {
-                padding: 15px;
-            }
-
+        
+        @media (max-width: 768px) {
             header {
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-
-            h1 {
-                font-size: 28px;
+                padding: 15px;
+                gap: 10px;
                 margin-bottom: 15px;
             }
-
+            h1 { font-size: 22px; }
             .header-wrapper {
-                gap: 15px;
+                flex-direction: column;
+                align-items: stretch;
             }
-
-            .tabs {
-                gap: 8px;
-                min-width: 100%;
-            }
-
+            .tabs { gap: 6px; }
             .tab-button {
-                padding: 10px 16px;
+                padding: 8px 12px;
                 font-size: 12px;
                 min-width: 80px;
             }
-
             .clear-all-btn {
-                padding: 10px 20px;
+                padding: 8px 12px;
                 font-size: 12px;
-                min-width: 100%;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-            }
-
-            .stat-card {
-                padding: 20px;
-            }
-
-            .stat-label {
-                font-size: 11px;
-                margin-bottom: 10px;
-            }
-
-            .stat-value {
-                font-size: 24px;
-            }
-
-            .filters-section {
-                padding: 20px;
-            }
-
-            .filters-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .table-header {
-                padding: 15px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-
-            .export-btn {
                 width: 100%;
             }
-
-            .table-wrapper {
-                max-height: 600px;
-            }
-
-            table {
-                font-size: 11px;
-            }
-
-            th {
-                padding: 10px 6px;
-                font-size: 9px;
-            }
-
-            td {
-                padding: 8px 6px;
-            }
-
-            .badge {
-                padding: 4px 8px;
-                font-size: 9px;
-            }
         }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 10px;
-            }
-
-            header {
-                padding: 15px;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .stat-label { color: #999; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card.landed-cost-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stat-card.landed-cost-card .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .stat-card.landed-cost-card .stat-value {
+            color: #ffffff;
+            font-size: 22px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
                 margin-bottom: 15px;
             }
-
-            h1 {
-                font-size: 22px;
+            .stat-card {
+                padding: 12px;
+            }
+            .stat-label { font-size: 10px; margin-bottom: 6px; }
+            .stat-value { font-size: 20px; }
+        }
+        .filters-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .filters-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 15px; 
+        }
+        .filter-group label { 
+            display: block; 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: #333; 
+            margin-bottom: 6px; 
+        }
+        select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 13px;
+        }
+        
+        @media (max-width: 768px) {
+            .filters-section {
+                padding: 12px;
                 margin-bottom: 12px;
             }
-
-            .header-wrapper {
+            .filters-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .filter-group label {
+                font-size: 11px;
+                margin-bottom: 5px;
+            }
+            select {
+                padding: 6px;
+                font-size: 12px;
+            }
+        }
+        .table-section { 
+            background: white; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .table-wrapper {
+            overflow-x: scroll !important;
+            overflow-y: auto;
+            max-height: 500px;
+            border-radius: 0 0 10px 10px;
+            display: block;
+            scroll-behavior: smooth;
+            padding-bottom: 5px;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            width: 15px;
+            height: 15px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #e8e8e8;
+            border-radius: 10px;
+            margin: 0 5px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 10px;
+            min-height: 40px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #333;
+        }
+        .table-header { 
+            padding: 12px; 
+            background: #f8f9fa; 
+            border-bottom: 1px solid #ddd; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+        }
+        .table-info { font-size: 12px; color: #666; }
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+            transition: background 0.2s ease;
+        }
+        .export-btn:hover { background: #229954; }
+        .export-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .records-select { width: 110px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
+        
+        @media (max-width: 768px) {
+            .table-header {
+                padding: 10px;
+                gap: 8px;
                 flex-direction: column;
-                gap: 12px;
+                align-items: stretch;
             }
-
-            .tabs {
-                gap: 6px;
+            .table-info { font-size: 11px; }
+            .export-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+                width: 100%;
             }
-
-            .tab-button {
-                padding: 8px 10px;
+            .records-select { 
+                width: 100%; 
+                padding: 6px;
                 font-size: 11px;
             }
-
-            .clear-all-btn {
-                padding: 8px 16px;
-                font-size: 11px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .stat-card {
-                padding: 15px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
-
-            .stat-value {
-                font-size: 20px;
-            }
-
-            .filters-section {
-                padding: 15px;
-            }
-
-            table {
-                font-size: 10px;
-            }
-
-            th {
-                padding: 8px 4px;
-                font-size: 8px;
-            }
-
-            td {
-                padding: 6px 4px;
-            }
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 2000px; table-layout: fixed; }
+        thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+        th { 
+            padding: 12px; 
+            text-align: left; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #333; 
+            white-space: nowrap;
+            min-width: 80px;
+            width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        td { 
+            padding: 12px; 
+            border-bottom: 1px solid #eee; 
+            font-size: 12px; 
+            color: #555; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+            vertical-align: top;
+            width: 80px;
+            min-width: 80px;
+        }
+        th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }
+        th:nth-child(2), td:nth-child(2) { width: 120px; min-width: 120px; }
+        th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
+        th:nth-child(4), td:nth-child(4) { width: 90px; min-width: 90px; }
+        th:nth-child(5), td:nth-child(5) { width: 90px; min-width: 90px; }
+        th:nth-child(6), td:nth-child(6) { width: 100px; min-width: 100px; }
+        th:nth-child(7), td:nth-child(7) { width: 100px; min-width: 100px; }
+        th:nth-child(8), td:nth-child(8) { width: 100px; min-width: 100px; }
+        th:nth-child(9), td:nth-child(9) { width: 90px; min-width: 90px; }
+        th:nth-child(10), td:nth-child(10) { width: 90px; min-width: 90px; }
+        th:nth-child(11), td:nth-child(11) { width: 400px; min-width: 400px; }
+        th:nth-child(12), td:nth-child(12) { width: 300px; min-width: 300px; }
+        
+        td:nth-child(11), td:nth-child(12) { 
+            word-break: break-word; 
+            white-space: normal;
+            max-width: 400px;
+        }
+        td:nth-child(12) { max-width: 300px; }
+        
+        .landed-cost-cell {
+            background: #f0f7ff;
+            color: #1967d2;
+            font-weight: 600;
+        }
+        
+        tr:hover { background: #f9f9f9; }
+        tbody tr { height: auto; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-open { background: #fef3e2; color: #e67e22; }
+        .badge-closed { background: #e8f5e9; color: #27ae60; }
+        .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
+        .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
+        .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
+        .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
+        .loading { text-align: center; padding: 40px; color: #667eea; }
+        .stat-updating {
+            animation: pulse 0.5s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
-    <!-- ============================================ HTML STRUCTURE ============================================ -->
     <div class="container">
-        <!-- ===== HEADER SECTION ===== -->
         <header>
-            <h1>🚗 Unnati Motors Open RO Dashboard</h1>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <img id="companyLogo" src="./logo.jpg" alt="Company Logo" 
+                     style="height: 60px; object-fit: contain; display: none;"
+                     onerror="this.style.display='none';">
+                <h1>Unnati Motors Open RO Dashboard</h1>
+            </div>
             <div class="header-wrapper">
                 <div class="tabs">
-                    <button class="tab-button active" id="btn-mechanical" onclick="switchTab('mechanical')">
-                        ⚙️ Mechanical
-                    </button>
-                    <button class="tab-button" id="btn-bodyshop" onclick="switchTab('bodyshop')">
-                        🔧 Bodyshop
-                    </button>
-                    <button class="tab-button" id="btn-accessories" onclick="switchTab('accessories')">
-                        📦 Accessories
-                    </button>
+                    <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
+                    <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
+                    <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
                 </div>
-                <button class="clear-all-btn" onclick="clearAllFiltersAndTabs()">
-                    🔄 Clear All
-                </button>
+                <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
             </div>
         </header>
 
-        <!-- ===== STATISTICS CARDS ===== -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total ROs</div>
-                <div class="stat-value" id="stat-total">-</div>
+                <div class="stat-value" id="total">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Mechanical</div>
-                <div class="stat-value" id="stat-mechanical">-</div>
+                <div class="stat-value" id="mech">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Bodyshop</div>
-                <div class="stat-value" id="stat-bodyshop">-</div>
+                <div class="stat-value" id="body">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Accessories</div>
-                <div class="stat-value" id="stat-accessories">-</div>
+                <div class="stat-value" id="acc">-</div>
             </div>
             <div class="stat-card landed-cost-card">
                 <div class="stat-label">Part Issued to RO's Value</div>
-                <div class="stat-value" id="stat-landed-cost">-</div>
+                <div class="stat-value" id="landedCost">-</div>
             </div>
         </div>
 
-        <!-- ===== FILTERS SECTION ===== -->
         <div class="filters-section">
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label for="filter-branch">Branch</label>
-                    <select id="filter-branch" onchange="onFilterChange()">
-                        <option value="All">All</option>
+                    <label>Branch</label>
+                    <select id="branch" onchange="onFilterChange()">
+                        <option>All</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="filter-status">RO Status</label>
-                    <select id="filter-status" onchange="onFilterChange()">
-                        <option value="All">All</option>
+                    <label>RO Status</label>
+                    <select id="status" onchange="onFilterChange()">
+                        <option>All</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="filter-age">Age Bucket</label>
-                    <select id="filter-age" onchange="onFilterChange()">
-                        <option value="All">All</option>
+                    <label>Age Bucket</label>
+                    <select id="age" onchange="onFilterChange()">
+                        <option>All</option>
                     </select>
                 </div>
-                <div class="filter-group" id="mjob-filter-group" style="display: none;">
-                    <label for="filter-mjob">MJob Type</label>
-                    <select id="filter-mjob" onchange="onFilterChange()">
-                        <option value="All">All</option>
-                        <option value="M1">M1</option>
-                        <option value="M2">M2</option>
-                        <option value="M3">M3</option>
-                        <option value="M4">M4</option>
-                        <option value="Not Categorized">Not Categorized</option>
+                <div class="filter-group" id="mjobFilter" style="display:none;">
+                    <label>MJob Type</label>
+                    <select id="mjob" onchange="onFilterChange()">
+                        <option>All</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- ===== TABLE SECTION ===== -->
         <div class="table-section">
             <div class="table-header">
-                <div class="table-info" id="table-info">Loading data...</div>
-                <button class="export-btn" onclick="exportToCSV()">📥 Export to CSV</button>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                    <div class="table-info" id="tableInfo">Loading data...</div>
+                    <select class="records-select" id="recordsPerPage" onchange="loadData()">
+                        <option value="10">10 Records</option>
+                        <option value="20">20 Records</option>
+                        <option value="50" selected>50 Records</option>
+                        <option value="100">&gt;50 Records</option>
+                    </select>
+                </div>
+                <button class="export-btn" onclick="exportToCSV()">📥 Export Filtered Data to Excel</button>
             </div>
             <div class="table-wrapper">
                 <table>
-                    <thead>
-                        <tr>
+                    <thead id="tableHead">
+                        <tr id="headerRow">
                             <th>RO Number</th>
                             <th>Landed Cost</th>
                             <th>RO Date</th>
@@ -844,17 +441,14 @@
                             <th>Model Group</th>
                             <th>Chassis No</th>
                             <th>MJob</th>
-                            <th>Days</th>
-                            <th>KM</th>
-                            <th>Age Bucket</th>
                             <th>TAT (Days)</th>
                             <th>Remarks</th>
                             <th>Pending Reason</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body">
+                    <tbody id="tableBody">
                         <tr>
-                            <td colspan="16" class="loading">Loading...</td>
+                            <td colspan="13" class="loading">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -862,15 +456,12 @@
         </div>
     </div>
 
-    <!-- ============================================ JAVASCRIPT CODE ============================================ -->
     <script>
-        // ======================= GLOBAL CONFIGURATION =======================
         const API_URL = window.location.origin;
+        
         let currentTab = 'mechanical';
-        let isLoading = false;
-        let allLoadedData = [];
+        let allData = [];
 
-        // Branch Name Abbreviations
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
             'WAGHOLI': 'WAG',
@@ -884,533 +475,485 @@
             'KOLHAPUR_SH': 'KHS'
         };
 
-        // ======================= INITIALIZATION =======================
-        /**
-         * Initialize dashboard on page load
-         */
+        function abbreviateBranch(branch) {
+            return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
+        }
+
         window.onload = function() {
-            console.log('✅ Dashboard Initialized');
-            console.log('API URL:', API_URL);
+            console.log('Dashboard loaded, API_URL:', API_URL);
             loadStats();
             loadFilters();
             loadData();
         };
 
-        // ======================= UTILITY FUNCTIONS =======================
-        /**
-         * Format number as Indian currency (₹ format)
-         * @param {number} value - Value to format
-         * @returns {string} - Formatted currency string
-         */
-        function formatCurrency(value) {
-            if (value === undefined || value === null || value === 0 || isNaN(value)) {
-                return '₹0';
-            }
-            try {
-                return '₹' + parseFloat(value).toLocaleString('en-IN', {
-                    maximumFractionDigits: 2,
-                    minimumFractionDigits: 2
-                });
-            } catch (e) {
-                return '₹0';
-            }
-        }
-
-        /**
-         * Get abbreviation for branch name
-         * @param {string} branch - Full branch name
-         * @returns {string} - Abbreviated branch name
-         */
-        function abbreviateBranch(branch) {
-            if (!branch) return '-';
-            return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
-        }
-
-        /**
-         * Extract MJob type from remarks
-         * @param {string} remark - Remark text
-         * @returns {string} - MJob type (M1, M2, M3, M4, or Not Categorized)
-         */
         function extractMJob(remark) {
             if (!remark) return 'Not Categorized';
             const matches = remark.match(/\bM[1-4]\b/g);
-            return (matches && matches.length > 0) ? matches[0] : 'Not Categorized';
+            if (matches && matches.length > 0) {
+                return matches[0];
+            }
+            return 'Not Categorized';
         }
 
-        /**
-         * Get last 8 characters of VIN
-         * @param {string} vin - Vehicle Identification Number
-         * @returns {string} - Last 8 characters or '-'
-         */
-        function getLastEightChars(vin) {
-            if (!vin) return '-';
-            const str = String(vin).trim();
+        function getLastEightChars(text) {
+            if (!text) return '-';
+            const str = String(text).trim();
             return str.length > 8 ? str.slice(-8) : str;
         }
 
-        /**
-         * Calculate TAT (Turn Around Time) in days
-         * @param {string} roDate - RO creation date
-         * @returns {number} - Number of days since RO creation
-         */
         function calculateTAT(roDate) {
             if (!roDate) return 0;
-            try {
-                const date = new Date(roDate);
-                const today = new Date();
-                const diffTime = Math.abs(today - date);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                return isNaN(diffDays) ? 0 : diffDays;
-            } catch (e) {
-                return 0;
-            }
+            const date = new Date(roDate);
+            const today = new Date();
+            const diffTime = Math.abs(today - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
         }
 
-        /**
-         * Determine TAT style based on MJob and days
-         * @param {string} mjob - MJob type
-         * @param {number} tat - TAT in days
-         * @returns {string} - CSS class (tat-alert or tat-normal)
-         */
         function getTATStyle(mjob, tat) {
-            if (mjob === 'M1' && tat > 1) return 'tat-alert';
-            else if (mjob === 'M2' && tat > 5) return 'tat-alert';
-            else if (mjob === 'M3' && tat > 9) return 'tat-alert';
-            else if (mjob === 'M4' && tat > 25) return 'tat-alert';
-            return 'tat-normal';
+            let isAlert = false;
+            
+            if (mjob === 'M1' && tat > 1) isAlert = true;
+            else if (mjob === 'M2' && tat > 5) isAlert = true;
+            else if (mjob === 'M3' && tat > 9) isAlert = true;
+            else if (mjob === 'M4' && tat > 25) isAlert = true;
+            
+            return isAlert ? 'tat-alert' : 'tat-normal';
         }
 
-        /**
-         * Get status badge color based on RO status
-         * @param {string} status - RO status
-         * @returns {string} - CSS class for badge
-         */
-        function getStatusBadgeClass(status) {
-            if (status === 'Open') return 'badge-open';
-            else if (status === 'Closed') return 'badge-closed';
-            else return 'badge-pending';
+        function formatCurrency(value) {
+            if (value === undefined || value === null || value === 0) return '₹0';
+            return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
         }
 
-        // ======================= API FUNCTIONS =======================
-        /**
-         * Load main dashboard statistics
-         */
         async function loadStats() {
             try {
-                console.log('📊 Loading main statistics...');
-                const response = await fetch(`${API_URL}/api/dashboard/statistics`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
-                }
+                const url = `${API_URL}/api/dashboard/statistics`;
+                console.log('Fetching stats from:', url);
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                updateStatCards(data);
-                console.log('✅ Main statistics loaded successfully');
+                console.log('Stats loaded:', data);
+                
+                document.getElementById('total').textContent = data.total_vehicles || 0;
+                document.getElementById('mech').textContent = data.mechanical_count || 0;
+                document.getElementById('body').textContent = data.bodyshop_count || 0;
+                document.getElementById('acc').textContent = data.accessories_count || 0;
+                document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
             } catch (error) {
-                console.error('❌ Error loading statistics:', error);
-                showErrorMessage('Error loading statistics');
+                console.error('Error loading stats:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
             }
         }
 
-        /**
-         * Update statistics cards with data
-         * @param {object} data - Statistics data
-         */
-        function updateStatCards(data) {
-            const cards = document.querySelectorAll('.stat-value');
-            cards.forEach(card => card.classList.add('stat-updating'));
-
-            // Safely extract values with fallback
-            const totalVehicles = parseInt(data.total_vehicles) || 0;
-            const mechanicalCount = parseInt(data.mechanical_count) || 0;
-            const bodyshopCount = parseInt(data.bodyshop_count) || 0;
-            const accessoriesCount = parseInt(data.accessories_count) || 0;
-            const totalLandedCost = parseFloat(data.total_landed_cost) || 0;
-
-            // Update DOM
-            document.getElementById('stat-total').textContent = totalVehicles;
-            document.getElementById('stat-mechanical').textContent = mechanicalCount;
-            document.getElementById('stat-bodyshop').textContent = bodyshopCount;
-            document.getElementById('stat-accessories').textContent = accessoriesCount;
-            document.getElementById('stat-landed-cost').textContent = formatCurrency(totalLandedCost);
-
-            // Remove animation class
-            setTimeout(() => {
-                cards.forEach(card => card.classList.remove('stat-updating'));
-            }, 600);
-        }
-
-        /**
-         * Load filtered statistics based on current filters
-         */
         async function loadFilteredStats() {
             try {
-                const branch = document.getElementById('filter-branch').value;
-                const status = document.getElementById('filter-status').value;
-                const age = document.getElementById('filter-age').value;
-                const mjob = currentTab === 'bodyshop' ? document.getElementById('filter-mjob').value : 'All';
-
-                console.log('📊 Loading filtered statistics...', { currentTab, branch, status, age, mjob });
-
-                let url = `${API_URL}/api/dashboard/statistics/filtered?service_category=${encodeURIComponent(currentTab)}`;
-                if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
-                if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
-                if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
-                if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
-
-                const response = await fetch(url);
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
+                let url = `${API_URL}/api/dashboard/statistics/filtered`;
+                const params = new URLSearchParams();
+                
+                params.append('service_category', currentTab);
+                
+                if (branch !== 'All') params.append('branch', branch);
+                if (status !== 'All') params.append('ro_status', status);
+                if (age !== 'All') params.append('age_bucket', age);
+                if (mjob !== 'All') params.append('mjob', mjob);
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
                 }
                 
+                console.log('=== LOADING FILTERED STATS ===');
+                console.log('Service Category:', currentTab);
+                console.log('URL:', url);
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
                 const data = await response.json();
-                updateStatCards(data);
-                console.log('✅ Filtered statistics loaded successfully');
+                console.log('Filtered stats response:', data);
+                
+                const cards = document.querySelectorAll('.stat-value');
+                cards.forEach(card => card.classList.add('stat-updating'));
+                
+                document.getElementById('total').textContent = data.total_vehicles || 0;
+                document.getElementById('mech').textContent = data.mechanical_count || 0;
+                document.getElementById('body').textContent = data.bodyshop_count || 0;
+                document.getElementById('acc').textContent = data.accessories_count || 0;
+                document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
+                
+                console.log('Updated landed cost to:', formatCurrency(data.total_landed_cost || 0));
+                console.log('=== FILTERED STATS COMPLETE ===\n');
+                
+                setTimeout(() => {
+                    cards.forEach(card => card.classList.remove('stat-updating'));
+                }, 500);
             } catch (error) {
-                console.error('❌ Error loading filtered statistics:', error);
+                console.error('Error loading filtered stats:', error);
             }
         }
 
-        /**
-         * Load available filter options from API
-         */
         async function loadFilters() {
             try {
-                console.log('📋 Loading filter options for tab:', currentTab);
-                const response = await fetch(`${API_URL}/api/filter-options/${encodeURIComponent(currentTab)}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-
-                // Update Branch filter dropdown
-                const branchOptions = data.branches && Array.isArray(data.branches)
-                    ? data.branches.filter(b => b && b !== 'All')
-                    : [];
-                document.getElementById('filter-branch').innerHTML = '<option value="All">All</option>' +
-                    branchOptions.map(b => `<option value="${encodeURIComponent(b)}">${b}</option>`).join('');
-
-                // Update Status filter dropdown
-                const statusOptions = data.ro_statuses && Array.isArray(data.ro_statuses)
-                    ? data.ro_statuses.filter(s => s && s !== 'All')
-                    : [];
-                document.getElementById('filter-status').innerHTML = '<option value="All">All</option>' +
-                    statusOptions.map(s => `<option value="${encodeURIComponent(s)}">${s}</option>`).join('');
-
-                // Update Age Bucket filter dropdown
-                const ageOptions = data.age_buckets && Array.isArray(data.age_buckets)
-                    ? data.age_buckets.filter(a => a && a !== 'All')
-                    : [];
-                document.getElementById('filter-age').innerHTML = '<option value="All">All</option>' +
-                    ageOptions.map(a => `<option value="${encodeURIComponent(a)}">${a}</option>`).join('');
-
-                // Show/hide MJob filter based on tab
-                const mjobFilterGroup = document.getElementById('mjob-filter-group');
-                if (currentTab === 'bodyshop') {
-                    mjobFilterGroup.style.display = 'block';
-                    document.getElementById('filter-mjob').value = 'All';
-                } else {
-                    mjobFilterGroup.style.display = 'none';
-                    document.getElementById('filter-mjob').value = 'All';
-                }
-
-                console.log('✅ Filter options loaded successfully');
-            } catch (error) {
-                console.error('❌ Error loading filters:', error);
-                showErrorMessage('Error loading filter options');
-            }
-        }
-
-        /**
-         * Load table data from API
-         */
-        async function loadData() {
-            if (isLoading) {
-                console.log('⚠️ Already loading data...');
-                return;
-            }
-            
-            isLoading = true;
-
-            try {
-                const branch = document.getElementById('filter-branch').value;
-                const status = document.getElementById('filter-status').value;
-                const age = document.getElementById('filter-age').value;
-                const mjob = currentTab === 'bodyshop' ? document.getElementById('filter-mjob').value : 'All';
-
-                console.log('📊 Loading table data...');
-
-                let url = `${API_URL}/api/vehicles/${encodeURIComponent(currentTab)}?skip=0&limit=150`;
-                if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
-                if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
-                if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
-                if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
-
+                const url = `${API_URL}/api/filter-options/${currentTab}`;
+                console.log('Fetching filters from:', url);
                 const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
+                console.log('Filters loaded:', data);
+                
+                document.getElementById('branch').innerHTML = '<option>All</option>' + 
+                    data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
+                
+                document.getElementById('status').innerHTML = '<option>All</option>' + 
+                    data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
+                
+                document.getElementById('age').innerHTML = '<option>All</option>' + 
+                    data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
 
-                // Update info message
-                const info = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
-                document.getElementById('table-info').textContent = info;
-                console.log('📊 ' + info);
-
-                // Store data for export
-                allLoadedData = data.vehicles || [];
-
-                const tbody = document.getElementById('table-body');
-                tbody.innerHTML = '';
-
-                if (!data.vehicles || data.vehicles.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="16" class="loading">No data found</td></tr>';
-                    isLoading = false;
-                    return;
+                const mjobFilter = document.getElementById('mjobFilter');
+                if (currentTab === 'bodyshop') {
+                    mjobFilter.style.display = 'block';
+                    const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
+                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
+                        `<option value="${m}">${m}</option>`
+                    ).join('');
+                } else {
+                    mjobFilter.style.display = 'none';
                 }
-
-                // Render table rows
-                data.vehicles.forEach((v, index) => {
-                    const statusClass = getStatusBadgeClass(v.ro_status);
-                    const branchAbbr = abbreviateBranch(v.branch);
-                    const landedCost = formatCurrency(v.total_landed_cost || 0);
-                    const mjobType = extractMJob(v.ro_remarks);
-                    const chassis = getLastEightChars(v.vin);
-                    const tat = calculateTAT(v.ro_date);
-                    const tatStyle = getTATStyle(mjobType, tat);
-                    const saName = v.service_adviser || '-';
-                    const days = v.days !== undefined && v.days !== null ? v.days : '-';
-                    const km = v.km !== undefined && v.km !== null ? parseInt(v.km).toLocaleString('en-IN') : '-';
-                    const ageBucket = v.age_bucket || '-';
-                    const remarks = v.ro_remarks || '-';
-                    const pendingReason = v.pendncy_resn_desc || '-';
-
-                    const truncateText = (text, length) => {
-                        return text.length > length ? text.substring(0, length) + '...' : text;
-                    };
-
-                    tbody.innerHTML += `
-                        <tr class="fade-in">
-                            <td><strong>${v.ro_id || '-'}</strong></td>
-                            <td class="landed-cost-cell">${landedCost}</td>
-                            <td>${v.ro_date || '-'}</td>
-                            <td><span class="branch-abbr">${branchAbbr}</span></td>
-                            <td><span class="badge ${statusClass}">${v.ro_status || '-'}</span></td>
-                            <td>${saName}</td>
-                            <td><strong>${v.reg_number || '-'}</strong></td>
-                            <td>${v.model_group || '-'}</td>
-                            <td>${chassis}</td>
-                            <td><span class="mjob-badge">${mjobType}</span></td>
-                            <td>${days}</td>
-                            <td>${km}</td>
-                            <td>${ageBucket}</td>
-                            <td><span class="${tatStyle}">${tat} days</span></td>
-                            <td title="${remarks}">${truncateText(remarks, 25)}</td>
-                            <td title="${pendingReason}">${truncateText(pendingReason, 25)}</td>
-                        </tr>
-                    `;
-                });
-
-                console.log('✅ Table data loaded -', data.vehicles.length, 'rows rendered');
+                
+                loadData();
+                loadFilteredStats();
             } catch (error) {
-                console.error('❌ Error loading table data:', error);
-                const tbody = document.getElementById('table-body');
-                tbody.innerHTML = `<tr><td colspan="16" class="error">Error: ${error.message}</td></tr>`;
-                showErrorMessage('Error loading table data: ' + error.message);
-            } finally {
-                isLoading = false;
+                console.error('Error loading filters:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
         }
 
-        // ======================= EVENT HANDLERS =======================
-        /**
-         * Handle filter change event
-         */
         function onFilterChange() {
-            console.log('🔄 Filter changed');
-            console.log('   Tab:', currentTab);
-            console.log('   Branch:', document.getElementById('filter-branch').value);
-            console.log('   Status:', document.getElementById('filter-status').value);
-            console.log('   Age:', document.getElementById('filter-age').value);
+            console.log('\n>>> FILTER CHANGED <<<');
+            console.log('Current Tab:', currentTab);
+            console.log('Branch:', document.getElementById('branch').value);
+            console.log('Status:', document.getElementById('status').value);
+            console.log('Age:', document.getElementById('age').value);
             if (currentTab === 'bodyshop') {
-                console.log('   MJob:', document.getElementById('filter-mjob').value);
+                console.log('MJob:', document.getElementById('mjob').value);
             }
             
             loadFilteredStats();
             loadData();
         }
 
-        /**
-         * Clear all filters and reset to default state
-         */
-        function clearAllFiltersAndTabs() {
-            console.log('\n🔄🔄🔄 CLEARING ALL FILTERS AND TABS 🔄🔄🔄');
-
-            // 1. Reset current tab to mechanical
-            currentTab = 'mechanical';
-            console.log('✅ Tab reset to: mechanical');
-
-            // 2. Reset all tab buttons - remove active class from all
-            const buttons = document.querySelectorAll('.tab-button');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            console.log('✅ Removed active class from all tab buttons');
-
-            // 3. Make Mechanical button active
-            document.getElementById('btn-mechanical').classList.add('active');
-            console.log('✅ Made Mechanical tab button active');
-
-            // 4. Reset all filter dropdowns to "All"
-            document.getElementById('filter-branch').value = 'All';
-            document.getElementById('filter-status').value = 'All';
-            document.getElementById('filter-age').value = 'All';
-            document.getElementById('filter-mjob').value = 'All';
-            console.log('✅ All filter dropdowns reset to: All');
-
-            // 5. Hide MJob filter (only visible on Bodyshop tab)
-            document.getElementById('mjob-filter-group').style.display = 'none';
-            console.log('✅ MJob filter hidden');
-
-            console.log('📊 Reloading dashboard with reset values...');
-
-            // 6. Reload everything with new values
-            setTimeout(() => {
-                loadFilters();
-                loadFilteredStats();
-                loadData();
-                console.log('✅✅✅ DASHBOARD FULLY RESET ✅✅✅\n');
-            }, 100);
-        }
-
-        /**
-         * Switch between tabs (Mechanical, Bodyshop, Accessories)
-         * @param {string} tab - Tab name to switch to
-         */
-        function switchTab(tab) {
-            console.log(`📑 Switching tab: ${currentTab} → ${tab}`);
-
-            // 1. Update current tab variable
-            currentTab = tab;
-
-            // 2. Update button styles
-            document.getElementById('btn-mechanical').classList.remove('active');
-            document.getElementById('btn-bodyshop').classList.remove('active');
-            document.getElementById('btn-accessories').classList.remove('active');
-
-            if (tab === 'mechanical') {
-                document.getElementById('btn-mechanical').classList.add('active');
-            } else if (tab === 'bodyshop') {
-                document.getElementById('btn-bodyshop').classList.add('active');
-            } else if (tab === 'accessories') {
-                document.getElementById('btn-accessories').classList.add('active');
+        // CHANGED: Improved clearAllFilters function
+        function clearAllFilters() {
+            console.log('\n>>> CLEARING ALL FILTERS <<<');
+            console.log('Current Tab:', currentTab);
+            
+            // Reset all filter dropdowns to "All"
+            document.getElementById('branch').value = 'All';
+            document.getElementById('status').value = 'All';
+            document.getElementById('age').value = 'All';
+            
+            // Reset MJob only if on bodyshop tab
+            if (currentTab === 'bodyshop') {
+                document.getElementById('mjob').value = 'All';
             }
-
-            console.log('✅ Tab button styling updated');
-
-            // 3. Reset all filters when switching tabs
-            document.getElementById('filter-branch').value = 'All';
-            document.getElementById('filter-status').value = 'All';
-            document.getElementById('filter-age').value = 'All';
-            document.getElementById('filter-mjob').value = 'All';
-            console.log('✅ All filters reset to: All');
-
-            console.log('📋 Loading new tab filters and data...');
-
-            // 4. Load new data for selected tab
+            
+            console.log('All filters reset to: All');
+            
+            // Reload data with cleared filters
             setTimeout(() => {
-                loadFilters();
                 loadFilteredStats();
                 loadData();
-                console.log('✅ Tab switch complete');
+                console.log('>>> ALL FILTERS CLEARED AND DATA RELOADED <<<\n');
             }, 100);
         }
 
-        // ======================= EXPORT FUNCTION =======================
-        /**
-         * Export filtered table data to CSV file
-         */
-        async function exportToCSV() {
+        // CHANGED: Improved switchTab function with filter clearing
+        function switchTab(event, tab) {
+            console.log(`\n>>> SWITCHING TAB: ${currentTab} -> ${tab} <<<`);
+            
+            currentTab = tab;
+            
+            // Update active tab button
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Reset all filters to "All" when switching tabs
+            console.log('Clearing all filters for new tab');
+            document.getElementById('branch').value = 'All';
+            document.getElementById('status').value = 'All';
+            document.getElementById('age').value = 'All';
+            document.getElementById('mjob').value = 'All';
+            
+            // Load fresh filters and data for new tab
+            setTimeout(() => {
+                loadFilters();
+            }, 100);
+            
+            console.log(`>>> TAB SWITCHED AND FILTERS CLEARED <<<\n`);
+        }
+
+        async function loadData() {
             try {
-                console.log('📥 Starting CSV export...');
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+                const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
-                const branch = document.getElementById('filter-branch').value;
-                const status = document.getElementById('filter-status').value;
-                const age = document.getElementById('filter-age').value;
-                const mjob = currentTab === 'bodyshop' ? document.getElementById('filter-mjob').value : 'All';
-
-                // Build export URL with filters
-                let url = `${API_URL}/api/export/${encodeURIComponent(currentTab)}`;
-                if (branch !== 'All') url += `?branch=${encodeURIComponent(branch)}`;
-                let sep = branch !== 'All' ? '&' : '?';
-                if (status !== 'All') url += `${sep}ro_status=${encodeURIComponent(status)}`;
-                sep = url.includes('?') ? '&' : '?';
-                if (age !== 'All') url += `${sep}age_bucket=${encodeURIComponent(age)}`;
-                sep = url.includes('?') ? '&' : '?';
-                if (mjob !== 'All') url += `${sep}mjob=${encodeURIComponent(mjob)}`;
-
-                console.log('📥 Export URL:', url);
-
-                const response = await fetch(url);
+                let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
+                if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
+                if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
+                if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
+                if (currentTab === 'bodyshop') {
+                    const mjob = document.getElementById('mjob').value;
+                    if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
                 }
 
+                console.log('Fetching data from:', url);
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
                 const data = await response.json();
+                console.log('Data loaded:', data);
+                
+                if (data.error) {
+                    document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                allData = data.vehicles;
 
-                if (!data.vehicles || data.vehicles.length === 0) {
-                    alert('No data to export!');
-                    console.log('⚠️ No data available for export');
+                document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                if (data.vehicles.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="13" class="loading">No data found</td></tr>';
                     return;
                 }
 
-                // Build CSV content
-                const keys = Object.keys(data.vehicles[0]);
-                const csvRows = [];
-
-                // Add header row
-                csvRows.push(keys.join(','));
-
-                // Add data rows
-                data.vehicles.forEach((row, index) => {
-                    const csvRow = keys.map(key => {
-                        let value = row[key] || '';
-                        value = String(value).replace(/"/g, '""');
-                        return `"${value}"`;
-                    });
-                    csvRows.push(csvRow.join(','));
+                data.vehicles.forEach(v => {
+                    const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
+                    const branchAbbr = abbreviateBranch(v.branch);
+                    
+                    const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
+                    
+                    if (currentTab === 'bodyshop') {
+                        const mjob = extractMJob(v.ro_remarks);
+                        const chassis = getLastEightChars(v.vin || '-');
+                        const tat = calculateTAT(v.ro_date);
+                        const tatStyle = getTATStyle(mjob, tat);
+                        const saName = v.service_adviser || '-';
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
+                                <td>${v.ro_date}</td>
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${saName}</td>
+                                <td><strong>${v.reg_number}</strong></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${chassis}</td>
+                                <td><span class="mjob-badge">${mjob}</span></td>
+                                <td><span class="${tatStyle}">${tat} days</span></td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
+                                <td>${v.ro_date}</td>
+                                <td>${v.service_adviser || '-'}</td>
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${v.reg_number}</td>
+                                <td>${v.age_bucket}</td>
+                                <td>${v.days}</td>
+                                <td>${v.km.toLocaleString()}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                    }
                 });
 
-                const csv = csvRows.join('\n');
-
-                // Create and trigger download
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `RO_Dashboard_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
-                link.click();
-
-                console.log('✅ Export successful -', data.vehicles.length, 'rows exported');
+                updateTableHeaders();
             } catch (error) {
-                console.error('❌ Export error:', error);
-                alert('Export failed: ' + error.message);
-                showErrorMessage('Export failed: ' + error.message);
+                console.error('Error loading data:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
             }
         }
 
-        // ======================= UTILITY FUNCTIONS =======================
-        /**
-         * Show error message to user
-         * @param {string} message - Error message to display
-         */
-        function showErrorMessage(message) {
-            console.error('❌ ' + message);
+        function updateTableHeaders() {
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = '';
+            
+            if (currentTab === 'bodyshop') {
+                headerRow.innerHTML = `
+                    <th>RO Number</th>
+                    <th>Landed Cost</th>
+                    <th>RO Date</th>
+                    <th>Branch</th>
+                    <th>Status</th>
+                    <th>SA Name</th>
+                    <th>VH No</th>
+                    <th>Model Group</th>
+                    <th>Chassis No</th>
+                    <th>MJob</th>
+                    <th>TAT (Days)</th>
+                    <th>Remarks</th>
+                    <th>Pending Reason</th>
+                `;
+            } else {
+                headerRow.innerHTML = `
+                    <th>RO ID</th>
+                    <th>Landed Cost</th>
+                    <th>RO Date</th>
+                    <th>SA Name</th>
+                    <th>Branch</th>
+                    <th>Status</th>
+                    <th>Model Group</th>
+                    <th>Reg Number</th>
+                    <th>Age</th>
+                    <th>Days</th>
+                    <th>KM</th>
+                    <th>Remarks</th>
+                    <th>Pending Reason</th>
+                `;
+            }
+        }
+
+        async function exportToCSV() {
+            try {
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '⏳ Preparing export...';
+                btn.disabled = true;
+
+                let url = `${API_URL}/api/export/${currentTab}`;
+                if (branch !== 'All') url += `?branch=${encodeURIComponent(branch)}`;
+                let separator = (branch !== 'All') ? '&' : '?';
+                if (status !== 'All') url += `${separator}ro_status=${encodeURIComponent(status)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
+                
+                if (currentTab === 'bodyshop') {
+                    const mjob = document.getElementById('mjob').value;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                const exportData = data.vehicles;
+
+                if (exportData.length === 0) {
+                    alert('No data to export!');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                const allColumns = Object.keys(exportData[0]);
+                const headers = allColumns;
+
+                let csv = [];
+                csv.push(headers.join(','));
+
+                exportData.forEach(row => {
+                    let csvRow = headers.map(col => {
+                        let value = row[col] || '-';
+                        value = String(value).replace(/"/g, '""');
+                        return `"${value}"`;
+                    });
+                    csv.push(csvRow.join(','));
+                });
+
+                const csvContent = csv.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url_obj = URL.createObjectURL(blob);
+                const fileName = `RO_Dashboard_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
+                
+                link.href = url_obj;
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(url_obj);
+
+                btn.textContent = '✅ Exported!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Error exporting data: ' + error.message);
+                event.target.textContent = '📥 Export Filtered Data to Excel';
+                event.target.disabled = false;
+            }
         }
     </script>
 </body>
 </html>
+```
+
+---
+
+## ✅ **KEY CHANGES**
+
+| Function | Change | Details |
+|----------|--------|---------|
+| **switchTab()** | IMPROVED | Now clears ALL filters when switching tabs |
+| **clearAllFilters()** | IMPROVED | Enhanced with better logging and timing |
+| **Tab Switching** | NEW FEATURE | Automatic filter reset when changing tabs |
+| **Console Logging** | ENHANCED | Better debugging for tab switches |
+
+---
+
+## 🎯 **HOW IT WORKS NOW**
+
+### **Scenario 1: Click Clear All on Any Tab**
+```
+1. User is on Mechanical tab with Branch=NAGPUR selected
+2. User clicks "Clear All" button
+3. Branch dropdown resets to "All"
+4. Stats card updates immediately ✅
+5. Table data refreshes with all data ✅
+```
+
+### **Scenario 2: Switch Between Tabs**
+```
+1. User is on Mechanical tab with Branch=NAGPUR selected
+2. User clicks "Bodyshop" tab button
+3. Automatic action: All filters reset to "All" ✅
+4. New filters load for Bodyshop tab ✅
+5. Stats and table refresh with fresh data ✅
+```
+
+### **Scenario 3: Clear All on Bodyshop Tab**
+```
+1. User is on Bodyshop tab with MJob=M1 selected
+2. User clicks "Clear All" button
+3. All filters (Branch, Status, Age, MJob) reset to "All" ✅
+4. Stats update with ALL Bodyshop data ✅
+5. Table shows ALL Bodyshop ROs ✅
