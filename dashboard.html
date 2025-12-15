@@ -5,14 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unnati Motors Open RO Dashboard</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+        }
+
         header {
             background: white;
             padding: 20px;
@@ -23,13 +33,13 @@
             flex-direction: column;
             gap: 15px;
         }
-        h1 { color: #333; font-size: 28px; margin: 0; }
-        #companyLogo { 
-            height: 50px; 
-            object-fit: contain; 
-            max-width: 200px;
+
+        h1 { 
+            color: #333; 
+            font-size: 28px; 
+            margin: 0; 
         }
-        
+
         .header-wrapper {
             display: flex;
             align-items: center;
@@ -37,17 +47,19 @@
             flex-wrap: wrap;
             gap: 15px;
         }
-        
+
         .tabs { 
             display: flex; 
             gap: 8px; 
             flex-wrap: wrap;
             flex: 1;
         }
+
         .tab-button {
             padding: 10px 16px;
             border: none;
             background: #f0f0f0;
+            color: #333;
             cursor: pointer;
             border-radius: 5px;
             font-size: 13px;
@@ -56,14 +68,16 @@
             min-width: 100px;
             transition: all 0.3s ease;
         }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+        }
+
         .tab-button.active { 
             background: #667eea; 
             color: white;
         }
-        .tab-button:hover {
-            transform: translateY(-2px);
-        }
-        
+
         .clear-all-btn {
             padding: 10px 16px;
             border: none;
@@ -76,20 +90,23 @@
             transition: background 0.2s ease;
             white-space: nowrap;
         }
+
         .clear-all-btn:hover {
             background: #c0392b;
         }
+
         .clear-all-btn:active {
             transform: scale(0.98);
         }
-        
+
         @media (max-width: 768px) {
             header {
                 padding: 15px;
                 gap: 10px;
-                margin-bottom: 15px;
             }
-            h1 { font-size: 22px; }
+            h1 { 
+                font-size: 22px; 
+            }
             .header-wrapper {
                 flex-direction: column;
                 align-items: stretch;
@@ -98,360 +115,454 @@
             .tab-button {
                 padding: 8px 12px;
                 font-size: 12px;
-                min-width: 80px;
             }
             .clear-all-btn {
                 padding: 8px 12px;
-                font-size: 12px;
                 width: 100%;
             }
         }
+
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
+
         .stat-card {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             text-align: center;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
+
         .stat-label { 
             color: #999; 
             font-size: 11px; 
             text-transform: uppercase; 
-            margin-bottom: 8px;
-            font-weight: 600;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
+
         .stat-value { 
-            font-size: 24px; 
-            font-weight: bold; 
+            font-size: 26px; 
+            font-weight: 700; 
             color: #667eea;
-            transition: all 0.3s ease;
-            min-height: 30px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
+
         .stat-card.landed-cost-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
         }
+
         .stat-card.landed-cost-card .stat-label {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.85);
         }
+
         .stat-card.landed-cost-card .stat-value {
             color: #ffffff;
-            font-size: 22px;
+            font-size: 24px;
         }
-        
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
-                margin-bottom: 15px;
             }
             .stat-card {
-                padding: 12px;
+                padding: 15px;
             }
-            .stat-label { font-size: 10px; margin-bottom: 6px; }
-            .stat-value { font-size: 20px; }
+            .stat-label { 
+                font-size: 10px; 
+                margin-bottom: 8px;
+            }
+            .stat-value { 
+                font-size: 20px; 
+            }
         }
+
         .filters-section {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
+
         .filters-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-            gap: 15px; 
+            gap: 20px; 
         }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
         .filter-group label { 
             display: block; 
             font-size: 12px; 
-            font-weight: 600; 
+            font-weight: 700; 
             color: #333; 
-            margin-bottom: 6px; 
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+
         select { 
             width: 100%; 
-            padding: 8px; 
+            padding: 10px; 
             border: 1px solid #ddd; 
             border-radius: 5px; 
             font-size: 13px;
             cursor: pointer;
+            background: white;
+            color: #333;
+            transition: border-color 0.2s ease;
         }
-        
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
         @media (max-width: 768px) {
             .filters-section {
-                padding: 12px;
-                margin-bottom: 12px;
+                padding: 15px;
             }
             .filters-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+                gap: 15px;
             }
             .filter-group label {
                 font-size: 11px;
-                margin-bottom: 5px;
-            }
-            select {
-                padding: 6px;
-                font-size: 12px;
             }
         }
+
         .table-section { 
             background: white; 
             border-radius: 10px; 
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            overflow: hidden;
         }
-        .table-wrapper {
-            overflow-x: scroll !important;
-            overflow-y: auto;
-            max-height: 500px;
-            border-radius: 0 0 10px 10px;
-            display: block;
-            scroll-behavior: smooth;
-            padding-bottom: 5px;
-        }
-        .table-wrapper::-webkit-scrollbar {
-            width: 15px;
-            height: 15px;
-        }
-        .table-wrapper::-webkit-scrollbar-track {
-            background: #e8e8e8;
-            border-radius: 10px;
-            margin: 0 5px;
-        }
-        .table-wrapper::-webkit-scrollbar-thumb {
-            background: #666;
-            border-radius: 10px;
-            min-height: 40px;
-        }
-        .table-wrapper::-webkit-scrollbar-thumb:hover {
-            background: #333;
-        }
+
         .table-header { 
-            padding: 12px; 
+            padding: 15px 20px; 
             background: #f8f9fa; 
             border-bottom: 1px solid #ddd; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             flex-wrap: wrap; 
-            gap: 10px; 
+            gap: 15px; 
         }
-        .table-info { font-size: 12px; color: #666; }
+
+        .table-info { 
+            font-size: 12px; 
+            color: #666;
+            font-weight: 600;
+        }
+
         .export-btn {
             background: #27ae60;
             color: white;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 12px;
             transition: background 0.2s ease;
+            white-space: nowrap;
         }
-        .export-btn:hover { background: #229954; }
+
+        .export-btn:hover { 
+            background: #229954; 
+        }
+
         .export-btn:disabled {
             background: #bdc3c7;
             cursor: not-allowed;
         }
-        .records-select { width: 110px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
-        
-        @media (max-width: 768px) {
-            .table-header {
-                padding: 10px;
-                gap: 8px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .table-info { font-size: 11px; }
-            .export-btn {
-                padding: 6px 12px;
-                font-size: 10px;
-                width: 100%;
-            }
-            .records-select { 
-                width: 100%; 
-                padding: 6px;
-                font-size: 11px;
-            }
+
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
+            display: block;
         }
-        table { width: 100%; border-collapse: collapse; min-width: 2000px; table-layout: fixed; }
-        thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+
+        .table-wrapper::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse;
+        }
+
+        thead { 
+            background: #f8f9fa; 
+            border-bottom: 2px solid #ddd;
+            position: sticky;
+            top: 0;
+        }
+
         th { 
-            padding: 12px; 
+            padding: 12px 15px; 
             text-align: left; 
             font-size: 11px; 
             font-weight: 700; 
-            color: #333; 
-            white-space: nowrap;
-            min-width: 80px;
-            width: 80px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+
         td { 
-            padding: 12px; 
+            padding: 12px 15px; 
             border-bottom: 1px solid #eee; 
             font-size: 12px; 
-            color: #555; 
-            word-wrap: break-word; 
-            overflow-wrap: break-word;
-            vertical-align: top;
-            width: 80px;
-            min-width: 80px;
+            color: #555;
         }
-        th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }
-        th:nth-child(2), td:nth-child(2) { width: 120px; min-width: 120px; }
-        th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
-        th:nth-child(4), td:nth-child(4) { width: 90px; min-width: 90px; }
-        th:nth-child(5), td:nth-child(5) { width: 90px; min-width: 90px; }
-        th:nth-child(6), td:nth-child(6) { width: 100px; min-width: 100px; }
-        th:nth-child(7), td:nth-child(7) { width: 100px; min-width: 100px; }
-        th:nth-child(8), td:nth-child(8) { width: 100px; min-width: 100px; }
-        th:nth-child(9), td:nth-child(9) { width: 90px; min-width: 90px; }
-        th:nth-child(10), td:nth-child(10) { width: 90px; min-width: 90px; }
-        th:nth-child(11), td:nth-child(11) { width: 400px; min-width: 400px; }
-        th:nth-child(12), td:nth-child(12) { width: 300px; min-width: 300px; }
-        
-        td:nth-child(11), td:nth-child(12) { 
-            word-break: break-word; 
-            white-space: normal;
-            max-width: 400px;
+
+        tbody tr {
+            transition: background 0.2s ease;
         }
-        td:nth-child(12) { max-width: 300px; }
-        
+
+        tbody tr:hover { 
+            background: #f9f9f9; 
+        }
+
         .landed-cost-cell {
             background: #f0f7ff;
             color: #1967d2;
+            font-weight: 700;
+            border-radius: 3px;
+        }
+
+        .badge { 
+            display: inline-block; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-open { 
+            background: #fef3e2; 
+            color: #e67e22; 
+        }
+
+        .badge-closed { 
+            background: #e8f5e9; 
+            color: #27ae60; 
+        }
+
+        .mjob-badge { 
+            display: inline-block; 
+            padding: 4px 10px; 
+            border-radius: 15px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            background: #e8f0fe; 
+            color: #1967d2;
+        }
+
+        .branch-abbr { 
+            font-weight: 700; 
+            background: #e3f2fd; 
+            padding: 2px 6px; 
+            border-radius: 3px;
+            color: #1967d2;
+        }
+
+        .loading { 
+            text-align: center; 
+            padding: 40px; 
+            color: #667eea;
             font-weight: 600;
         }
-        
-        tr:hover { background: #f9f9f9; }
-        tbody tr { height: auto; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .badge-open { background: #fef3e2; color: #e67e22; }
-        .badge-closed { background: #e8f5e9; color: #27ae60; }
-        .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
-        .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
-        .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
-        .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
-        .loading { text-align: center; padding: 40px; color: #667eea; }
+
+        .error { 
+            background: #fee; 
+            color: #c33; 
+            padding: 15px; 
+            border-radius: 5px;
+            border-left: 4px solid #c33;
+        }
+
+        .tat-alert { 
+            background: #c0392b; 
+            color: white; 
+            font-weight: 700; 
+            padding: 6px 10px; 
+            border-radius: 5px;
+        }
+
+        .tat-normal { 
+            background: #27ae60; 
+            color: white; 
+            font-weight: 700; 
+            padding: 6px 10px; 
+            border-radius: 5px;
+        }
+
         .stat-updating {
             animation: pulse 0.5s ease-in-out;
         }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+
+        @media (max-width: 768px) {
+            .table-header {
+                padding: 12px;
+                gap: 10px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .table-info { 
+                font-size: 11px; 
+            }
+            .export-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+            th, td {
+                padding: 10px 8px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- HEADER -->
         <header>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <img id="companyLogo" src="./logo.jpg" alt="Company Logo" 
-                     style="height: 60px; object-fit: contain; display: none;"
-                     onerror="this.style.display='none';">
-                <h1>Unnati Motors Open RO Dashboard</h1>
-            </div>
+            <h1>Unnati Motors Open RO Dashboard</h1>
             <div class="header-wrapper">
                 <div class="tabs">
-                    <button class="tab-button active" id="tab-mechanical" onclick="switchTab(event, 'mechanical')">Mechanical</button>
-                    <button class="tab-button" id="tab-bodyshop" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
-                    <button class="tab-button" id="tab-accessories" onclick="switchTab(event, 'accessories')">Accessories</button>
+                    <button class="tab-button active" id="btn-mechanical" onclick="switchTab(event, 'mechanical')">
+                        ⚙️ Mechanical
+                    </button>
+                    <button class="tab-button" id="btn-bodyshop" onclick="switchTab(event, 'bodyshop')">
+                        🔧 Bodyshop
+                    </button>
+                    <button class="tab-button" id="btn-accessories" onclick="switchTab(event, 'accessories')">
+                        📦 Accessories
+                    </button>
                 </div>
-                <button class="clear-all-btn" onclick="clearAllFiltersAndTabs()">🔄 Clear All</button>
+                <button class="clear-all-btn" onclick="clearAllFiltersAndTabs()">
+                    🔄 Clear All
+                </button>
             </div>
         </header>
 
+        <!-- STATISTICS CARDS -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total ROs</div>
-                <div class="stat-value" id="total">-</div>
+                <div class="stat-value" id="stat-total">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Mechanical</div>
-                <div class="stat-value" id="mech">-</div>
+                <div class="stat-value" id="stat-mechanical">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Bodyshop</div>
-                <div class="stat-value" id="body">-</div>
+                <div class="stat-value" id="stat-bodyshop">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Accessories</div>
-                <div class="stat-value" id="acc">-</div>
+                <div class="stat-value" id="stat-accessories">-</div>
             </div>
             <div class="stat-card landed-cost-card">
                 <div class="stat-label">Part Issued to RO's Value</div>
-                <div class="stat-value" id="landedCost">-</div>
+                <div class="stat-value" id="stat-landed-cost">-</div>
             </div>
         </div>
 
+        <!-- FILTERS SECTION -->
         <div class="filters-section">
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label>Branch</label>
-                    <select id="branch" onchange="onFilterChange()">
-                        <option>All</option>
+                    <label for="filter-branch">Branch</label>
+                    <select id="filter-branch" onchange="onFilterChange()">
+                        <option value="All">All</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>RO Status</label>
-                    <select id="status" onchange="onFilterChange()">
-                        <option>All</option>
+                    <label for="filter-status">RO Status</label>
+                    <select id="filter-status" onchange="onFilterChange()">
+                        <option value="All">All</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Age Bucket</label>
-                    <select id="age" onchange="onFilterChange()">
-                        <option>All</option>
+                    <label for="filter-age">Age Bucket</label>
+                    <select id="filter-age" onchange="onFilterChange()">
+                        <option value="All">All</option>
                     </select>
                 </div>
-                <div class="filter-group" id="mjobFilter" style="display:none;">
-                    <label>MJob Type</label>
-                    <select id="mjob" onchange="onFilterChange()">
-                        <option>All</option>
+                <div class="filter-group" id="mjob-filter-group" style="display: none;">
+                    <label for="filter-mjob">MJob Type</label>
+                    <select id="filter-mjob" onchange="onFilterChange()">
+                        <option value="All">All</option>
+                        <option value="M1">M1</option>
+                        <option value="M2">M2</option>
+                        <option value="M3">M3</option>
+                        <option value="M4">M4</option>
+                        <option value="Not Categorized">Not Categorized</option>
                     </select>
                 </div>
             </div>
         </div>
 
+        <!-- TABLE SECTION -->
         <div class="table-section">
             <div class="table-header">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-                    <div class="table-info" id="tableInfo">Loading data...</div>
-                    <select class="records-select" id="recordsPerPage" onchange="loadData()">
-                        <option value="10">10 Records</option>
-                        <option value="20">20 Records</option>
-                        <option value="50" selected>50 Records</option>
-                        <option value="100">&gt;50 Records</option>
-                    </select>
-                </div>
-                <button class="export-btn" onclick="exportToCSV()">📥 Export Filtered Data to Excel</button>
+                <div class="table-info" id="table-info">Loading data...</div>
+                <button class="export-btn" onclick="exportToCSV()">📥 Export to CSV</button>
             </div>
             <div class="table-wrapper">
                 <table>
-                    <thead id="tableHead">
-                        <tr id="headerRow">
+                    <thead>
+                        <tr id="table-header-row">
                             <th>RO Number</th>
                             <th>Landed Cost</th>
                             <th>RO Date</th>
@@ -464,12 +575,11 @@
                             <th>MJob</th>
                             <th>TAT (Days)</th>
                             <th>Remarks</th>
-                            <th>Pending Reason</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
+                    <tbody id="table-body">
                         <tr>
-                            <td colspan="13" class="loading">Loading...</td>
+                            <td colspan="12" class="loading">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -477,13 +587,13 @@
         </div>
     </div>
 
+    <!-- JAVASCRIPT -->
     <script>
         const API_URL = window.location.origin;
-        
         let currentTab = 'mechanical';
-        let allData = [];
         let isLoading = false;
 
+        // Branch abbreviations
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
             'WAGHOLI': 'WAG',
@@ -497,33 +607,43 @@
             'KOLHAPUR_SH': 'KHS'
         };
 
-        function abbreviateBranch(branch) {
-            return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
-        }
-
+        // Initialize dashboard on page load
         window.onload = function() {
-            console.log('✅ Dashboard loaded');
-            console.log('API_URL:', API_URL);
+            console.log('✅ Dashboard initialized - API:', API_URL);
             loadStats();
             loadFilters();
             loadData();
         };
 
+        // Format currency with Indian locale
+        function formatCurrency(value) {
+            if (!value || value === 0) return '₹0';
+            return '₹' + parseFloat(value).toLocaleString('en-IN', { 
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2 
+            });
+        }
+
+        // Abbreviate branch name
+        function abbreviateBranch(branch) {
+            return branchAbbreviations[branch] || (branch ? branch.substring(0, 3).toUpperCase() : '-');
+        }
+
+        // Extract MJob from remarks
         function extractMJob(remark) {
             if (!remark) return 'Not Categorized';
             const matches = remark.match(/\bM[1-4]\b/g);
-            if (matches && matches.length > 0) {
-                return matches[0];
-            }
-            return 'Not Categorized';
+            return matches && matches.length > 0 ? matches[0] : 'Not Categorized';
         }
 
+        // Get last 8 characters of VIN
         function getLastEightChars(text) {
             if (!text) return '-';
             const str = String(text).trim();
             return str.length > 8 ? str.slice(-8) : str;
         }
 
+        // Calculate TAT (Turn Around Time)
         function calculateTAT(roDate) {
             if (!roDate) return 0;
             const date = new Date(roDate);
@@ -533,440 +653,306 @@
             return diffDays;
         }
 
+        // Get TAT style based on MJob and days
         function getTATStyle(mjob, tat) {
-            let isAlert = false;
-            if (mjob === 'M1' && tat > 1) isAlert = true;
-            else if (mjob === 'M2' && tat > 5) isAlert = true;
-            else if (mjob === 'M3' && tat > 9) isAlert = true;
-            else if (mjob === 'M4' && tat > 25) isAlert = true;
-            return isAlert ? 'tat-alert' : 'tat-normal';
+            if (mjob === 'M1' && tat > 1) return 'tat-alert';
+            else if (mjob === 'M2' && tat > 5) return 'tat-alert';
+            else if (mjob === 'M3' && tat > 9) return 'tat-alert';
+            else if (mjob === 'M4' && tat > 25) return 'tat-alert';
+            return 'tat-normal';
         }
 
-        function formatCurrency(value) {
-            if (value === undefined || value === null || value === 0) return '₹0';
-            return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
-        }
-
+        // Load main statistics
         async function loadStats() {
             try {
-                const url = `${API_URL}/api/dashboard/statistics`;
-                console.log('📊 Loading initial stats...');
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
+                const response = await fetch(`${API_URL}/api/dashboard/statistics`);
                 const data = await response.json();
-                console.log('📊 Stats response:', data);
                 updateStatCards(data);
+                console.log('✅ Main stats loaded');
             } catch (error) {
                 console.error('❌ Error loading stats:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
             }
         }
 
+        // Update statistic cards
         function updateStatCards(data) {
-            const total = parseInt(data.total_vehicles) || 0;
-            const mech = parseInt(data.mechanical_count) || 0;
-            const bodyshop = parseInt(data.bodyshop_count) || 0;
-            const accessories = parseInt(data.accessories_count) || 0;
-            const cost = parseFloat(data.total_landed_cost) || 0;
+            const cards = document.querySelectorAll('.stat-value');
+            cards.forEach(card => card.classList.add('stat-updating'));
 
-            console.log('📈 Updating stat cards:', { total, mech, bodyshop, accessories, cost });
+            document.getElementById('stat-total').textContent = parseInt(data.total_vehicles) || 0;
+            document.getElementById('stat-mechanical').textContent = parseInt(data.mechanical_count) || 0;
+            document.getElementById('stat-bodyshop').textContent = parseInt(data.bodyshop_count) || 0;
+            document.getElementById('stat-accessories').textContent = parseInt(data.accessories_count) || 0;
+            document.getElementById('stat-landed-cost').textContent = formatCurrency(data.total_landed_cost || 0);
 
-            document.getElementById('total').textContent = total;
-            document.getElementById('mech').textContent = mech;
-            document.getElementById('body').textContent = bodyshop;
-            document.getElementById('acc').textContent = accessories;
-            document.getElementById('landedCost').textContent = formatCurrency(cost);
+            setTimeout(() => {
+                cards.forEach(card => card.classList.remove('stat-updating'));
+            }, 500);
         }
 
+        // Load filtered statistics based on current filters
         async function loadFilteredStats() {
             try {
-                const branch = document.getElementById('branch').value;
-                const status = document.getElementById('status').value;
-                const age = document.getElementById('age').value;
-                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
-                
-                let url = `${API_URL}/api/dashboard/statistics/filtered`;
-                const params = new URLSearchParams();
-                
-                params.append('service_category', currentTab);
-                if (branch !== 'All') params.append('branch', branch);
-                if (status !== 'All') params.append('ro_status', status);
-                if (age !== 'All') params.append('age_bucket', age);
-                if (mjob !== 'All') params.append('mjob', mjob);
-                
-                const fullUrl = params.toString() ? url + '?' + params.toString() : url;
-                
-                console.log('📊 Loading filtered stats...');
-                console.log('   Tab:', currentTab);
-                console.log('   URL:', fullUrl);
-                
-                const response = await fetch(fullUrl);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
+                const branch = document.getElementById('filter-branch').value;
+                const status = document.getElementById('filter-status').value;
+                const age = document.getElementById('filter-age').value;
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('filter-mjob').value : 'All';
+
+                let url = `${API_URL}/api/dashboard/statistics/filtered?service_category=${currentTab}`;
+                if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
+                if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
+                if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
+                if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
+
+                const response = await fetch(url);
                 const data = await response.json();
-                console.log('📊 Filtered stats response:', data);
-                
-                const cards = document.querySelectorAll('.stat-value');
-                cards.forEach(card => card.classList.add('stat-updating'));
-                
                 updateStatCards(data);
-                
-                setTimeout(() => {
-                    cards.forEach(card => card.classList.remove('stat-updating'));
-                }, 500);
-                
-                console.log('✅ Filtered stats loaded successfully');
+                console.log('✅ Filtered stats loaded for tab:', currentTab);
             } catch (error) {
                 console.error('❌ Error loading filtered stats:', error);
             }
         }
 
+        // Load filter options from API
         async function loadFilters() {
             try {
-                const url = `${API_URL}/api/filter-options/${currentTab}`;
-                console.log('📋 Loading filters for:', currentTab);
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
+                const response = await fetch(`${API_URL}/api/filter-options/${currentTab}`);
                 const data = await response.json();
-                console.log('📋 Filters loaded:', data);
-                
-                document.getElementById('branch').innerHTML = '<option>All</option>' + 
-                    data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
-                
-                document.getElementById('status').innerHTML = '<option>All</option>' + 
-                    data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
-                
-                document.getElementById('age').innerHTML = '<option>All</option>' + 
-                    data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
 
-                const mjobFilter = document.getElementById('mjobFilter');
+                // Update Branch filter
+                document.getElementById('filter-branch').innerHTML = '<option value="All">All</option>' + 
+                    data.branches.filter(b => b !== 'All').map(b => `<option value="${b}">${b}</option>`).join('');
+
+                // Update Status filter
+                document.getElementById('filter-status').innerHTML = '<option value="All">All</option>' + 
+                    data.ro_statuses.filter(s => s !== 'All').map(s => `<option value="${s}">${s}</option>`).join('');
+
+                // Update Age Bucket filter
+                document.getElementById('filter-age').innerHTML = '<option value="All">All</option>' + 
+                    data.age_buckets.filter(a => a !== 'All').map(a => `<option value="${a}">${a}</option>`).join('');
+
+                // Show/hide MJob filter based on current tab
+                const mjobFilterGroup = document.getElementById('mjob-filter-group');
                 if (currentTab === 'bodyshop') {
-                    mjobFilter.style.display = 'block';
-                    const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
-                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
-                        `<option value="${m}">${m}</option>`
-                    ).join('');
+                    mjobFilterGroup.style.display = 'block';
                 } else {
-                    mjobFilter.style.display = 'none';
+                    mjobFilterGroup.style.display = 'none';
+                    document.getElementById('filter-mjob').value = 'All';
                 }
-                
-                console.log('✅ Filters loaded successfully');
+
+                console.log('✅ Filters loaded for tab:', currentTab);
             } catch (error) {
                 console.error('❌ Error loading filters:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
         }
 
+        // Handle filter change event
         function onFilterChange() {
             console.log('🔄 Filter changed');
-            console.log('   Tab:', currentTab);
-            console.log('   Branch:', document.getElementById('branch').value);
-            console.log('   Status:', document.getElementById('status').value);
-            console.log('   Age:', document.getElementById('age').value);
-            if (currentTab === 'bodyshop') {
-                console.log('   MJob:', document.getElementById('mjob').value);
-            }
-            
             loadFilteredStats();
             loadData();
         }
 
-        // FIXED: Clear All button now resets tabs AND filters
+        // CLEAR ALL BUTTON - Resets everything
         function clearAllFiltersAndTabs() {
-            console.log('\n🔄 CLEARING ALL FILTERS AND RESETTING TABS');
-            
-            // Reset all filter dropdowns to "All"
-            document.getElementById('branch').value = 'All';
-            document.getElementById('status').value = 'All';
-            document.getElementById('age').value = 'All';
-            document.getElementById('mjob').value = 'All';
-            
-            // Reset to Mechanical tab
+            console.log('\n🔄🔄🔄 CLEARING ALL FILTERS AND RESETTING TABS 🔄🔄🔄');
+
+            // 1. Reset current tab to mechanical
             currentTab = 'mechanical';
-            
-            // Remove active class from all tab buttons
-            document.getElementById('tab-mechanical').classList.add('active');
-            document.getElementById('tab-bodyshop').classList.remove('active');
-            document.getElementById('tab-accessories').classList.remove('active');
-            
-            // Hide MJob filter since we're on Mechanical
-            document.getElementById('mjobFilter').style.display = 'none';
-            
-            console.log('✅ All filters reset to: All');
-            console.log('✅ Tab reset to: Mechanical');
-            console.log('📊 Reloading data...');
-            
-            // Reload everything
+
+            // 2. Update all tab buttons - remove active from all, add to mechanical
+            document.getElementById('btn-mechanical').classList.add('active');
+            document.getElementById('btn-bodyshop').classList.remove('active');
+            document.getElementById('btn-accessories').classList.remove('active');
+
+            // 3. Reset all filter dropdowns
+            document.getElementById('filter-branch').value = 'All';
+            document.getElementById('filter-status').value = 'All';
+            document.getElementById('filter-age').value = 'All';
+            document.getElementById('filter-mjob').value = 'All';
+
+            // 4. Hide MJob filter since we're on Mechanical
+            document.getElementById('mjob-filter-group').style.display = 'none';
+
+            console.log('✅ All cleared - Tab: Mechanical, Filters: All');
+            console.log('📊 Reloading dashboard...');
+
+            // 5. Reload all data
             setTimeout(() => {
                 loadFilters();
                 loadFilteredStats();
                 loadData();
-                console.log('✅ Dashboard reset complete!\n');
+                console.log('✅✅✅ DASHBOARD FULLY RESET ✅✅✅\n');
             }, 100);
         }
 
-        // FIXED: Improved switchTab function
+        // Switch between tabs
         function switchTab(event, tab) {
-            if (currentTab === tab) {
-                console.log('⚠️  Already on', tab, 'tab');
-                return;
-            }
-            
-            console.log('📑 SWITCHING TAB:', currentTab, '→', tab);
-            
+            console.log(`📑 Switching tab: ${currentTab} → ${tab}`);
+
+            // Set current tab
             currentTab = tab;
-            
-            // Update active tab button - FIXED to use all three IDs
-            document.getElementById('tab-mechanical').classList.remove('active');
-            document.getElementById('tab-bodyshop').classList.remove('active');
-            document.getElementById('tab-accessories').classList.remove('active');
-            
+
+            // Update button styles
+            document.getElementById('btn-mechanical').classList.remove('active');
+            document.getElementById('btn-bodyshop').classList.remove('active');
+            document.getElementById('btn-accessories').classList.remove('active');
+
             if (tab === 'mechanical') {
-                document.getElementById('tab-mechanical').classList.add('active');
+                document.getElementById('btn-mechanical').classList.add('active');
             } else if (tab === 'bodyshop') {
-                document.getElementById('tab-bodyshop').classList.add('active');
+                document.getElementById('btn-bodyshop').classList.add('active');
             } else if (tab === 'accessories') {
-                document.getElementById('tab-accessories').classList.add('active');
+                document.getElementById('btn-accessories').classList.add('active');
             }
-            
-            // Reset all filters
-            document.getElementById('branch').value = 'All';
-            document.getElementById('status').value = 'All';
-            document.getElementById('age').value = 'All';
-            document.getElementById('mjob').value = 'All';
-            
-            console.log('✅ Tab switched, filters cleared');
-            console.log('📋 Loading new tab data...');
-            
-            // Load fresh filters and data for new tab
+
+            // Reset all filters when switching tabs
+            document.getElementById('filter-branch').value = 'All';
+            document.getElementById('filter-status').value = 'All';
+            document.getElementById('filter-age').value = 'All';
+            document.getElementById('filter-mjob').value = 'All';
+
+            console.log('✅ Tab switched to:', tab);
+
+            // Load new data for selected tab
             setTimeout(() => {
                 loadFilters();
+                loadFilteredStats();
+                loadData();
             }, 100);
         }
 
+        // Load table data
         async function loadData() {
-            if (isLoading) {
-                console.log('⚠️  Already loading, skipping...');
-                return;
-            }
-            
+            if (isLoading) return;
             isLoading = true;
-            try {
-                const branch = document.getElementById('branch').value;
-                const status = document.getElementById('status').value;
-                const age = document.getElementById('age').value;
-                const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
-                let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
+            try {
+                const branch = document.getElementById('filter-branch').value;
+                const status = document.getElementById('filter-status').value;
+                const age = document.getElementById('filter-age').value;
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('filter-mjob').value : 'All';
+
+                let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=50`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
-                
-                if (currentTab === 'bodyshop') {
-                    const mjob = document.getElementById('mjob').value;
-                    if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
-                }
+                if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
 
-                console.log('📊 Loading table data...');
-                console.log('   URL:', url);
-                
                 const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
                 const data = await response.json();
-                console.log('📊 Table data loaded:', data);
-                
-                if (data.error) {
-                    document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
-                    return;
-                }
-                
-                allData = data.vehicles;
-                document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
-                
-                const tbody = document.getElementById('tableBody');
+
+                document.getElementById('table-info').textContent = 
+                    `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
+
+                const tbody = document.getElementById('table-body');
                 tbody.innerHTML = '';
 
                 if (data.vehicles.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="13" class="loading">No data found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="12" class="loading">No data found</td></tr>';
+                    isLoading = false;
                     return;
                 }
 
+                // Render table rows
                 data.vehicles.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
-                    const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
-                    
-                    if (currentTab === 'bodyshop') {
-                        const mjob = extractMJob(v.ro_remarks);
-                        const chassis = getLastEightChars(v.vin || '-');
-                        const tat = calculateTAT(v.ro_date);
-                        const tatStyle = getTATStyle(mjob, tat);
-                        const saName = v.service_adviser || '-';
-                        
-                        tbody.innerHTML += `
-                            <tr>
-                                <td><strong>${v.ro_id}</strong></td>
-                                <td class="landed-cost-cell">${landedCostDisplay}</td>
-                                <td>${v.ro_date}</td>
-                                <td><span class="branch-abbr">${branchAbbr}</span></td>
-                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                                <td>${saName}</td>
-                                <td><strong>${v.reg_number}</strong></td>
-                                <td>${v.model_group || '-'}</td>
-                                <td>${chassis}</td>
-                                <td><span class="mjob-badge">${mjob}</span></td>
-                                <td><span class="${tatStyle}">${tat} days</span></td>
-                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
-                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
-                            </tr>
-                        `;
-                    } else {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td><strong>${v.ro_id}</strong></td>
-                                <td class="landed-cost-cell">${landedCostDisplay}</td>
-                                <td>${v.ro_date}</td>
-                                <td>${v.service_adviser || '-'}</td>
-                                <td><span class="branch-abbr">${branchAbbr}</span></td>
-                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                                <td>${v.model_group || '-'}</td>
-                                <td>${v.reg_number}</td>
-                                <td>${v.age_bucket}</td>
-                                <td>${v.days}</td>
-                                <td>${v.km.toLocaleString()}</td>
-                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
-                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
-                            </tr>
-                        `;
-                    }
+                    const landedCost = formatCurrency(v.total_landed_cost || 0);
+                    const mjob = extractMJob(v.ro_remarks);
+                    const chassis = getLastEightChars(v.vin);
+                    const tat = calculateTAT(v.ro_date);
+                    const tatStyle = getTATStyle(mjob, tat);
+                    const saName = v.service_adviser || '-';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${v.ro_id}</strong></td>
+                            <td class="landed-cost-cell">${landedCost}</td>
+                            <td>${v.ro_date || '-'}</td>
+                            <td><span class="branch-abbr">${branchAbbr}</span></td>
+                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                            <td>${saName}</td>
+                            <td><strong>${v.reg_number || '-'}</strong></td>
+                            <td>${v.model_group || '-'}</td>
+                            <td>${chassis}</td>
+                            <td><span class="mjob-badge">${mjob}</span></td>
+                            <td><span class="${tatStyle}">${tat} days</span></td>
+                            <td style="max-width: 300px; word-break: break-word;">${v.ro_remarks || '-'}</td>
+                        </tr>
+                    `;
                 });
 
-                updateTableHeaders();
-                console.log('✅ Table data rendered successfully');
+                console.log('✅ Table data loaded:', data.vehicles.length, 'rows');
             } catch (error) {
                 console.error('❌ Error loading data:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
+                document.getElementById('table-info').innerHTML = `<span class="error">Error: ${error.message}</span>`;
             } finally {
                 isLoading = false;
             }
         }
 
-        function updateTableHeaders() {
-            const headerRow = document.getElementById('headerRow');
-            headerRow.innerHTML = '';
-            
-            if (currentTab === 'bodyshop') {
-                headerRow.innerHTML = `
-                    <th>RO Number</th>
-                    <th>Landed Cost</th>
-                    <th>RO Date</th>
-                    <th>Branch</th>
-                    <th>Status</th>
-                    <th>SA Name</th>
-                    <th>VH No</th>
-                    <th>Model Group</th>
-                    <th>Chassis No</th>
-                    <th>MJob</th>
-                    <th>TAT (Days)</th>
-                    <th>Remarks</th>
-                    <th>Pending Reason</th>
-                `;
-            } else {
-                headerRow.innerHTML = `
-                    <th>RO ID</th>
-                    <th>Landed Cost</th>
-                    <th>RO Date</th>
-                    <th>SA Name</th>
-                    <th>Branch</th>
-                    <th>Status</th>
-                    <th>Model Group</th>
-                    <th>Reg Number</th>
-                    <th>Age</th>
-                    <th>Days</th>
-                    <th>KM</th>
-                    <th>Remarks</th>
-                    <th>Pending Reason</th>
-                `;
-            }
-        }
-
+        // Export table data to CSV
         async function exportToCSV() {
             try {
-                const branch = document.getElementById('branch').value;
-                const status = document.getElementById('status').value;
-                const age = document.getElementById('age').value;
-
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '⏳ Preparing export...';
-                btn.disabled = true;
+                const branch = document.getElementById('filter-branch').value;
+                const status = document.getElementById('filter-status').value;
+                const age = document.getElementById('filter-age').value;
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('filter-mjob').value : 'All';
 
                 let url = `${API_URL}/api/export/${currentTab}`;
                 if (branch !== 'All') url += `?branch=${encodeURIComponent(branch)}`;
-                let separator = (branch !== 'All') ? '&' : '?';
-                if (status !== 'All') url += `${separator}ro_status=${encodeURIComponent(status)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
-                
-                if (currentTab === 'bodyshop') {
-                    const mjob = document.getElementById('mjob').value;
-                    separator = (url.includes('?')) ? '&' : '?';
-                    if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
-                }
+                let sep = branch !== 'All' ? '&' : '?';
+                if (status !== 'All') url += `${sep}ro_status=${encodeURIComponent(status)}`;
+                sep = url.includes('?') ? '&' : '?';
+                if (age !== 'All') url += `${sep}age_bucket=${encodeURIComponent(age)}`;
+                sep = url.includes('?') ? '&' : '?';
+                if (mjob !== 'All') url += `${sep}mjob=${encodeURIComponent(mjob)}`;
 
                 const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
                 const data = await response.json();
-                const exportData = data.vehicles;
 
-                if (exportData.length === 0) {
+                if (!data.vehicles || data.vehicles.length === 0) {
                     alert('No data to export!');
-                    btn.textContent = originalText;
-                    btn.disabled = false;
                     return;
                 }
 
-                const allColumns = Object.keys(exportData[0]);
-                const headers = allColumns;
-
-                let csv = [];
-                csv.push(headers.join(','));
-
-                exportData.forEach(row => {
-                    let csvRow = headers.map(col => {
-                        let value = row[col] || '-';
-                        value = String(value).replace(/"/g, '""');
-                        return `"${value}"`;
-                    });
-                    csv.push(csvRow.join(','));
-                });
-
-                const csvContent = csv.join('\n');
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                // Convert to CSV
+                const csv = convertToCSV(data.vehicles);
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
-                const url_obj = URL.createObjectURL(blob);
-                const fileName = `RO_Dashboard_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
-                
-                link.href = url_obj;
-                link.download = fileName;
+                link.href = URL.createObjectURL(blob);
+                link.download = `RO_Dashboard_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
                 link.click();
-                URL.revokeObjectURL(url_obj);
 
-                btn.textContent = '✅ Exported!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                }, 2000);
+                console.log('✅ Export successful');
             } catch (error) {
-                console.error('Export error:', error);
-                alert('Error exporting data: ' + error.message);
-                event.target.textContent = '📥 Export Filtered Data to Excel';
-                event.target.disabled = false;
+                console.error('❌ Export error:', error);
+                alert('Export failed: ' + error.message);
             }
+        }
+
+        // Convert array of objects to CSV string
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const keys = Object.keys(data[0]);
+            const csvRows = [];
+            
+            // Add header
+            csvRows.push(keys.join(','));
+            
+            // Add data rows
+            data.forEach(row => {
+                const csvRow = keys.map(key => {
+                    let value = row[key] || '';
+                    value = String(value).replace(/"/g, '""');
+                    return `"${value}"`;
+                });
+                csvRows.push(csvRow.join(','));
+            });
+            
+            return csvRows.join('\n');
         }
     </script>
 </body>
