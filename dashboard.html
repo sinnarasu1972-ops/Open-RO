@@ -375,11 +375,11 @@
             </div>
             <div class="header-wrapper">
                 <div class="tabs">
-                    <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
-                    <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
-                    <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
+                    <button class="tab-button active" id="tab-mechanical" onclick="switchTab(event, 'mechanical')">Mechanical</button>
+                    <button class="tab-button" id="tab-bodyshop" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
+                    <button class="tab-button" id="tab-accessories" onclick="switchTab(event, 'accessories')">Accessories</button>
                 </div>
-                <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
+                <button class="clear-all-btn" onclick="clearAllFiltersAndTabs()">🔄 Clear All</button>
             </div>
         </header>
 
@@ -547,7 +547,6 @@
             return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
         }
 
-        // FIXED: Better stat loading with explicit error handling
         async function loadStats() {
             try {
                 const url = `${API_URL}/api/dashboard/statistics`;
@@ -557,8 +556,6 @@
                 
                 const data = await response.json();
                 console.log('📊 Stats response:', data);
-                
-                // Update all stat cards
                 updateStatCards(data);
             } catch (error) {
                 console.error('❌ Error loading stats:', error);
@@ -566,7 +563,6 @@
             }
         }
 
-        // FIXED: Explicit stat card update function
         function updateStatCards(data) {
             const total = parseInt(data.total_vehicles) || 0;
             const mech = parseInt(data.mechanical_count) || 0;
@@ -583,7 +579,6 @@
             document.getElementById('landedCost').textContent = formatCurrency(cost);
         }
 
-        // FIXED: Better filtered stats loading
         async function loadFilteredStats() {
             try {
                 const branch = document.getElementById('branch').value;
@@ -612,14 +607,11 @@
                 const data = await response.json();
                 console.log('📊 Filtered stats response:', data);
                 
-                // Add pulse animation
                 const cards = document.querySelectorAll('.stat-value');
                 cards.forEach(card => card.classList.add('stat-updating'));
                 
-                // Update stat cards
                 updateStatCards(data);
                 
-                // Remove animation
                 setTimeout(() => {
                     cards.forEach(card => card.classList.remove('stat-updating'));
                 }, 500);
@@ -630,7 +622,6 @@
             }
         }
 
-        // FIXED: Better filter loading
         async function loadFilters() {
             try {
                 const url = `${API_URL}/api/filter-options/${currentTab}`;
@@ -641,7 +632,6 @@
                 const data = await response.json();
                 console.log('📋 Filters loaded:', data);
                 
-                // Update filter dropdowns
                 document.getElementById('branch').innerHTML = '<option>All</option>' + 
                     data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
                 
@@ -651,7 +641,6 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
 
-                // Handle MJob filter (only for bodyshop)
                 const mjobFilter = document.getElementById('mjobFilter');
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
@@ -684,26 +673,38 @@
             loadData();
         }
 
-        // FIXED: Improved clearAllFilters function
-        function clearAllFilters() {
-            console.log('🔄 CLEARING ALL FILTERS');
-            console.log('   Current Tab:', currentTab);
+        // FIXED: Clear All button now resets tabs AND filters
+        function clearAllFiltersAndTabs() {
+            console.log('\n🔄 CLEARING ALL FILTERS AND RESETTING TABS');
             
-            // Reset all dropdowns to "All"
+            // Reset all filter dropdowns to "All"
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
             document.getElementById('mjob').value = 'All';
             
+            // Reset to Mechanical tab
+            currentTab = 'mechanical';
+            
+            // Remove active class from all tab buttons
+            document.getElementById('tab-mechanical').classList.add('active');
+            document.getElementById('tab-bodyshop').classList.remove('active');
+            document.getElementById('tab-accessories').classList.remove('active');
+            
+            // Hide MJob filter since we're on Mechanical
+            document.getElementById('mjobFilter').style.display = 'none';
+            
             console.log('✅ All filters reset to: All');
+            console.log('✅ Tab reset to: Mechanical');
             console.log('📊 Reloading data...');
             
-            // Force reload with slight delay
+            // Reload everything
             setTimeout(() => {
+                loadFilters();
                 loadFilteredStats();
                 loadData();
-                console.log('✅ Data reloaded after clear');
-            }, 50);
+                console.log('✅ Dashboard reset complete!\n');
+            }, 100);
         }
 
         // FIXED: Improved switchTab function
@@ -717,9 +718,18 @@
             
             currentTab = tab;
             
-            // Update active tab button
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            // Update active tab button - FIXED to use all three IDs
+            document.getElementById('tab-mechanical').classList.remove('active');
+            document.getElementById('tab-bodyshop').classList.remove('active');
+            document.getElementById('tab-accessories').classList.remove('active');
+            
+            if (tab === 'mechanical') {
+                document.getElementById('tab-mechanical').classList.add('active');
+            } else if (tab === 'bodyshop') {
+                document.getElementById('tab-bodyshop').classList.add('active');
+            } else if (tab === 'accessories') {
+                document.getElementById('tab-accessories').classList.add('active');
+            }
             
             // Reset all filters
             document.getElementById('branch').value = 'All';
@@ -730,13 +740,12 @@
             console.log('✅ Tab switched, filters cleared');
             console.log('📋 Loading new tab data...');
             
-            // Load fresh filters and data
+            // Load fresh filters and data for new tab
             setTimeout(() => {
                 loadFilters();
             }, 100);
         }
 
-        // FIXED: Better data loading
         async function loadData() {
             if (isLoading) {
                 console.log('⚠️  Already loading, skipping...');
