@@ -30,7 +30,6 @@
             max-width: 200px;
         }
         
-        /* CHANGED: Header wrapper for tabs and clear button */
         .header-wrapper {
             display: flex;
             align-items: center;
@@ -58,7 +57,6 @@
         }
         .tab-button.active { background: #667eea; color: white; }
         
-        /* CHANGED: Clear All Button Style */
         .clear-all-btn {
             padding: 10px 16px;
             border: none;
@@ -298,7 +296,6 @@
             width: 80px;
             min-width: 80px;
         }
-        /* CHANGED: Added Landed Cost column width */
         th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }
         th:nth-child(2), td:nth-child(2) { width: 120px; min-width: 120px; }
         th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
@@ -319,7 +316,6 @@
         }
         td:nth-child(12) { max-width: 300px; }
         
-        /* CHANGED: Style for Landed Cost column */
         .landed-cost-cell {
             background: #f0f7ff;
             color: #1967d2;
@@ -356,14 +352,12 @@
                      onerror="this.style.display='none';">
                 <h1>Unnati Motors Open RO Dashboard</h1>
             </div>
-            <!-- CHANGED: Header wrapper for tabs and clear button -->
             <div class="header-wrapper">
                 <div class="tabs">
                     <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
                     <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
                     <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
                 </div>
-                <!-- CHANGED: Clear All Button -->
                 <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
             </div>
         </header>
@@ -630,14 +624,12 @@
                     document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
                         `<option value="${m}">${m}</option>`
                     ).join('');
-                    
-                    loadData();
-                    loadFilteredStats();
                 } else {
                     mjobFilter.style.display = 'none';
-                    loadData();
-                    loadFilteredStats();
                 }
+                
+                loadData();
+                loadFilteredStats();
             } catch (error) {
                 console.error('Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
@@ -658,19 +650,54 @@
             loadData();
         }
 
-        // CHANGED: New function to clear all filters
+        // CHANGED: Improved clearAllFilters function
         function clearAllFilters() {
-            console.log('>>> CLEARING ALL FILTERS <<<');
+            console.log('\n>>> CLEARING ALL FILTERS <<<');
+            console.log('Current Tab:', currentTab);
+            
+            // Reset all filter dropdowns to "All"
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
+            
+            // Reset MJob only if on bodyshop tab
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
             }
             
-            loadFilteredStats();
-            loadData();
-            console.log('>>> ALL FILTERS CLEARED <<<\n');
+            console.log('All filters reset to: All');
+            
+            // Reload data with cleared filters
+            setTimeout(() => {
+                loadFilteredStats();
+                loadData();
+                console.log('>>> ALL FILTERS CLEARED AND DATA RELOADED <<<\n');
+            }, 100);
+        }
+
+        // CHANGED: Improved switchTab function with filter clearing
+        function switchTab(event, tab) {
+            console.log(`\n>>> SWITCHING TAB: ${currentTab} -> ${tab} <<<`);
+            
+            currentTab = tab;
+            
+            // Update active tab button
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Reset all filters to "All" when switching tabs
+            console.log('Clearing all filters for new tab');
+            document.getElementById('branch').value = 'All';
+            document.getElementById('status').value = 'All';
+            document.getElementById('age').value = 'All';
+            document.getElementById('mjob').value = 'All';
+            
+            // Load fresh filters and data for new tab
+            setTimeout(() => {
+                loadFilters();
+            }, 100);
+            
+            console.log(`>>> TAB SWITCHED AND FILTERS CLEARED <<<\n`);
         }
 
         async function loadData() {
@@ -717,7 +744,6 @@
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
                     
-                    // CHANGED: Format landed cost for display
                     const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                     
                     if (currentTab === 'bodyshop') {
@@ -811,13 +837,6 @@
             }
         }
 
-        function switchTab(event, tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            loadFilters();
-        }
-
         async function exportToCSV() {
             try {
                 const branch = document.getElementById('branch').value;
@@ -896,3 +915,4 @@
     </script>
 </body>
 </html>
+```
