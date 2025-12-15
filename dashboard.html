@@ -29,11 +29,21 @@
             object-fit: contain; 
             max-width: 200px;
         }
+        
+        /* CHANGED: Header wrapper for tabs and clear button */
+        .header-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
         .tabs { 
             display: flex; 
             gap: 8px; 
             flex-wrap: wrap;
-            justify-content: center;
+            flex: 1;
         }
         .tab-button {
             padding: 10px 16px;
@@ -48,6 +58,23 @@
         }
         .tab-button.active { background: #667eea; color: white; }
         
+        /* CHANGED: Clear All Button Style */
+        .clear-all-btn {
+            padding: 10px 16px;
+            border: none;
+            background: #e74c3c;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s ease;
+            white-space: nowrap;
+        }
+        .clear-all-btn:hover {
+            background: #c0392b;
+        }
+        
         @media (max-width: 768px) {
             header {
                 padding: 15px;
@@ -55,11 +82,20 @@
                 margin-bottom: 15px;
             }
             h1 { font-size: 22px; }
+            .header-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
             .tabs { gap: 6px; }
             .tab-button {
                 padding: 8px 12px;
                 font-size: 12px;
                 min-width: 80px;
+            }
+            .clear-all-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                width: 100%;
             }
         }
         .stats-grid {
@@ -262,8 +298,9 @@
             width: 80px;
             min-width: 80px;
         }
+        /* CHANGED: Added Landed Cost column width */
         th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }
-        th:nth-child(2), td:nth-child(2) { width: 90px; min-width: 90px; }
+        th:nth-child(2), td:nth-child(2) { width: 120px; min-width: 120px; }
         th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
         th:nth-child(4), td:nth-child(4) { width: 90px; min-width: 90px; }
         th:nth-child(5), td:nth-child(5) { width: 90px; min-width: 90px; }
@@ -274,12 +311,21 @@
         th:nth-child(10), td:nth-child(10) { width: 90px; min-width: 90px; }
         th:nth-child(11), td:nth-child(11) { width: 400px; min-width: 400px; }
         th:nth-child(12), td:nth-child(12) { width: 300px; min-width: 300px; }
+        
         td:nth-child(11), td:nth-child(12) { 
             word-break: break-word; 
             white-space: normal;
             max-width: 400px;
         }
         td:nth-child(12) { max-width: 300px; }
+        
+        /* CHANGED: Style for Landed Cost column */
+        .landed-cost-cell {
+            background: #f0f7ff;
+            color: #1967d2;
+            font-weight: 600;
+        }
+        
         tr:hover { background: #f9f9f9; }
         tbody tr { height: auto; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
@@ -310,10 +356,15 @@
                      onerror="this.style.display='none';">
                 <h1>Unnati Motors Open RO Dashboard</h1>
             </div>
-            <div class="tabs">
-                <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
-                <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
-                <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
+            <!-- CHANGED: Header wrapper for tabs and clear button -->
+            <div class="header-wrapper">
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
+                    <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
+                    <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
+                </div>
+                <!-- CHANGED: Clear All Button -->
+                <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
             </div>
         </header>
 
@@ -387,6 +438,7 @@
                     <thead id="tableHead">
                         <tr id="headerRow">
                             <th>RO Number</th>
+                            <th>Landed Cost</th>
                             <th>RO Date</th>
                             <th>Branch</th>
                             <th>Status</th>
@@ -402,7 +454,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="12" class="loading">Loading...</td>
+                            <td colspan="13" class="loading">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -501,7 +553,6 @@
             }
         }
 
-        // CHANGED: Enhanced with service_category parameter
         async function loadFilteredStats() {
             try {
                 const branch = document.getElementById('branch').value;
@@ -512,7 +563,6 @@
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
                 
-                // CHANGED: Add service_category parameter based on current tab
                 params.append('service_category', currentTab);
                 
                 if (branch !== 'All') params.append('branch', branch);
@@ -527,10 +577,6 @@
                 console.log('=== LOADING FILTERED STATS ===');
                 console.log('Service Category:', currentTab);
                 console.log('URL:', url);
-                console.log('Branch:', branch);
-                console.log('Status:', status);
-                console.log('Age Bucket:', age);
-                console.log('MJob:', mjob);
                 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -538,11 +584,9 @@
                 const data = await response.json();
                 console.log('Filtered stats response:', data);
                 
-                // Add animation effect
                 const cards = document.querySelectorAll('.stat-value');
                 cards.forEach(card => card.classList.add('stat-updating'));
                 
-                // Update values
                 document.getElementById('total').textContent = data.total_vehicles || 0;
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
                 document.getElementById('body').textContent = data.bodyshop_count || 0;
@@ -552,7 +596,6 @@
                 console.log('Updated landed cost to:', formatCurrency(data.total_landed_cost || 0));
                 console.log('=== FILTERED STATS COMPLETE ===\n');
                 
-                // Remove animation class
                 setTimeout(() => {
                     cards.forEach(card => card.classList.remove('stat-updating'));
                 }, 500);
@@ -601,7 +644,6 @@
             }
         }
 
-        // CHANGED: Enhanced with console logging
         function onFilterChange() {
             console.log('\n>>> FILTER CHANGED <<<');
             console.log('Current Tab:', currentTab);
@@ -614,6 +656,21 @@
             
             loadFilteredStats();
             loadData();
+        }
+
+        // CHANGED: New function to clear all filters
+        function clearAllFilters() {
+            console.log('>>> CLEARING ALL FILTERS <<<');
+            document.getElementById('branch').value = 'All';
+            document.getElementById('status').value = 'All';
+            document.getElementById('age').value = 'All';
+            if (currentTab === 'bodyshop') {
+                document.getElementById('mjob').value = 'All';
+            }
+            
+            loadFilteredStats();
+            loadData();
+            console.log('>>> ALL FILTERS CLEARED <<<\n');
         }
 
         async function loadData() {
@@ -652,13 +709,16 @@
                 tbody.innerHTML = '';
 
                 if (data.vehicles.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" class="loading">No data found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="13" class="loading">No data found</td></tr>';
                     return;
                 }
 
                 data.vehicles.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
+                    
+                    // CHANGED: Format landed cost for display
+                    const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                     
                     if (currentTab === 'bodyshop') {
                         const mjob = extractMJob(v.ro_remarks);
@@ -670,6 +730,7 @@
                         tbody.innerHTML += `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
                                 <td>${v.ro_date}</td>
                                 <td><span class="branch-abbr">${branchAbbr}</span></td>
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
@@ -687,6 +748,7 @@
                         tbody.innerHTML += `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
                                 <td>${v.ro_date}</td>
                                 <td>${v.service_adviser || '-'}</td>
                                 <td><span class="branch-abbr">${branchAbbr}</span></td>
@@ -717,6 +779,7 @@
             if (currentTab === 'bodyshop') {
                 headerRow.innerHTML = `
                     <th>RO Number</th>
+                    <th>Landed Cost</th>
                     <th>RO Date</th>
                     <th>Branch</th>
                     <th>Status</th>
@@ -732,6 +795,7 @@
             } else {
                 headerRow.innerHTML = `
                     <th>RO ID</th>
+                    <th>Landed Cost</th>
                     <th>RO Date</th>
                     <th>SA Name</th>
                     <th>Branch</th>
