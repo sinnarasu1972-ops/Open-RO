@@ -186,6 +186,7 @@ async def statistics():
             "total_landed_cost": 0.0
         }
 
+# ========== CHANGED: Enhanced filtered statistics with better debugging ==========
 @app.get("/api/dashboard/statistics/filtered")
 async def filtered_statistics(
     branch: Optional[str] = Query("All"),
@@ -196,6 +197,7 @@ async def filtered_statistics(
     """Dashboard statistics - with dynamic filtering"""
     try:
         if df_global.empty:
+            print("ERROR: DataFrame is empty!")
             return {
                 "total_vehicles": 0, 
                 "mechanical_count": 0, 
@@ -204,25 +206,74 @@ async def filtered_statistics(
                 "total_landed_cost": 0.0
             }
         
-        filtered_df = apply_filters(df_global, branch, ro_status, age_bucket, mjob)
+        print(f"\n{'='*80}")
+        print(f"FILTERED STATS REQUEST")
+        print(f"{'='*80}")
+        print(f"Filters: branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}, mjob={mjob}")
+        print(f"Total rows in df_global: {len(df_global)}")
+        print(f"Total landed cost before filtering: {df_global['total_landed_cost'].sum()}")
         
+        # Start with full dataframe
+        filtered_df = df_global.copy()
+        print(f"Starting filtered_df rows: {len(filtered_df)}")
+        
+        # Apply Branch filter
+        if branch and branch != "All":
+            filtered_df = filtered_df[filtered_df['Branch'] == branch]
+            print(f"After BRANCH filter ({branch}): {len(filtered_df)} rows")
+        
+        # Apply RO Status filter
+        if ro_status and ro_status != "All":
+            filtered_df = filtered_df[filtered_df['RO Status'] == ro_status]
+            print(f"After RO_STATUS filter ({ro_status}): {len(filtered_df)} rows")
+        
+        # Apply Age Bucket filter
+        if age_bucket and age_bucket != "All":
+            filtered_df = filtered_df[filtered_df['Age Bucket'] == age_bucket]
+            print(f"After AGE_BUCKET filter ({age_bucket}): {len(filtered_df)} rows")
+        
+        # Apply MJob filter
+        if mjob and mjob != "All":
+            if mjob == "Not Categorized":
+                filtered_df = filtered_df[filtered_df['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
+                print(f"After MJOB filter (Not Categorized): {len(filtered_df)} rows")
+            else:
+                search_mjob = mjob.upper()
+                filtered_df = filtered_df[filtered_df['RO Remarks'].apply(
+                    lambda x: any(m.upper() in [search_mjob, search_mjob.replace('/', '')] 
+                                for m in (extract_mjobs(x) or []))
+                )]
+                print(f"After MJOB filter ({mjob}): {len(filtered_df)} rows")
+        
+        # Count by service category
         mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         bodyshop = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
         accessories = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
         
-        total_cost = filtered_df['total_landed_cost'].sum() if 'total_landed_cost' in filtered_df.columns else 0.0
+        # Calculate total landed cost for FILTERED data only
+        total_cost = 0.0
+        if 'total_landed_cost' in filtered_df.columns:
+            total_cost = float(filtered_df['total_landed_cost'].sum())
+            print(f"Filtered landed cost sum: {total_cost}")
         
-        return {
+        result = {
             "total_vehicles": int(len(filtered_df)),
             "mechanical_count": int(len(mechanical)),
             "bodyshop_count": int(len(bodyshop)),
             "accessories_count": int(len(accessories)),
             "total_landed_cost": float(total_cost)
         }
+        
+        print(f"FINAL RESULT: {result}")
+        print(f"{'='*80}\n")
+        
+        return result
+        
     except Exception as e:
-        print(f"Error in filtered_statistics: {str(e)}")
+        print(f"\nERROR in filtered_statistics: {str(e)}")
         import traceback
         traceback.print_exc()
+        print(f"{'='*80}\n")
         return {
             "total_vehicles": 0, 
             "mechanical_count": 0, 
