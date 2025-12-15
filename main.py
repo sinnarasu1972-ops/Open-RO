@@ -14,11 +14,13 @@ HOST = '0.0.0.0'
 # ==================== GLOBAL DATA ====================
 
 df_global = None
+df_landed_cost = None
 
 def load_data():
-    """Load Excel file"""
-    global df_global
+    """Load Excel files and merge data"""
+    global df_global, df_landed_cost
     try:
+        # Load Open RO data
         excel_file = None
         for fn in ['Open RO.xlsx', 'Open_RO.xlsx', 'open_ro.xlsx']:
             if os.path.exists(fn):
@@ -26,44 +28,66 @@ def load_data():
                 break
         
         if excel_file is None:
-            print("⚠ Excel file not found")
+            print("⚠ Open RO Excel file not found")
             df_global = pd.DataFrame()
+            df_landed_cost = pd.DataFrame()
             return
         
         print(f"✓ Loading: {excel_file}")
         df_global = pd.read_excel(excel_file)
         print(f"✓ Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
         print(f"✓ Columns: {list(df_global.columns)}")
+        
+        # Load and aggregate Landed Cost data
+        parts_file = None
+        for fn in ['Part Issue But Not Bill.xlsx', 'Part_Issue_But_Not_Bill.xlsx', 'part_issue_but_not_bill.xlsx']:
+            if os.path.exists(fn):
+                parts_file = fn
+                break
+        
+        if parts_file is None:
+            print("⚠ Part Issue file not found - Landed Cost will not be available")
+            df_landed_cost = pd.DataFrame()
+        else:
+            print(f"✓ Loading: {parts_file}")
+            df_parts = pd.read_excel(parts_file)
+            print(f"✓ Loaded {len(df_parts)} part records")
+            
+            # Aggregate Landed Cost by RO Number
+            df_landed_cost = df_parts.groupby('RO Number')['Landed Cost (Total)'].sum().reset_index()
+            df_landed_cost.columns = ['RO ID', 'total_landed_cost']
+            print(f"✓ Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
+            
+            # Merge with main dataframe
+            df_global = df_global.merge(df_landed_cost, on='RO ID', how='left')
+            df_global['total_landed_cost'] = df_global['total_landed_cost'].fillna(0)
+            print(f"✓ Merged landed cost data into main dataframe")
+        
     except Exception as e:
         print(f"✗ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         df_global = pd.DataFrame()
+        df_landed_cost = pd.DataFrame()
 
 load_data()
 
 # ==================== HELPER FUNCTIONS ====================
 
 def extract_mjobs(remark):
-    """
-    Extract MJob codes from remarks
-    Supports: M1, M2, M3, M4, M/4
-    Returns list of MJob codes found, or None if not found
-    """
+    """Extract MJob codes from remarks"""
     if pd.isna(remark) or remark == '-' or remark == '':
         return None
     
-    # Convert to string and search for M1, M2, M3, M4, M/4
     remark_str = str(remark).strip()
-    # Match M1, M2, M3, M4, M/4 (with or without slash)
     matches = re.findall(r'\bM/?[1-4]\b', remark_str)
     return matches if matches else None
 
 def get_mjob_category(remark):
-    """
-    Categorize a remark as M1, M2, M3, M4, M/4, or "Not Categorized"
+    """Categorize a remark as M1, M2, M3, M4, M/4, or "Not Categorized"
     """
     mjobs = extract_mjobs(remark)
     if mjobs:
-        # Return first match if multiple found
         return mjobs[0]
     return "Not Categorized"
 
@@ -87,6 +111,7 @@ def convert_row(row) -> Dict[str, Any]:
             'service_adviser': str(row['Service Adviser Name']).strip() if pd.notna(row['Service Adviser Name']) else '-',
             'vin': str(row['VIN']).strip() if pd.notna(row['VIN']) else '-',
             'pendncy_resn_desc': str(row['PENDNCY_RESN_DESC']).strip() if pd.notna(row['PENDNCY_RESN_DESC']) else '-',
+            'total_landed_cost': float(row['total_landed_cost']) if pd.notna(row['total_landed_cost']) else 0.0,
         }
     except Exception as e:
         print(f"Error converting row: {str(e)}")
@@ -96,7 +121,6 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None):
     """Apply filters to dataframe"""
     result = df.copy()
     
-    # Apply basic filters
     if branch and branch != "All":
         result = result[result['Branch'] == branch]
     
@@ -106,14 +130,10 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None):
     if age_bucket and age_bucket != "All":
         result = result[result['Age Bucket'] == age_bucket]
     
-    # Apply MJob filter
     if mjob and mjob != "All":
         if mjob == "Not Categorized":
-            # Filter for rows where MJob is NOT found (Not Categorized)
             result = result[result['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
         else:
-            # Filter for rows where MJob matches (M1, M2, M3, M4, M/4)
-            # Normalize M/4 to match both M4 and M/4
             search_mjob = mjob.upper()
             result = result[result['RO Remarks'].apply(
                 lambda x: any(m.upper() in [search_mjob, search_mjob.replace('/', '')] 
@@ -141,17 +161,30 @@ async def statistics():
     """Dashboard statistics - total counts"""
     try:
         if df_global.empty:
-            return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+            return {
+                "total_vehicles": 0, 
+                "mechanical_count": 0, 
+                "bodyshop_count": 0, 
+                "accessories_count": 0,
+                "total_landed_cost": 0.0
+            }
         
         return {
             "total_vehicles": int(len(df_global)),
             "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])])),
             "bodyshop_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'])),
-            "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']))
+            "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'])),
+            "total_landed_cost": float(df_global['total_landed_cost'].sum())
         }
     except Exception as e:
         print(f"Error in statistics: {str(e)}")
-        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+        return {
+            "total_vehicles": 0, 
+            "mechanical_count": 0, 
+            "bodyshop_count": 0, 
+            "accessories_count": 0,
+            "total_landed_cost": 0.0
+        }
 
 @app.get("/api/dashboard/statistics/filtered")
 async def filtered_statistics(
@@ -160,30 +193,43 @@ async def filtered_statistics(
     age_bucket: Optional[str] = Query("All"),
     mjob: Optional[str] = Query("All")
 ):
-    """Dashboard statistics - with dynamic filtering based on current tab and selections"""
+    """Dashboard statistics - with dynamic filtering"""
     try:
         if df_global.empty:
-            return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+            return {
+                "total_vehicles": 0, 
+                "mechanical_count": 0, 
+                "bodyshop_count": 0, 
+                "accessories_count": 0,
+                "total_landed_cost": 0.0
+            }
         
-        # Apply filters
         filtered_df = apply_filters(df_global, branch, ro_status, age_bucket, mjob)
         
-        # Count by service category from filtered data
         mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         bodyshop = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
         accessories = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
+        
+        total_cost = filtered_df['total_landed_cost'].sum() if 'total_landed_cost' in filtered_df.columns else 0.0
         
         return {
             "total_vehicles": int(len(filtered_df)),
             "mechanical_count": int(len(mechanical)),
             "bodyshop_count": int(len(bodyshop)),
-            "accessories_count": int(len(accessories))
+            "accessories_count": int(len(accessories)),
+            "total_landed_cost": float(total_cost)
         }
     except Exception as e:
         print(f"Error in filtered_statistics: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0}
+        return {
+            "total_vehicles": 0, 
+            "mechanical_count": 0, 
+            "bodyshop_count": 0, 
+            "accessories_count": 0,
+            "total_landed_cost": 0.0
+        }
 
 @app.get("/api/filter-options/mechanical")
 async def mech_filters():
@@ -211,14 +257,12 @@ async def bs_filters():
         
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
         
-        # Extract unique MJob codes from remarks
         mjobs_set = set(['Not Categorized'])
         for remark in df['RO Remarks'].dropna():
             extracted = extract_mjobs(remark)
             if extracted:
                 mjobs_set.update(extracted)
         
-        # Sort mjobs: put All first, then Not Categorized, then M1-M4 in order
         mjobs_sorted = ['All', 'Not Categorized']
         for m in ['M1', 'M2', 'M3', 'M4', 'M/4']:
             if m in mjobs_set:
@@ -303,7 +347,6 @@ async def get_bodyshop(
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
         total = len(df)
         
-        # Apply basic filters
         df = apply_filters(df, branch, ro_status, age_bucket, mjob)
         
         filtered = len(df)
