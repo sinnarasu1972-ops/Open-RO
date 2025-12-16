@@ -30,7 +30,6 @@
             max-width: 200px;
         }
         
-        /* CHANGED: Header wrapper for tabs and clear button */
         .header-wrapper {
             display: flex;
             align-items: center;
@@ -58,7 +57,6 @@
         }
         .tab-button.active { background: #667eea; color: white; }
         
-        /* CHANGED: Clear All Button Style */
         .clear-all-btn {
             padding: 10px 16px;
             border: none;
@@ -167,12 +165,15 @@
             color: #333; 
             margin-bottom: 6px; 
         }
-        select { 
+        select, input[type="text"] { 
             width: 100%; 
             padding: 8px; 
             border: 1px solid #ddd; 
             border-radius: 5px; 
             font-size: 13px;
+        }
+        input[type="text"]::placeholder {
+            color: #999;
         }
         
         @media (max-width: 768px) {
@@ -188,7 +189,7 @@
                 font-size: 11px;
                 margin-bottom: 5px;
             }
-            select {
+            select, input[type="text"] {
                 padding: 6px;
                 font-size: 12px;
             }
@@ -298,7 +299,6 @@
             width: 80px;
             min-width: 80px;
         }
-        /* CHANGED: Added Landed Cost column width */
         th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }
         th:nth-child(2), td:nth-child(2) { width: 120px; min-width: 120px; }
         th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
@@ -319,7 +319,6 @@
         }
         td:nth-child(12) { max-width: 300px; }
         
-        /* CHANGED: Style for Landed Cost column */
         .landed-cost-cell {
             background: #f0f7ff;
             color: #1967d2;
@@ -356,14 +355,12 @@
                      onerror="this.style.display='none';">
                 <h1>Unnati Motors Open RO Dashboard</h1>
             </div>
-            <!-- CHANGED: Header wrapper for tabs and clear button -->
             <div class="header-wrapper">
                 <div class="tabs">
                     <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
                     <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
                     <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
                 </div>
-                <!-- CHANGED: Clear All Button -->
                 <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
             </div>
         </header>
@@ -411,11 +408,21 @@
                         <option>All</option>
                     </select>
                 </div>
+                <div class="filter-group" id="billableTypeFilter" style="display:none;">
+                    <label>Billable Type</label>
+                    <select id="billableType" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
                 <div class="filter-group" id="mjobFilter" style="display:none;">
                     <label>MJob Type</label>
                     <select id="mjob" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
+                </div>
+                <div class="filter-group" id="regNumberFilter" style="display:none;">
+                    <label>Reg. Number (Search)</label>
+                    <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
                 </div>
             </div>
         </div>
@@ -558,7 +565,9 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
+                const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
                 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -568,7 +577,9 @@
                 if (branch !== 'All') params.append('branch', branch);
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
+                if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (mjob !== 'All') params.append('mjob', mjob);
+                if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
                 if (params.toString()) {
                     url += '?' + params.toString();
@@ -623,9 +634,24 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
 
+                // Show/hide Billable Type filter
+                const billableTypeFilter = document.getElementById('billableTypeFilter');
+                if (currentTab === 'mechanical' || currentTab === 'accessories') {
+                    billableTypeFilter.style.display = 'block';
+                    const billableTypeOptions = data.billable_types || ['All'];
+                    document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => 
+                        `<option value="${bt}">${bt}</option>`
+                    ).join('');
+                } else {
+                    billableTypeFilter.style.display = 'none';
+                }
+
+                // Show/hide MJob filter
                 const mjobFilter = document.getElementById('mjobFilter');
+                const regNumberFilter = document.getElementById('regNumberFilter');
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
+                    regNumberFilter.style.display = 'block';
                     const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
                     document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
                         `<option value="${m}">${m}</option>`
@@ -635,6 +661,7 @@
                     loadFilteredStats();
                 } else {
                     mjobFilter.style.display = 'none';
+                    regNumberFilter.style.display = 'none';
                     loadData();
                     loadFilteredStats();
                 }
@@ -650,22 +677,29 @@
             console.log('Branch:', document.getElementById('branch').value);
             console.log('Status:', document.getElementById('status').value);
             console.log('Age:', document.getElementById('age').value);
+            if (document.getElementById('billableType')) {
+                console.log('Billable Type:', document.getElementById('billableType').value);
+            }
             if (currentTab === 'bodyshop') {
                 console.log('MJob:', document.getElementById('mjob').value);
+                console.log('Reg Number:', document.getElementById('regNumber').value);
             }
             
             loadFilteredStats();
             loadData();
         }
 
-        // CHANGED: New function to clear all filters
         function clearAllFilters() {
             console.log('>>> CLEARING ALL FILTERS <<<');
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
+            if (document.getElementById('billableType')) {
+                document.getElementById('billableType').value = 'All';
+            }
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
+                document.getElementById('regNumber').value = '';
             }
             
             loadFilteredStats();
@@ -678,16 +712,20 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
+                if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
+                    const regNumber = document.getElementById('regNumber').value;
                     if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
+                    if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
                 console.log('Fetching data from:', url);
@@ -717,7 +755,6 @@
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
                     
-                    // CHANGED: Format landed cost for display
                     const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                     
                     if (currentTab === 'bodyshop') {
@@ -823,6 +860,7 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
 
                 const btn = event.target;
                 const originalText = btn.textContent;
@@ -835,11 +873,16 @@
                 if (status !== 'All') url += `${separator}ro_status=${encodeURIComponent(status)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
+                    const regNumber = document.getElementById('regNumber').value;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
                 const response = await fetch(url);
