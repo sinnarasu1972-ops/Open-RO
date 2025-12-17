@@ -61,7 +61,7 @@ def load_data():
             df_landed_cost.columns = ['RO ID', 'total_landed_cost']
             print(f"✓ Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
             
-            # Extract Billable Type by RO Number (take first/primary billable type)
+            # Extract Billable Type by RO Number
             df_billable_type = df_parts.groupby('RO Number')['Billable Type'].first().reset_index()
             df_billable_type.columns = ['RO ID', 'billable_type']
             print(f"✓ Extracted billable type for {len(df_billable_type)} RO Numbers")
@@ -97,8 +97,7 @@ def extract_mjobs(remark):
     return matches if matches else None
 
 def get_mjob_category(remark):
-    """Categorize a remark as M1, M2, M3, M4, M/4, or "Not Categorized"
-    """
+    """Categorize a remark as M1, M2, M3, M4, M/4, or "Not Categorized" """
     mjobs = extract_mjobs(remark)
     if mjobs:
         return mjobs[0]
@@ -187,6 +186,7 @@ async def statistics():
                 "mechanical_count": 0, 
                 "bodyshop_count": 0, 
                 "accessories_count": 0,
+                "presale_count": 0,
                 "total_landed_cost": 0.0
             }
         
@@ -195,17 +195,12 @@ async def statistics():
             "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])])),
             "bodyshop_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'])),
             "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'])),
+            "presale_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI'])),
             "total_landed_cost": float(df_global['total_landed_cost'].sum())
         }
     except Exception as e:
         print(f"Error in statistics: {str(e)}")
-        return {
-            "total_vehicles": 0, 
-            "mechanical_count": 0, 
-            "bodyshop_count": 0, 
-            "accessories_count": 0,
-            "total_landed_cost": 0.0
-        }
+        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
 
 @app.get("/api/dashboard/statistics/filtered")
 async def filtered_statistics(
@@ -220,130 +215,82 @@ async def filtered_statistics(
     """Dashboard statistics - with dynamic filtering by service category"""
     try:
         if df_global.empty:
-            print("ERROR: DataFrame is empty!")
-            return {
-                "total_vehicles": 0, 
-                "mechanical_count": 0, 
-                "bodyshop_count": 0, 
-                "accessories_count": 0,
-                "total_landed_cost": 0.0
-            }
+            return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
         
-        print(f"\n{'='*80}")
-        print(f"FILTERED STATS REQUEST")
-        print(f"{'='*80}")
-        print(f"Service Category: {service_category}")
-        print(f"Filters: branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}, mjob={mjob}, billable_type={billable_type}, reg_number={reg_number}")
-        print(f"Total rows in df_global: {len(df_global)}")
-        print(f"Total landed cost before filtering: {df_global['total_landed_cost'].sum()}")
-        
-        # Start with full dataframe
         filtered_df = df_global.copy()
-        print(f"Starting filtered_df rows: {len(filtered_df)}")
         
         # Filter by service category FIRST
         if service_category and service_category != "All":
             if service_category == "mechanical":
                 filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
-                print(f"After SERVICE_CATEGORY filter (mechanical): {len(filtered_df)} rows")
             elif service_category == "bodyshop":
                 filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
-                print(f"After SERVICE_CATEGORY filter (bodyshop): {len(filtered_df)} rows")
             elif service_category == "accessories":
                 filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
-                print(f"After SERVICE_CATEGORY filter (accessories): {len(filtered_df)} rows")
+            elif service_category == "presale":
+                filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
         
-        # Apply Branch filter
+        # Apply filters
         if branch and branch != "All":
             filtered_df = filtered_df[filtered_df['Branch'] == branch]
-            print(f"After BRANCH filter ({branch}): {len(filtered_df)} rows")
         
-        # Apply RO Status filter
         if ro_status and ro_status != "All":
             filtered_df = filtered_df[filtered_df['RO Status'] == ro_status]
-            print(f"After RO_STATUS filter ({ro_status}): {len(filtered_df)} rows")
         
-        # Apply Age Bucket filter
         if age_bucket and age_bucket != "All":
             filtered_df = filtered_df[filtered_df['Age Bucket'] == age_bucket]
-            print(f"After AGE_BUCKET filter ({age_bucket}): {len(filtered_df)} rows")
         
-        # Apply Billable Type filter
         if billable_type and billable_type != "All":
             filtered_df = filtered_df[filtered_df['billable_type'] == billable_type]
-            print(f"After BILLABLE_TYPE filter ({billable_type}): {len(filtered_df)} rows")
         
-        # Apply MJob filter
         if mjob and mjob != "All":
             if mjob == "Not Categorized":
                 filtered_df = filtered_df[filtered_df['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
-                print(f"After MJOB filter (Not Categorized): {len(filtered_df)} rows")
             else:
                 search_mjob = mjob.upper()
                 filtered_df = filtered_df[filtered_df['RO Remarks'].apply(
                     lambda x: any(m.upper() in [search_mjob, search_mjob.replace('/', '')] 
                                 for m in (extract_mjobs(x) or []))
                 )]
-                print(f"After MJOB filter ({mjob}): {len(filtered_df)} rows")
         
-        # Apply Reg Number search
         if reg_number and reg_number.strip() != "":
             search_reg = reg_number.strip().upper()
             filtered_df = filtered_df[filtered_df['Reg. Number'].astype(str).str.upper().str.contains(search_reg, na=False)]
-            print(f"After REG_NUMBER search ({reg_number}): {len(filtered_df)} rows")
         
         # Count by service category from FILTERED data
         mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         bodyshop = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
         accessories = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
+        presale = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
         
-        # Calculate total landed cost for FILTERED data only
         total_cost = 0.0
         if 'total_landed_cost' in filtered_df.columns:
             total_cost = float(filtered_df['total_landed_cost'].sum())
-            print(f"Filtered landed cost sum: {total_cost}")
         
-        result = {
+        return {
             "total_vehicles": int(len(filtered_df)),
             "mechanical_count": int(len(mechanical)),
             "bodyshop_count": int(len(bodyshop)),
             "accessories_count": int(len(accessories)),
+            "presale_count": int(len(presale)),
             "total_landed_cost": float(total_cost)
         }
         
-        print(f"FINAL RESULT: {result}")
-        print(f"{'='*80}\n")
-        
-        return result
-        
     except Exception as e:
-        print(f"\nERROR in filtered_statistics: {str(e)}")
+        print(f"Error in filtered_statistics: {str(e)}")
         import traceback
         traceback.print_exc()
-        print(f"{'='*80}\n")
-        return {
-            "total_vehicles": 0, 
-            "mechanical_count": 0, 
-            "bodyshop_count": 0, 
-            "accessories_count": 0,
-            "total_landed_cost": 0.0
-        }
+        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
 
 @app.get("/api/filter-options/mechanical")
 async def mech_filters():
-    """Mechanical filters with billable type"""
+    """Mechanical filters"""
     try:
         if df_global.empty:
-            return {
-                "branches": ["All"], 
-                "ro_statuses": ["All"], 
-                "age_buckets": ["All"],
-                "billable_types": ["All"]
-            }
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         
-        # Extract unique billable types
         billable_types = ['All'] + sorted([str(x) for x in df['billable_type'].dropna().unique().tolist() if x != 'Not Billed'])
         if 'Not Billed' in df['billable_type'].values:
             billable_types.append('Not Billed')
@@ -356,24 +303,14 @@ async def mech_filters():
         }
     except Exception as e:
         print(f"Error in mech_filters: {str(e)}")
-        return {
-            "branches": ["All"], 
-            "ro_statuses": ["All"], 
-            "age_buckets": ["All"],
-            "billable_types": ["All"]
-        }
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
 
 @app.get("/api/filter-options/bodyshop")
 async def bs_filters():
     """Bodyshop filters - dynamically extracts MJob options"""
     try:
         if df_global.empty:
-            return {
-                "branches": ["All"], 
-                "ro_statuses": ["All"], 
-                "age_buckets": ["All"], 
-                "mjobs": ["All"]
-            }
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
         
@@ -388,8 +325,6 @@ async def bs_filters():
             if m in mjobs_set:
                 mjobs_sorted.append(m)
         
-        print(f"DEBUG: Found MJob options: {mjobs_sorted}")
-        
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
@@ -398,30 +333,17 @@ async def bs_filters():
         }
     except Exception as e:
         print(f"Error in bs_filters: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return {
-            "branches": ["All"], 
-            "ro_statuses": ["All"], 
-            "age_buckets": ["All"], 
-            "mjobs": ["All"]
-        }
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
 
 @app.get("/api/filter-options/accessories")
 async def acc_filters():
     """Accessories filters with billable type"""
     try:
         if df_global.empty:
-            return {
-                "branches": ["All"], 
-                "ro_statuses": ["All"], 
-                "age_buckets": ["All"],
-                "billable_types": ["All"]
-            }
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
         
-        # Extract unique billable types
         billable_types = ['All'] + sorted([str(x) for x in df['billable_type'].dropna().unique().tolist() if x != 'Not Billed'])
         if 'Not Billed' in df['billable_type'].values:
             billable_types.append('Not Billed')
@@ -434,12 +356,30 @@ async def acc_filters():
         }
     except Exception as e:
         print(f"Error in acc_filters: {str(e)}")
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
+
+@app.get("/api/filter-options/presale")
+async def presale_filters():
+    """Pre-Sale/PDI filters with billable type"""
+    try:
+        if df_global.empty:
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
+        
+        billable_types = ['All'] + sorted([str(x) for x in df['billable_type'].dropna().unique().tolist() if x != 'Not Billed'])
+        if 'Not Billed' in df['billable_type'].values:
+            billable_types.append('Not Billed')
+        
         return {
-            "branches": ["All"], 
-            "ro_statuses": ["All"], 
-            "age_buckets": ["All"],
-            "billable_types": ["All"]
+            "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
+            "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
+            "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
+            "billable_types": billable_types
         }
+    except Exception as e:
+        print(f"Error in presale_filters: {str(e)}")
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
 
 @app.get("/api/vehicles/mechanical")
 async def get_mechanical(
@@ -462,13 +402,9 @@ async def get_mechanical(
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        print(f"DEBUG: Mechanical - Total: {total}, Filtered: {filtered}, Returned: {len(vehicles)}")
-        
         return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
         print(f"Error in get_mechanical: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/bodyshop")
@@ -486,26 +422,16 @@ async def get_bodyshop(
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        print(f"DEBUG: get_bodyshop called with mjob='{mjob}', reg_number='{reg_number}'")
-        
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
         total = len(df)
-        
         df = apply_filters(df, branch, ro_status, age_bucket, mjob, reg_number=reg_number)
-        
         filtered = len(df)
-        print(f"DEBUG: Bodyshop - Total: {total}, Filtered (after mjob & reg_number): {filtered}")
-        
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
-        
-        print(f"DEBUG: Bodyshop - Returned: {len(vehicles)}")
         
         return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
         print(f"Error in get_bodyshop: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/accessories")
@@ -529,13 +455,35 @@ async def get_accessories(
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         
-        print(f"DEBUG: Accessories - Total: {total}, Filtered: {filtered}, Returned: {len(vehicles)}")
-        
         return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
         print(f"Error in get_accessories: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+
+@app.get("/api/vehicles/presale")
+async def get_presale(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
+    skip: int = Query(0),
+    limit: int = Query(50)
+):
+    """Get Pre-Sale/PDI vehicles"""
+    try:
+        if df_global.empty:
+            return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI'].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
+    except Exception as e:
+        print(f"Error in get_presale: {str(e)}")
         return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/export/mechanical")
@@ -594,6 +542,25 @@ async def export_acc(
         return {"vehicles": vehicles}
     except Exception as e:
         print(f"Error in export_acc: {str(e)}")
+        return {"vehicles": []}
+
+@app.get("/api/export/presale")
+async def export_presale(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All")
+):
+    """Export Pre-Sale/PDI vehicles"""
+    try:
+        if df_global.empty:
+            return {"vehicles": []}
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type)
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        return {"vehicles": vehicles}
+    except Exception as e:
+        print(f"Error in export_presale: {str(e)}")
         return {"vehicles": []}
 
 @app.get("/")
