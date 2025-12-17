@@ -360,6 +360,7 @@
                     <button class="tab-button active" onclick="switchTab(event, 'mechanical')">Mechanical</button>
                     <button class="tab-button" onclick="switchTab(event, 'bodyshop')">Bodyshop</button>
                     <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
+                    <button class="tab-button" onclick="switchTab(event, 'presale')">Pre-Sale/PDI</button>
                 </div>
                 <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
             </div>
@@ -381,6 +382,10 @@
             <div class="stat-card">
                 <div class="stat-label">Accessories</div>
                 <div class="stat-value" id="acc">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pre-Sale/PDI</div>
+                <div class="stat-value" id="presale">-</div>
             </div>
             <div class="stat-card landed-cost-card">
                 <div class="stat-label">Part Issued to RO's Value</div>
@@ -480,12 +485,12 @@
             'WAGHOLI': 'WAG',
             'NAGPUR_KAMPTHEE ROAD': 'HO',
             'AMRAVATI': 'AMT',
-            'YAVATMAL': 'YAV',
-            'NAGPUR_WARDHAMAN NGR': 'WDH',
+            'YAVATMAL': 'YAT',
+            'NAGPUR_WARDHAMAN NGR': 'CITY',
             'CHIKHALI': 'CHI',
             'CHAUFULA_SZZ': 'CHA',
             'SHIKRAPUR_SZS': 'SHI',
-            'KOLHAPUR_SH': 'KHS'
+            'KOLHAPUR_SH': 'KOL'
         };
 
         function abbreviateBranch(branch) {
@@ -553,6 +558,7 @@
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
                 document.getElementById('body').textContent = data.bodyshop_count || 0;
                 document.getElementById('acc').textContent = data.accessories_count || 0;
+                document.getElementById('presale').textContent = data.presale_count || 0;
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -602,6 +608,7 @@
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
                 document.getElementById('body').textContent = data.bodyshop_count || 0;
                 document.getElementById('acc').textContent = data.accessories_count || 0;
+                document.getElementById('presale').textContent = data.presale_count || 0;
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
                 
                 console.log('Updated landed cost to:', formatCurrency(data.total_landed_cost || 0));
@@ -636,7 +643,7 @@
 
                 // Show/hide Billable Type filter
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
-                if (currentTab === 'mechanical' || currentTab === 'accessories') {
+                if (currentTab === 'mechanical' || currentTab === 'accessories' || currentTab === 'presale') {
                     billableTypeFilter.style.display = 'block';
                     const billableTypeOptions = data.billable_types || ['All'];
                     document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => 
@@ -914,7 +921,7 @@
                 exportData.forEach(row => {
                     let csvRow = headers.map(col => {
                         let value = row[col] || '-';
-                        value = String(value).replace(/"/g, '""');
+                        value = String(value).replace(/\"/g, '\"\"');
                         return `"${value}"`;
                     });
                     csv.push(csvRow.join(','));
