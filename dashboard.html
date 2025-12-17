@@ -485,16 +485,43 @@
             'WAGHOLI': 'WAG',
             'NAGPUR_KAMPTHEE ROAD': 'HO',
             'AMRAVATI': 'AMT',
-            'YAVATMAL': 'YAT',
-            'NAGPUR_WARDHAMAN NGR': 'CITY',
+            'YAVATMAL': 'YAV',
+            'NAGPUR_WARDHAMAN NGR': 'WDH',
             'CHIKHALI': 'CHI',
             'CHAUFULA_SZZ': 'CHA',
             'SHIKRAPUR_SZS': 'SHI',
-            'KOLHAPUR_SH': 'KOL'
+            'KOLHAPUR_SH': 'KHS'
         };
 
         function abbreviateBranch(branch) {
             return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
+        }
+
+        // SORT AGE BUCKETS IN PROPER ORDER
+        function sortAgeBuckets(ageBuckets) {
+            const ageBucketOrder = ['0-3 days', '4-10 days', '11-15 days', '16-30 days', '31-60 days', 'Above 60'];
+            
+            let sorted = [];
+            
+            for (let order of ageBucketOrder) {
+                for (let bucket of ageBuckets) {
+                    if (bucket.toLowerCase().includes(order.toLowerCase())) {
+                        if (!sorted.includes(bucket)) {
+                            sorted.push(bucket);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // Add any remaining buckets not in the order list
+            ageBuckets.forEach(bucket => {
+                if (!sorted.includes(bucket)) {
+                    sorted.push(bucket);
+                }
+            });
+            
+            return sorted;
         }
 
         window.onload = function() {
@@ -638,8 +665,12 @@
                 document.getElementById('status').innerHTML = '<option>All</option>' + 
                     data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                 
+                // SORT AGE BUCKETS IN PROPER ORDER
+                let ageBucketsFiltered = data.age_buckets.filter(a => a !== 'All');
+                let sortedAgeBuckets = sortAgeBuckets(ageBucketsFiltered);
+                
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
-                    data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
+                    sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
                 // Show/hide Billable Type filter
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
