@@ -486,26 +486,37 @@
             'NAGPUR_KAMPTHEE ROAD': 'HO',
             'AMRAVATI': 'AMT',
             'YAVATMAL': 'YAV',
-            'NAGPUR_WARDHAMAN NGR': 'WDH',
+            'NAGPUR_WARDHAMAN NGR': 'CITY',
             'CHIKHALI': 'CHI',
             'CHAUFULA_SZZ': 'CHA',
             'SHIKRAPUR_SZS': 'SHI',
-            'KOLHAPUR_SH': 'KHS'
+            'KOLHAPUR_SH': 'KOL'
         };
 
         function abbreviateBranch(branch) {
             return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
         }
 
-        // SORT AGE BUCKETS IN PROPER ORDER
+        // SORT AGE BUCKETS IN PROPER ORDER - 0-3, 4-10, 11-15, 16-30, 31-60/30-60, Above 60
         function sortAgeBuckets(ageBuckets) {
-            const ageBucketOrder = ['0-3 days', '4-10 days', '11-15 days', '16-30 days', '31-60 days', 'Above 60'];
+            const ageBucketOrder = [
+                '0-3 days', 
+                '4-10 days', 
+                '11-15 days', 
+                '16-30 days', 
+                '31-60 days',
+                'Above 60'
+            ];
             
             let sorted = [];
             
+            // First pass: match exact patterns
             for (let order of ageBucketOrder) {
                 for (let bucket of ageBuckets) {
-                    if (bucket.toLowerCase().includes(order.toLowerCase())) {
+                    let bucketLower = bucket.toLowerCase().trim();
+                    let orderLower = order.toLowerCase().trim();
+                    
+                    if (bucketLower === orderLower || bucketLower.includes(orderLower)) {
                         if (!sorted.includes(bucket)) {
                             sorted.push(bucket);
                         }
