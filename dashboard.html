@@ -552,9 +552,9 @@
         function updateDateTime() {
             const now = new Date();
             
-            // Format date: Thursday, 18 December 2025
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const dateStr = now.toLocaleDateString('en-IN', dateOptions);
+            // Format date: Data Update at 18 December 2025
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = 'Data Update at ' + now.toLocaleDateString('en-IN', dateOptions);
             
             // Format time: HH:MM:SS
             const timeStr = now.toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
