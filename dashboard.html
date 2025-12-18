@@ -563,10 +563,9 @@
             document.getElementById('timeDisplay').textContent = timeStr;
         }
 
-        // Update date/time immediately and then every second
+        // Update date/time on page load (static display, not a clock)
         window.addEventListener('load', function() {
             updateDateTime();
-            setInterval(updateDateTime, 1000);
         });
 
         // SORT AGE BUCKETS IN PROPER ORDER - 0-3, 4-10, 11-15, 16-30, 31-60/30-60, Above 60
@@ -610,7 +609,6 @@
         window.onload = function() {
             console.log('Dashboard loaded, API_URL:', API_URL);
             updateDateTime();
-            setInterval(updateDateTime, 1000);
             loadStats();
             loadFilters();
             loadData();
@@ -680,6 +678,7 @@
 
         async function loadFilteredStats() {
             try {
+                updateDateTime(); // Update timestamp when filters change
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
@@ -839,6 +838,7 @@
 
         async function loadData() {
             try {
+                updateDateTime(); // Update timestamp whenever data is loaded
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
