@@ -49,8 +49,9 @@
             font-weight: 600;
             font-size: 14px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            min-width: 280px;
+            min-width: auto;
             justify-content: center;
+            white-space: nowrap;
         }
 
         .datetime-display-icon {
@@ -59,8 +60,16 @@
 
         .datetime-content {
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            flex-direction: row;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .datetime-full {
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+            color: white;
         }
 
         .datetime-date {
@@ -401,8 +410,7 @@
                 <div class="datetime-display">
                     <div class="datetime-display-icon">📅</div>
                     <div class="datetime-content">
-                        <div class="datetime-date" id="dateDisplay">-</div>
-                        <div class="datetime-time" id="timeDisplay">--:--:--</div>
+                        <div class="datetime-full" id="datetimeDisplay">-</div>
                     </div>
                 </div>
             </div>
@@ -549,18 +557,26 @@
         }
 
         // ==================== DATE & TIME FUNCTIONS ====================
-        function updateDateTime() {
-            const now = new Date();
-            
-            // Format date: Data Update at 18 December 2025
-            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-            const dateStr = 'Data Update at ' + now.toLocaleDateString('en-IN', dateOptions);
-            
-            // Format time: HH:MM:SS
-            const timeStr = now.toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            
-            document.getElementById('dateDisplay').textContent = dateStr;
-            document.getElementById('timeDisplay').textContent = timeStr;
+        // Update date/time from data file's last modified time (not current browser time)
+        async function updateDateTime() {
+            try {
+                const response = await fetch(`${API_URL}/api/data-last-updated`);
+                const data = await response.json();
+                
+                if (data.formatted_datetime) {
+                    // Display in single line: "December 18, 2025 at 11:28 AM"
+                    document.getElementById('datetimeDisplay').textContent = data.formatted_datetime;
+                    
+                    console.log('Timestamp from file:', data.formatted_datetime);
+                } else {
+                    // Fallback if API fails
+                    document.getElementById('datetimeDisplay').textContent = '-';
+                }
+            } catch (error) {
+                console.error('Error fetching data update time:', error);
+                // Fallback if API fails
+                document.getElementById('datetimeDisplay').textContent = '-';
+            }
         }
 
         // Update date/time on page load (static display, not a clock)
@@ -678,7 +694,8 @@
 
         async function loadFilteredStats() {
             try {
-                updateDateTime(); // Update timestamp when filters change
+                // NOTE: NOT calling updateDateTime() here - timestamp only updates on page load
+                // This shows when the data files were last modified, not when filters are applied
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
@@ -838,7 +855,8 @@
 
         async function loadData() {
             try {
-                updateDateTime(); // Update timestamp whenever data is loaded
+                // NOTE: NOT calling updateDateTime() here - timestamp only updates on page load
+                // This shows when the data files were last modified, not when filters are applied
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
