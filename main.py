@@ -106,16 +106,6 @@ load_data()
 # ==================== DEPLOYMENT TIME ====================
 # Capture the exact time when the backend server started
 deployment_time = datetime.now()
-
-# Allow manual override via environment variable
-# Example: set DEPLOYMENT_TIME="2025-12-18 09:40:00" before starting
-if os.getenv('DEPLOYMENT_TIME'):
-    try:
-        deployment_time = datetime.strptime(os.getenv('DEPLOYMENT_TIME'), '%Y-%m-%d %H:%M:%S')
-        print(f"✓ Using custom deployment time: {deployment_time.strftime('%B %d, %Y at %I:%M %p')}")
-    except:
-        print(f"⚠ Invalid DEPLOYMENT_TIME format. Using current time instead.")
-
 print(f"✓ Deployment Time: {deployment_time.strftime('%B %d, %Y at %I:%M %p')}")
 
 # ==================== HELPER FUNCTIONS ====================
