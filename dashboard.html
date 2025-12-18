@@ -37,51 +37,6 @@
             flex-wrap: wrap;
             gap: 15px;
         }
-
-        .datetime-display {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            min-width: auto;
-            justify-content: center;
-            white-space: nowrap;
-        }
-
-        .datetime-display-icon {
-            font-size: 18px;
-        }
-
-        .datetime-content {
-            display: flex;
-            flex-direction: row;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .datetime-full {
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 0.3px;
-            color: white;
-        }
-
-        .datetime-date {
-            font-size: 13px;
-            opacity: 0.95;
-        }
-
-        .datetime-time {
-            font-size: 16px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
         
         .tabs { 
             display: flex; 
@@ -128,12 +83,6 @@
             .header-wrapper {
                 flex-direction: column;
                 align-items: stretch;
-            }
-            .datetime-display {
-                min-width: auto;
-                width: 100%;
-                order: -1;
-                margin-bottom: 10px;
             }
             .tabs { gap: 6px; }
             .tab-button {
@@ -400,19 +349,11 @@
 <body>
     <div class="container">
         <header>
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-                <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
-                    <img id="companyLogo" src="./logo.jpg" alt="Company Logo" 
-                         style="height: 60px; object-fit: contain; display: none;"
-                         onerror="this.style.display='none';">
-                    <h1>Unnati Motors Open RO Dashboard</h1>
-                </div>
-                <div class="datetime-display">
-                    <div class="datetime-display-icon">📅</div>
-                    <div class="datetime-content">
-                        <div class="datetime-full" id="datetimeDisplay">-</div>
-                    </div>
-                </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <img id="companyLogo" src="./logo.jpg" alt="Company Logo" 
+                     style="height: 60px; object-fit: contain; display: none;"
+                     onerror="this.style.display='none';">
+                <h1>Unnati Motors Open RO Dashboard</h1>
             </div>
             <div class="header-wrapper">
                 <div class="tabs">
@@ -556,34 +497,6 @@
             return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
         }
 
-        // ==================== DATE & TIME FUNCTIONS ====================
-        // Update date/time from data file's last modified time (not current browser time)
-        async function updateDateTime() {
-            try {
-                const response = await fetch(`${API_URL}/api/data-last-updated`);
-                const data = await response.json();
-                
-                if (data.formatted_datetime) {
-                    // Display in single line: "December 18, 2025 at 11:28 AM"
-                    document.getElementById('datetimeDisplay').textContent = data.formatted_datetime;
-                    
-                    console.log('Timestamp from file:', data.formatted_datetime);
-                } else {
-                    // Fallback if API fails
-                    document.getElementById('datetimeDisplay').textContent = '-';
-                }
-            } catch (error) {
-                console.error('Error fetching data update time:', error);
-                // Fallback if API fails
-                document.getElementById('datetimeDisplay').textContent = '-';
-            }
-        }
-
-        // Update date/time on page load (static display, not a clock)
-        window.addEventListener('load', function() {
-            updateDateTime();
-        });
-
         // SORT AGE BUCKETS IN PROPER ORDER - 0-3, 4-10, 11-15, 16-30, 31-60/30-60, Above 60
         function sortAgeBuckets(ageBuckets) {
             const ageBucketOrder = [
@@ -624,7 +537,6 @@
 
         window.onload = function() {
             console.log('Dashboard loaded, API_URL:', API_URL);
-            updateDateTime();
             loadStats();
             loadFilters();
             loadData();
@@ -694,8 +606,6 @@
 
         async function loadFilteredStats() {
             try {
-                // NOTE: NOT calling updateDateTime() here - timestamp only updates on page load
-                // This shows when the data files were last modified, not when filters are applied
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
@@ -855,8 +765,6 @@
 
         async function loadData() {
             try {
-                // NOTE: NOT calling updateDateTime() here - timestamp only updates on page load
-                // This shows when the data files were last modified, not when filters are applied
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
