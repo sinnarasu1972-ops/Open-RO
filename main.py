@@ -6,6 +6,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List, Dict, Any
+import time
 
 # ==================== CONFIGURATION ====================
 PORT = int(os.getenv('PORT', 8000))
@@ -15,10 +16,14 @@ HOST = '0.0.0.0'
 df_global = None
 df_landed_cost = None
 df_billable_type = None
+last_updated_time = None  # Store the file modification time
+deployment_time = None    # Store the deployment/startup time
+open_ro_file = None       # Store the file name for Open RO
+parts_file_name = None    # Store the file name for Parts
 
 def load_data():
     """Load Excel files and merge data"""
-    global df_global, df_landed_cost, df_billable_type
+    global df_global, df_landed_cost, df_billable_type, last_updated_time, open_ro_file, parts_file_name
     try:
         # Load Open RO data
         excel_file = None
@@ -34,10 +39,14 @@ def load_data():
             df_billable_type = pd.DataFrame()
             return
 
+        open_ro_file = excel_file
         print(f"✓ Loading: {excel_file}")
         df_global = pd.read_excel(excel_file)
         print(f"✓ Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
         print(f"✓ Columns: {list(df_global.columns)}")
+
+        # Get file modification time
+        open_ro_mtime = os.path.getmtime(excel_file)
 
         # Load and aggregate Landed Cost data
         parts_file = None
@@ -50,10 +59,15 @@ def load_data():
             print("⚠ Part Issue file not found - Landed Cost and Billable Type will not be available")
             df_landed_cost = pd.DataFrame()
             df_billable_type = pd.DataFrame()
+            parts_mtime = open_ro_mtime  # Use Open RO time if parts file doesn't exist
         else:
+            parts_file_name = parts_file
             print(f"✓ Loading: {parts_file}")
             df_parts = pd.read_excel(parts_file)
             print(f"✓ Loaded {len(df_parts)} part records")
+
+            # Get file modification time
+            parts_mtime = os.path.getmtime(parts_file)
 
             # Aggregate Landed Cost by RO Number
             df_landed_cost = df_parts.groupby('RO Number')['Landed Cost (Total)'].sum().reset_index()
@@ -72,6 +86,13 @@ def load_data():
             df_global['billable_type'] = df_global['billable_type'].fillna('Not Billed')
             print(f"✓ Merged landed cost and billable type data into main dataframe")
 
+        # Use the LATEST modification time from both files
+        # This ensures we show when the most recent file was updated
+        latest_mtime = max(open_ro_mtime, parts_mtime) if parts_file_name else open_ro_mtime
+        last_updated_time = datetime.fromtimestamp(latest_mtime)
+        
+        print(f"✓ Data Last Updated: {last_updated_time.strftime('%d %B %Y %H:%M:%S')}")
+
     except Exception as e:
         print(f"✗ Error: {str(e)}")
         import traceback
@@ -81,6 +102,11 @@ def load_data():
         df_billable_type = pd.DataFrame()
 
 load_data()
+
+# ==================== DEPLOYMENT TIME ====================
+# Capture the exact time when the backend server started
+deployment_time = datetime.now()
+print(f"✓ Deployment Time: {deployment_time.strftime('%B %d, %Y at %I:%M %p')}")
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -189,6 +215,40 @@ async def statistics():
     except Exception as e:
         print(f"Error in statistics: {str(e)}")
         return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
+
+@app.get("/api/data-last-updated")
+async def get_data_last_updated():
+    """Get the deployment time of the backend server"""
+    try:
+        if deployment_time is None:
+            return {
+                "deployment_time": None,
+                "formatted_datetime": "Unknown",
+                "timestamp": None
+            }
+        
+        # Format: December 18, 2025 at 11:28 AM
+        # Get date part: December 18, 2025
+        date_str = deployment_time.strftime('%B %d, %Y')
+        
+        # Get time part with AM/PM: 11:28 AM
+        time_str = deployment_time.strftime('%I:%M %p')
+        
+        # Combine: December 18, 2025 at 11:28 AM
+        formatted_datetime = f"{date_str} at {time_str}"
+        
+        return {
+            "deployment_time": deployment_time.isoformat(),
+            "formatted_datetime": formatted_datetime,
+            "timestamp": deployment_time.timestamp()
+        }
+    except Exception as e:
+        print(f"Error in get_data_last_updated: {str(e)}")
+        return {
+            "deployment_time": None,
+            "formatted_datetime": "Error",
+            "timestamp": None
+        }
 
 @app.get("/api/dashboard/statistics/filtered")
 async def filtered_statistics(
