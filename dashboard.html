@@ -148,60 +148,32 @@
         }
         .filters-section {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         .filters-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 20px;
-        }
-        .filter-group { 
-            display: flex;
-            flex-direction: column;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 15px; 
         }
         .filter-group label { 
             display: block; 
             font-size: 12px; 
             font-weight: 600; 
             color: #333; 
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-bottom: 6px; 
         }
         select, input[type="text"] { 
             width: 100%; 
-            padding: 10px 12px; 
+            padding: 8px; 
             border: 1px solid #ddd; 
             border-radius: 5px; 
             font-size: 13px;
-            background-color: #fff;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        select:hover, input[type="text"]:hover { 
-            border-color: #667eea;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-        }
-        select:focus, input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         input[type="text"]::placeholder {
             color: #999;
-        }
-        
-        @media (max-width: 1024px) {
-            .filters-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
-            }
-            .filters-section {
-                padding: 15px;
-            }
         }
         
         @media (max-width: 768px) {
@@ -218,18 +190,7 @@
                 margin-bottom: 5px;
             }
             select, input[type="text"] {
-                padding: 8px;
-                font-size: 12px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .filters-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-            select, input[type="text"] {
-                padding: 10px;
+                padding: 6px;
                 font-size: 12px;
             }
         }
@@ -452,12 +413,6 @@
                         <option>All</option>
                     </select>
                 </div>
-                <div class="filter-group" id="serviceTypeFilter" style="display:none;">
-                    <label>Service Type</label>
-                    <select id="serviceCategory" onchange="onFilterChange()">
-                        <option>All</option>
-                    </select>
-                </div>
                 <div class="filter-group" id="billableTypeFilter" style="display:none;">
                     <label>Billable Type</label>
                     <select id="billableType" onchange="onFilterChange()">
@@ -655,7 +610,6 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
-                const serviceCategory = document.getElementById('serviceCategory') ? document.getElementById('serviceCategory').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
                 
@@ -668,7 +622,6 @@
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
-                if (serviceCategory !== 'All' && serviceCategory !== undefined) params.append('service_category', serviceCategory);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
@@ -730,18 +683,6 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
-                // Show/hide Service Type filter for Mechanical
-                const serviceTypeFilter = document.getElementById('serviceTypeFilter');
-                if (currentTab === 'mechanical') {
-                    serviceTypeFilter.style.display = 'block';
-                    const serviceCategories = data.service_categories || ['All'];
-                    document.getElementById('serviceCategory').innerHTML = serviceCategories.map(sc => 
-                        `<option value="${sc}">${sc}</option>`
-                    ).join('');
-                } else {
-                    serviceTypeFilter.style.display = 'none';
-                }
-
                 // Show/hide Billable Type filter
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
                 if (currentTab === 'mechanical' || currentTab === 'accessories' || currentTab === 'presale') {
@@ -785,9 +726,6 @@
             console.log('Branch:', document.getElementById('branch').value);
             console.log('Status:', document.getElementById('status').value);
             console.log('Age:', document.getElementById('age').value);
-            if (currentTab === 'mechanical' && document.getElementById('serviceCategory')) {
-                console.log('Service Category:', document.getElementById('serviceCategory').value);
-            }
             if (document.getElementById('billableType')) {
                 console.log('Billable Type:', document.getElementById('billableType').value);
             }
@@ -807,9 +745,6 @@
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
-            if (document.getElementById('serviceCategory')) {
-                document.getElementById('serviceCategory').value = 'All';
-            }
             if (document.getElementById('billableType')) {
                 document.getElementById('billableType').value = 'All';
             }
@@ -834,23 +769,12 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
-                const serviceCategory = document.getElementById('serviceCategory') ? document.getElementById('serviceCategory').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
-
-                console.log('\n========== LOAD DATA STARTED ==========');
-                console.log('Current Tab:', currentTab);
-                console.log('Branch:', branch);
-                console.log('Status:', status);
-                console.log('Age:', age);
-                console.log('Service Category:', serviceCategory);
-                console.log('Billable Type:', billableType);
-                console.log('Records Per Page:', recordsPerPage);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
-                if (serviceCategory !== 'All' && serviceCategory !== undefined) url += `&service_category=${encodeURIComponent(serviceCategory)}`;
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 
                 if (currentTab === 'bodyshop') {
@@ -860,15 +784,12 @@
                     if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
-                console.log('Final URL:', url);
-                console.log('Fetching data...');
-                
+                console.log('Fetching data from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                console.log('Response received:', data);
-                console.log('========== LOAD DATA COMPLETE ==========\n');
+                console.log('Data loaded:', data);
                 
                 if (data.error) {
                     document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
@@ -996,7 +917,6 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
-                const serviceCategory = document.getElementById('serviceCategory') ? document.getElementById('serviceCategory').value : 'All';
 
                 const btn = event.target;
                 const originalText = btn.textContent;
@@ -1009,8 +929,6 @@
                 if (status !== 'All') url += `${separator}ro_status=${encodeURIComponent(status)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (serviceCategory !== 'All' && serviceCategory !== undefined) url += `${separator}service_category=${encodeURIComponent(serviceCategory)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 
