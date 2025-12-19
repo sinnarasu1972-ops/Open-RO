@@ -134,20 +134,29 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=No
     """Apply filters to dataframe"""
     result = df.copy()
     
+    print(f"[FILTER] Applying filters - Branch: {branch}, Status: {ro_status}, Age: {age_bucket}, ServiceCat: {service_category}, BillableType: {billable_type}")
+    
     if branch and branch != "All":
         result = result[result['Branch'] == branch]
+        print(f"[FILTER] After branch filter: {len(result)} rows")
     
     if ro_status and ro_status != "All":
         result = result[result['RO Status'] == ro_status]
+        print(f"[FILTER] After status filter: {len(result)} rows")
     
     if age_bucket and age_bucket != "All":
         result = result[result['Age Bucket'] == age_bucket]
+        print(f"[FILTER] After age bucket filter: {len(result)} rows")
     
     if billable_type and billable_type != "All":
         result = result[result['billable_type'] == billable_type]
+        print(f"[FILTER] After billable type filter: {len(result)} rows")
     
     if service_category and service_category != "All":
+        print(f"[FILTER] Filtering by service_category: {service_category}")
+        print(f"[FILTER] Unique SERVC_CATGRY_DESC values in df: {result['SERVC_CATGRY_DESC'].unique().tolist()}")
         result = result[result['SERVC_CATGRY_DESC'] == service_category]
+        print(f"[FILTER] After service category filter: {len(result)} rows")
     
     if mjob and mjob != "All":
         if mjob == "Not Categorized":
@@ -412,15 +421,28 @@ async def get_mechanical(
         
         mechanical_categories = ['Repair', 'Paid Service', 'Free Service', 'En-Route']
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(mechanical_categories)].copy()
+        
+        print(f"\n=== GET_MECHANICAL REQUEST ===")
+        print(f"Parameters: branch={branch}, ro_status={ro_status}, age_bucket={age_bucket}, billable_type={billable_type}, service_category={service_category}")
+        
         total = len(df)
+        print(f"Total mechanical vehicles: {total}")
+        
         df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_category=service_category)
         filtered = len(df)
+        print(f"Filtered count: {filtered}")
+        
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        print(f"Returning {len(vehicles)} vehicles")
+        print(f"=== GET_MECHANICAL COMPLETE ===\n")
         
         return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
     except Exception as e:
         print(f"Error in get_mechanical: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
 @app.get("/api/vehicles/bodyshop")
