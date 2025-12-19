@@ -130,7 +130,7 @@ def convert_row(row) -> Dict[str, Any]:
         print(f"Error converting row: {str(e)}")
         raise
 
-def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None):
+def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None, service_category=None):
     """Apply filters to dataframe"""
     result = df.copy()
     
@@ -145,6 +145,9 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=No
     
     if billable_type and billable_type != "All":
         result = result[result['billable_type'] == billable_type]
+    
+    if service_category and service_category != "All":
+        result = result[result['SERVC_CATGRY_DESC'] == service_category]
     
     if mjob and mjob != "All":
         if mjob == "Not Categorized":
@@ -284,10 +287,10 @@ async def filtered_statistics(
 
 @app.get("/api/filter-options/mechanical")
 async def mech_filters():
-    """Mechanical filters"""
+    """Mechanical filters with service category option"""
     try:
         if df_global.empty:
-            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_categories": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         
@@ -295,15 +298,19 @@ async def mech_filters():
         if 'Not Billed' in df['billable_type'].values:
             billable_types.append('Not Billed')
         
+        # Get service categories (only from mechanical data, excluding Bodyshop, Accessories, Pre-Sale/PDI)
+        service_categories = ['All'] + sorted([str(x) for x in df['SERVC_CATGRY_DESC'].unique().tolist()])
+        
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
-            "billable_types": billable_types
+            "billable_types": billable_types,
+            "service_categories": service_categories
         }
     except Exception as e:
         print(f"Error in mech_filters: {str(e)}")
-        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_categories": ["All"]}
 
 @app.get("/api/filter-options/bodyshop")
 async def bs_filters():
@@ -387,6 +394,7 @@ async def get_mechanical(
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
     billable_type: Optional[str] = Query("All"),
+    service_category: Optional[str] = Query("All"),
     skip: int = Query(0),
     limit: int = Query(50)
 ):
@@ -397,7 +405,7 @@ async def get_mechanical(
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
         total = len(df)
-        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_category=service_category)
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
@@ -491,14 +499,15 @@ async def export_mech(
     branch: Optional[str] = Query("All"),
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
-    billable_type: Optional[str] = Query("All")
+    billable_type: Optional[str] = Query("All"),
+    service_category: Optional[str] = Query("All")
 ):
     """Export mechanical vehicles"""
     try:
         if df_global.empty:
             return {"vehicles": []}
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
-        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_category=service_category)
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
