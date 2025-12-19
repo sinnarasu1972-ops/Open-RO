@@ -193,9 +193,11 @@ async def statistics():
                 "total_landed_cost": 0.0
             }
         
+        mechanical_categories = ['Repair', 'Paid Service', 'Free Service', 'En-Route']
+        
         return {
             "total_vehicles": int(len(df_global)),
-            "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])])),
+            "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(mechanical_categories)])),
             "bodyshop_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'])),
             "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'])),
             "presale_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI'])),
@@ -221,11 +223,12 @@ async def filtered_statistics(
             return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
         
         filtered_df = df_global.copy()
+        mechanical_categories = ['Repair', 'Paid Service', 'Free Service', 'En-Route']
         
         # Filter by service category FIRST
         if service_category and service_category != "All":
             if service_category == "mechanical":
-                filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+                filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(mechanical_categories)]
             elif service_category == "bodyshop":
                 filtered_df = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
             elif service_category == "accessories":
@@ -261,7 +264,7 @@ async def filtered_statistics(
             filtered_df = filtered_df[filtered_df['Reg. Number'].astype(str).str.upper().str.contains(search_reg, na=False)]
         
         # Count by service category from FILTERED data
-        mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        mechanical = filtered_df[filtered_df['SERVC_CATGRY_DESC'].isin(mechanical_categories)]
         bodyshop = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Bodyshop']
         accessories = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Accessories']
         presale = filtered_df[filtered_df['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
@@ -292,14 +295,18 @@ async def mech_filters():
         if df_global.empty:
             return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_categories": ["All"]}
         
-        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        # Define allowed service categories
+        allowed_service_categories = ['Free Service', 'Paid Service', 'Repair', 'En-Route']
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(allowed_service_categories)]
         
         billable_types = ['All'] + sorted([str(x) for x in df['billable_type'].dropna().unique().tolist() if x != 'Not Billed'])
         if 'Not Billed' in df['billable_type'].values:
             billable_types.append('Not Billed')
         
-        # Get service categories (only from mechanical data, excluding Bodyshop, Accessories, Pre-Sale/PDI)
-        service_categories = ['All'] + sorted([str(x) for x in df['SERVC_CATGRY_DESC'].unique().tolist()])
+        # Get service categories that exist in data (from the allowed list)
+        available_service_categories = [str(x) for x in df['SERVC_CATGRY_DESC'].unique().tolist() if x in allowed_service_categories]
+        service_categories = ['All'] + sorted(available_service_categories)
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -403,7 +410,8 @@ async def get_mechanical(
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
-        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
+        mechanical_categories = ['Repair', 'Paid Service', 'Free Service', 'En-Route']
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(mechanical_categories)].copy()
         total = len(df)
         df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_category=service_category)
         filtered = len(df)
@@ -506,7 +514,8 @@ async def export_mech(
     try:
         if df_global.empty:
             return {"vehicles": []}
-        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        mechanical_categories = ['Repair', 'Paid Service', 'Free Service', 'En-Route']
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(mechanical_categories)]
         df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_category=service_category)
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
