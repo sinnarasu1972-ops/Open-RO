@@ -837,6 +837,15 @@
                 const serviceCategory = document.getElementById('serviceCategory') ? document.getElementById('serviceCategory').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
+                console.log('\n========== LOAD DATA STARTED ==========');
+                console.log('Current Tab:', currentTab);
+                console.log('Branch:', branch);
+                console.log('Status:', status);
+                console.log('Age:', age);
+                console.log('Service Category:', serviceCategory);
+                console.log('Billable Type:', billableType);
+                console.log('Records Per Page:', recordsPerPage);
+
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
@@ -851,12 +860,15 @@
                     if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
-                console.log('Fetching data from:', url);
+                console.log('Final URL:', url);
+                console.log('Fetching data...');
+                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                console.log('Data loaded:', data);
+                console.log('Response received:', data);
+                console.log('========== LOAD DATA COMPLETE ==========\n');
                 
                 if (data.error) {
                     document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
