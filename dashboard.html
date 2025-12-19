@@ -148,32 +148,60 @@
         }
         .filters-section {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
             margin-bottom: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         .filters-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-            gap: 15px; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px;
+        }
+        .filter-group { 
+            display: flex;
+            flex-direction: column;
         }
         .filter-group label { 
             display: block; 
             font-size: 12px; 
             font-weight: 600; 
             color: #333; 
-            margin-bottom: 6px; 
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         select, input[type="text"] { 
             width: 100%; 
-            padding: 8px; 
+            padding: 10px 12px; 
             border: 1px solid #ddd; 
             border-radius: 5px; 
             font-size: 13px;
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        select:hover, input[type="text"]:hover { 
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         input[type="text"]::placeholder {
             color: #999;
+        }
+        
+        @media (max-width: 1024px) {
+            .filters-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+            .filters-section {
+                padding: 15px;
+            }
         }
         
         @media (max-width: 768px) {
@@ -190,7 +218,18 @@
                 margin-bottom: 5px;
             }
             select, input[type="text"] {
-                padding: 6px;
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            select, input[type="text"] {
+                padding: 10px;
                 font-size: 12px;
             }
         }
