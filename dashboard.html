@@ -994,6 +994,12 @@
                 exportData.forEach(row => {
                     let csvRow = headers.map(col => {
                         let value = row[col] || '-';
+                        
+                        // Format total_landed_cost with 2 decimal places
+                        if (col === 'total_landed_cost' && value !== '-') {
+                            value = parseFloat(value).toFixed(2);
+                        }
+                        
                         value = String(value).replace(/\"/g, '\"\"');
                         return `"${value}"`;
                     });
