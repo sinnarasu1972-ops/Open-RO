@@ -117,6 +117,7 @@ def convert_row(row) -> Dict[str, Any]:
             'model_group': str(row['Model Group']).strip() if pd.notna(row['Model Group']) else '-',
             'reg_number': str(row['Reg. Number']).strip() if pd.notna(row['Reg. Number']) else '-',
             'ro_date': pd.Timestamp(row['RO Date']).strftime('%Y-%m-%d') if pd.notna(row['RO Date']) else '-',
+            'vehicle_ready_date': pd.Timestamp(row['Vehicle  Ready Date']).strftime('%Y-%m-%d') if pd.notna(row['Vehicle  Ready Date']) else '-',
             'ro_remarks': str(row['RO Remarks']).strip() if pd.notna(row['RO Remarks']) else '-',
             'km': int(row['KM']) if pd.notna(row['KM']) else 0,
             'days': int(row['Days']) if pd.notna(row['Days']) else 0,
