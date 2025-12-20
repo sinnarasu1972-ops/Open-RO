@@ -1058,13 +1058,27 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                const exportData = data.vehicles;
+                let exportData = data.vehicles;
 
                 if (exportData.length === 0) {
                     alert('No data to export!');
                     btn.textContent = originalText;
                     btn.disabled = false;
                     return;
+                }
+
+                // Check if "Closed but not billed" is selected
+                const isClosedButNotBilled = status === 'Closed but not billed';
+                
+                // Add TAT Days column if Closed but not billed
+                if (isClosedButNotBilled) {
+                    exportData = exportData.map(row => {
+                        const tatDays = calculateTAT(row.vehicle_ready_date);
+                        return {
+                            ...row,
+                            tat_days_from_vehicle_ready: tatDays
+                        };
+                    });
                 }
 
                 const allColumns = Object.keys(exportData[0]);
