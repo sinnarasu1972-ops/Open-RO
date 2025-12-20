@@ -203,7 +203,7 @@
         .table-wrapper {
             overflow-x: scroll !important;
             overflow-y: auto;
-            max-height: 500px;
+            max-height: 550px;
             border-radius: 0 0 10px 10px;
             display: block;
             scroll-behavior: smooth;
@@ -274,50 +274,55 @@
                 font-size: 11px;
             }
         }
-        table { width: 100%; border-collapse: collapse; min-width: 2000px; table-layout: fixed; }
-        thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+        table { width: 100%; border-collapse: collapse; min-width: 2400px; table-layout: fixed; }
+        thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
         th { 
-            padding: 12px; 
+            padding: 12px 8px; 
             text-align: left; 
             font-size: 11px; 
             font-weight: 700; 
             color: #333; 
             white-space: nowrap;
-            min-width: 80px;
-            width: 80px;
             overflow: hidden;
             text-overflow: ellipsis;
+            cursor: help;
+            position: relative;
+        }
+        th:hover {
+            background: #e9ecef;
         }
         td { 
-            padding: 12px; 
+            padding: 12px 8px; 
             border-bottom: 1px solid #eee; 
             font-size: 12px; 
             color: #555; 
             word-wrap: break-word; 
             overflow-wrap: break-word;
             vertical-align: top;
-            width: 80px;
-            min-width: 80px;
         }
-        th:nth-child(1), td:nth-child(1) { width: 100px; min-width: 100px; }
-        th:nth-child(2), td:nth-child(2) { width: 120px; min-width: 120px; }
-        th:nth-child(3), td:nth-child(3) { width: 110px; min-width: 110px; }
-        th:nth-child(4), td:nth-child(4) { width: 90px; min-width: 90px; }
-        th:nth-child(5), td:nth-child(5) { width: 90px; min-width: 90px; }
-        th:nth-child(6), td:nth-child(6) { width: 100px; min-width: 100px; }
-        th:nth-child(7), td:nth-child(7) { width: 100px; min-width: 100px; }
-        th:nth-child(8), td:nth-child(8) { width: 100px; min-width: 100px; }
-        th:nth-child(9), td:nth-child(9) { width: 90px; min-width: 90px; }
-        th:nth-child(10), td:nth-child(10) { width: 90px; min-width: 90px; }
-        th:nth-child(11), td:nth-child(11) { width: 400px; min-width: 400px; }
-        th:nth-child(12), td:nth-child(12) { width: 300px; min-width: 300px; }
         
-        td:nth-child(11), td:nth-child(12) { 
+        /* Column widths for regular view (without Vehicle Ready Date) */
+        th:nth-child(1), td:nth-child(1) { width: 110px; min-width: 110px; } /* RO ID */
+        th:nth-child(2), td:nth-child(2) { width: 110px; min-width: 110px; } /* Landed Cost */
+        th:nth-child(3), td:nth-child(3) { width: 100px; min-width: 100px; } /* RO Date */
+        th:nth-child(4), td:nth-child(4) { width: 120px; min-width: 120px; } /* SA Name / Vehicle Ready Date */
+        th:nth-child(5), td:nth-child(5) { width: 100px; min-width: 100px; } /* Branch / TAT Current */
+        th:nth-child(6), td:nth-child(6) { width: 130px; min-width: 130px; } /* Status / SA Name */
+        th:nth-child(7), td:nth-child(7) { width: 90px; min-width: 90px; } /* Model Group / Branch */
+        th:nth-child(8), td:nth-child(8) { width: 110px; min-width: 110px; } /* Reg Number / Status */
+        th:nth-child(9), td:nth-child(9) { width: 100px; min-width: 100px; } /* Age / Model Group */
+        th:nth-child(10), td:nth-child(10) { width: 80px; min-width: 80px; } /* Days / Reg Number */
+        th:nth-child(11), td:nth-child(11) { width: 80px; min-width: 80px; } /* KM / Age */
+        th:nth-child(12), td:nth-child(12) { width: 80px; min-width: 80px; } /* Remarks / Days */
+        th:nth-child(13), td:nth-child(13) { width: 80px; min-width: 80px; } /* Pending / KM */
+        th:nth-child(14), td:nth-child(14) { width: 400px; min-width: 400px; } /* Remarks */
+        th:nth-child(15), td:nth-child(15) { width: 300px; min-width: 300px; } /* Pending Reason */
+        
+        /* Special styling for text columns */
+        td:nth-child(14), td:nth-child(15) { 
             word-break: break-word; 
             white-space: normal;
-            max-width: 400px;
         }
-        td:nth-child(12) { max-width: 300px; }
         
         .landed-cost-cell {
             background: #f0f7ff;
@@ -473,11 +478,11 @@
                             <th>Branch</th>
                             <th>Status</th>
                             <th>SA Name</th>
-                            <th>VH No</th>
-                            <th>Model Group</th>
-                            <th>Chassis No</th>
+                            <th>Vehicle No</th>
+                            <th>Model</th>
+                            <th>Chassis</th>
                             <th>MJob</th>
-                            <th>TAT (Days)</th>
+                            <th>TAT</th>
                             <th>Remarks</th>
                             <th>Pending Reason</th>
                         </tr>
@@ -934,53 +939,53 @@
             
             if (currentTab === 'bodyshop') {
                 let headers = `
-                    <th>RO Number</th>
-                    <th>Landed Cost</th>
-                    <th>RO Date</th>`;
+                    <th title="Repair Order Number">RO Number</th>
+                    <th title="Total Landed Cost">Landed Cost</th>
+                    <th title="Repair Order Date">RO Date</th>`;
                 
                 if (showClosedButNotBilledColumns) {
                     headers += `
-                    <th>Vehicle Ready Date</th>
-                    <th>TAT (Current)</th>`;
+                    <th title="Vehicle Ready Date">Vehicle Ready</th>
+                    <th title="Turn Around Time in Days (from Vehicle Ready Date to Current Date)">TAT Days</th>`;
                 }
                 
                 headers += `
-                    <th>Branch</th>
-                    <th>Status</th>
-                    <th>SA Name</th>
-                    <th>VH No</th>
-                    <th>Model Group</th>
-                    <th>Chassis No</th>
-                    <th>MJob</th>
-                    <th>TAT (Days)</th>
-                    <th>Remarks</th>
-                    <th>Pending Reason</th>
+                    <th title="Branch Location">Branch</th>
+                    <th title="RO Status">Status</th>
+                    <th title="Service Adviser Name">SA Name</th>
+                    <th title="Vehicle Registration Number">Vehicle No</th>
+                    <th title="Model Group">Model</th>
+                    <th title="Last 8 Digits of Chassis Number">Chassis</th>
+                    <th title="MJob Category">MJob</th>
+                    <th title="Turn Around Time in Days">TAT</th>
+                    <th title="RO Remarks">Remarks</th>
+                    <th title="Pending Reason Description">Pending Reason</th>
                 `;
                 
                 headerRow.innerHTML = headers;
             } else {
                 let headers = `
-                    <th>RO ID</th>
-                    <th>Landed Cost</th>
-                    <th>RO Date</th>`;
+                    <th title="Repair Order ID">RO ID</th>
+                    <th title="Total Landed Cost">Landed Cost</th>
+                    <th title="Repair Order Date">RO Date</th>`;
                 
                 if (showClosedButNotBilledColumns) {
                     headers += `
-                    <th>Vehicle Ready Date</th>
-                    <th>TAT (Current)</th>`;
+                    <th title="Vehicle Ready Date">Vehicle Ready</th>
+                    <th title="Turn Around Time in Days (from Vehicle Ready Date to Current Date)">TAT Days</th>`;
                 }
                 
                 headers += `
-                    <th>SA Name</th>
-                    <th>Branch</th>
-                    <th>Status</th>
-                    <th>Model Group</th>
-                    <th>Reg Number</th>
-                    <th>Age</th>
-                    <th>Days</th>
-                    <th>KM</th>
-                    <th>Remarks</th>
-                    <th>Pending Reason</th>
+                    <th title="Service Adviser Name">SA Name</th>
+                    <th title="Branch Location">Branch</th>
+                    <th title="RO Status">Status</th>
+                    <th title="Model Group">Model</th>
+                    <th title="Vehicle Registration Number">Reg Number</th>
+                    <th title="Age Bucket">Age</th>
+                    <th title="Number of Days">Days</th>
+                    <th title="Kilometers">KM</th>
+                    <th title="RO Remarks">Remarks</th>
+                    <th title="Pending Reason Description">Pending Reason</th>
                 `;
                 
                 headerRow.innerHTML = headers;
