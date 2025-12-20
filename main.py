@@ -112,6 +112,7 @@ def convert_row(row) -> Dict[str, Any]:
             'ro_status': str(row['RO Status']).strip() if pd.notna(row['RO Status']) else '-',
             'age_bucket': str(row['Age Bucket']).strip() if pd.notna(row['Age Bucket']) else '-',
             'service_category': str(row['SERVC_CATGRY_DESC']).strip() if pd.notna(row['SERVC_CATGRY_DESC']) else '-',
+            'service_type': str(row['SERVC_TYPE_DESC']).strip() if pd.notna(row['SERVC_TYPE_DESC']) else '-',
             'vehicle_model': str(row['Family']).strip() if pd.notna(row['Family']) else '-',
             'model_group': str(row['Model Group']).strip() if pd.notna(row['Model Group']) else '-',
             'reg_number': str(row['Reg. Number']).strip() if pd.notna(row['Reg. Number']) else '-',
@@ -130,7 +131,7 @@ def convert_row(row) -> Dict[str, Any]:
         print(f"Error converting row: {str(e)}")
         raise
 
-def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None):
+def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None, service_type=None):
     """Apply filters to dataframe"""
     result = df.copy()
     
@@ -145,6 +146,9 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=No
     
     if billable_type and billable_type != "All":
         result = result[result['billable_type'] == billable_type]
+    
+    if service_type and service_type != "All":
+        result = result[result['SERVC_TYPE_DESC'] == service_type]
     
     if mjob and mjob != "All":
         if mjob == "Not Categorized":
@@ -210,6 +214,7 @@ async def filtered_statistics(
     mjob: Optional[str] = Query("All"),
     billable_type: Optional[str] = Query("All"),
     service_category: Optional[str] = Query("All"),
+    service_type: Optional[str] = Query("All"),
     reg_number: Optional[str] = Query("")
 ):
     """Dashboard statistics - with dynamic filtering by service category"""
@@ -242,6 +247,9 @@ async def filtered_statistics(
         
         if billable_type and billable_type != "All":
             filtered_df = filtered_df[filtered_df['billable_type'] == billable_type]
+        
+        if service_type and service_type != "All":
+            filtered_df = filtered_df[filtered_df['SERVC_TYPE_DESC'] == service_type]
         
         if mjob and mjob != "All":
             if mjob == "Not Categorized":
@@ -287,7 +295,7 @@ async def mech_filters():
     """Mechanical filters"""
     try:
         if df_global.empty:
-            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_types": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         
@@ -295,15 +303,22 @@ async def mech_filters():
         if 'Not Billed' in df['billable_type'].values:
             billable_types.append('Not Billed')
         
+        # Get service types and exclude specific values
+        exclude_service_types = ['ACCIDENTAL', 'PDI SERVICE', 'PRESALE', 'Sales Accessories', 'Service Accessories']
+        service_types_raw = df['SERVC_TYPE_DESC'].dropna().unique().tolist()
+        service_types_filtered = [str(x) for x in service_types_raw if str(x) not in exclude_service_types]
+        service_types = ['All'] + sorted(service_types_filtered)
+        
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
-            "billable_types": billable_types
+            "billable_types": billable_types,
+            "service_types": service_types
         }
     except Exception as e:
         print(f"Error in mech_filters: {str(e)}")
-        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"]}
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_types": ["All"]}
 
 @app.get("/api/filter-options/bodyshop")
 async def bs_filters():
@@ -387,6 +402,7 @@ async def get_mechanical(
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
     billable_type: Optional[str] = Query("All"),
+    service_type: Optional[str] = Query("All"),
     skip: int = Query(0),
     limit: int = Query(50)
 ):
@@ -397,7 +413,7 @@ async def get_mechanical(
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
         total = len(df)
-        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_type=service_type)
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
@@ -491,14 +507,15 @@ async def export_mech(
     branch: Optional[str] = Query("All"),
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
-    billable_type: Optional[str] = Query("All")
+    billable_type: Optional[str] = Query("All"),
+    service_type: Optional[str] = Query("All")
 ):
     """Export mechanical vehicles"""
     try:
         if df_global.empty:
             return {"vehicles": []}
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
-        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_type=service_type)
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
