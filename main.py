@@ -106,6 +106,15 @@ def get_mjob_category(remark):
 def convert_row(row) -> Dict[str, Any]:
     """Convert pandas row to JSON-safe dict"""
     try:
+        # Helper function to parse dates safely
+        def safe_date_parse(date_value):
+            if pd.notna(date_value) and str(date_value).strip() not in ['-', '', 'nan', 'NaT']:
+                try:
+                    return pd.Timestamp(date_value).strftime('%Y-%m-%d')
+                except:
+                    return '-'
+            return '-'
+        
         return {
             'ro_id': str(row['RO ID']).strip() if pd.notna(row['RO ID']) else '-',
             'branch': str(row['Branch']).strip() if pd.notna(row['Branch']) else '-',
@@ -116,8 +125,8 @@ def convert_row(row) -> Dict[str, Any]:
             'vehicle_model': str(row['Family']).strip() if pd.notna(row['Family']) else '-',
             'model_group': str(row['Model Group']).strip() if pd.notna(row['Model Group']) else '-',
             'reg_number': str(row['Reg. Number']).strip() if pd.notna(row['Reg. Number']) else '-',
-            'ro_date': pd.Timestamp(row['RO Date']).strftime('%Y-%m-%d') if pd.notna(row['RO Date']) else '-',
-            'vehicle_ready_date': pd.Timestamp(row['Vehicle  Ready Date']).strftime('%Y-%m-%d') if pd.notna(row['Vehicle  Ready Date']) else '-',
+            'ro_date': safe_date_parse(row['RO Date']),
+            'vehicle_ready_date': safe_date_parse(row['Vehicle  Ready Date']),
             'ro_remarks': str(row['RO Remarks']).strip() if pd.notna(row['RO Remarks']) else '-',
             'km': int(row['KM']) if pd.notna(row['KM']) else 0,
             'days': int(row['Days']) if pd.notna(row['Days']) else 0,
