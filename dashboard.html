@@ -419,6 +419,12 @@
                         <option>All</option>
                     </select>
                 </div>
+                <div class="filter-group" id="serviceTypeFilter" style="display:none;">
+                    <label>Service Type</label>
+                    <select id="serviceType" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
                 <div class="filter-group" id="mjobFilter" style="display:none;">
                     <label>MJob Type</label>
                     <select id="mjob" onchange="onFilterChange()">
@@ -610,6 +616,7 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
+                const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
                 
@@ -622,6 +629,7 @@
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
+                if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
@@ -695,6 +703,18 @@
                     billableTypeFilter.style.display = 'none';
                 }
 
+                // Show/hide Service Type filter (only for Mechanical)
+                const serviceTypeFilter = document.getElementById('serviceTypeFilter');
+                if (currentTab === 'mechanical') {
+                    serviceTypeFilter.style.display = 'block';
+                    const serviceTypeOptions = data.service_types || ['All'];
+                    document.getElementById('serviceType').innerHTML = serviceTypeOptions.map(st => 
+                        `<option value="${st}">${st}</option>`
+                    ).join('');
+                } else {
+                    serviceTypeFilter.style.display = 'none';
+                }
+
                 // Show/hide MJob filter
                 const mjobFilter = document.getElementById('mjobFilter');
                 const regNumberFilter = document.getElementById('regNumberFilter');
@@ -729,6 +749,9 @@
             if (document.getElementById('billableType')) {
                 console.log('Billable Type:', document.getElementById('billableType').value);
             }
+            if (document.getElementById('serviceType') && currentTab === 'mechanical') {
+                console.log('Service Type:', document.getElementById('serviceType').value);
+            }
             if (currentTab === 'bodyshop') {
                 console.log('MJob:', document.getElementById('mjob').value);
                 console.log('Reg Number:', document.getElementById('regNumber').value);
@@ -747,6 +770,9 @@
             document.getElementById('age').value = 'All';
             if (document.getElementById('billableType')) {
                 document.getElementById('billableType').value = 'All';
+            }
+            if (document.getElementById('serviceType')) {
+                document.getElementById('serviceType').value = 'All';
             }
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
@@ -769,6 +795,7 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
+                const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
@@ -776,6 +803,7 @@
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
+                if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
@@ -917,6 +945,7 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
+                const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
 
                 const btn = event.target;
                 const originalText = btn.textContent;
@@ -931,6 +960,8 @@
                 if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
