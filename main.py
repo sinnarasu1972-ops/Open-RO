@@ -124,7 +124,7 @@ def convert_row(row) -> Dict[str, Any]:
             'service_adviser': str(row['Service Adviser Name']).strip() if pd.notna(row['Service Adviser Name']) else '-',
             'vin': str(row['VIN']).strip() if pd.notna(row['VIN']) else '-',
             'pendncy_resn_desc': str(row['PENDNCY_RESN_DESC']).strip() if pd.notna(row['PENDNCY_RESN_DESC']) else '-',
-            'total_landed_cost': float(row['total_landed_cost']) if pd.notna(row['total_landed_cost']) else 0.0,
+            'total_landed_cost': round(float(row['total_landed_cost']), 2) if pd.notna(row['total_landed_cost']) else 0.00,
             'billable_type': str(row['billable_type']).strip() if pd.notna(row['billable_type']) else 'Not Billed',
         }
     except Exception as e:
