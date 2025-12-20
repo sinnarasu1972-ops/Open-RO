@@ -325,6 +325,18 @@
             font-weight: 600;
         }
         
+        .vehicle-ready-date-cell {
+            background: #fff3e0;
+            color: #f57c00;
+            font-weight: 600;
+        }
+        
+        .tat-current-cell {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 600;
+        }
+        
         tr:hover { background: #f9f9f9; }
         tbody tr { height: auto; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
@@ -503,7 +515,6 @@
             return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
         }
 
-        // SORT AGE BUCKETS IN PROPER ORDER - 0-3, 4-10, 11-15, 16-30, 31-60/30-60, Above 60
         function sortAgeBuckets(ageBuckets) {
             const ageBucketOrder = [
                 '0-3 days', 
@@ -516,7 +527,6 @@
             
             let sorted = [];
             
-            // First pass: match exact patterns
             for (let order of ageBucketOrder) {
                 for (let bucket of ageBuckets) {
                     let bucketLower = bucket.toLowerCase().trim();
@@ -531,7 +541,6 @@
                 }
             }
             
-            // Add any remaining buckets not in the order list
             ageBuckets.forEach(bucket => {
                 if (!sorted.includes(bucket)) {
                     sorted.push(bucket);
@@ -564,7 +573,7 @@
         }
 
         function calculateTAT(roDate) {
-            if (!roDate) return 0;
+            if (!roDate || roDate === '-') return 0;
             const date = new Date(roDate);
             const today = new Date();
             const diffTime = Math.abs(today - date);
@@ -684,14 +693,12 @@
                 document.getElementById('status').innerHTML = '<option>All</option>' + 
                     data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                 
-                // SORT AGE BUCKETS IN PROPER ORDER
                 let ageBucketsFiltered = data.age_buckets.filter(a => a !== 'All');
                 let sortedAgeBuckets = sortAgeBuckets(ageBucketsFiltered);
                 
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
-                // Show/hide Billable Type filter
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
                 if (currentTab === 'mechanical' || currentTab === 'accessories' || currentTab === 'presale') {
                     billableTypeFilter.style.display = 'block';
@@ -703,7 +710,6 @@
                     billableTypeFilter.style.display = 'none';
                 }
 
-                // Show/hide Service Type filter (only for Mechanical)
                 const serviceTypeFilter = document.getElementById('serviceTypeFilter');
                 if (currentTab === 'mechanical') {
                     serviceTypeFilter.style.display = 'block';
@@ -715,7 +721,6 @@
                     serviceTypeFilter.style.display = 'none';
                 }
 
-                // Show/hide MJob filter
                 const mjobFilter = document.getElementById('mjobFilter');
                 const regNumberFilter = document.getElementById('regNumberFilter');
                 if (currentTab === 'bodyshop') {
@@ -764,7 +769,6 @@
         function clearAllFilters() {
             console.log('>>> CLEARING ALL FILTERS <<<');
             
-            // Reset all filter values
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
@@ -779,14 +783,17 @@
                 document.getElementById('regNumber').value = '';
             }
             
-            // Load complete statistics for current tab (unfiltered totals)
             loadStats();
-            // Reload data without any filters
             loadData();
             
             console.log('>>> ALL FILTERS CLEARED <<<');
             console.log('Showing total statistics for all items');
             console.log('>>> REFRESH COMPLETE <<<\n');
+        }
+
+        function isClosedButNotBilled() {
+            const status = document.getElementById('status').value;
+            return status === 'Closed but not billed';
         }
 
         async function loadData() {
@@ -831,9 +838,11 @@
                 tbody.innerHTML = '';
 
                 if (data.vehicles.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="13" class="loading">No data found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="15" class="loading">No data found</td></tr>';
                     return;
                 }
+
+                const showClosedButNotBilledColumns = isClosedButNotBilled();
 
                 data.vehicles.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
@@ -848,11 +857,21 @@
                         const tatStyle = getTATStyle(mjob, tat);
                         const saName = v.service_adviser || '-';
                         
-                        tbody.innerHTML += `
+                        let rowHTML = `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
                                 <td class="landed-cost-cell">${landedCostDisplay}</td>
-                                <td>${v.ro_date}</td>
+                                <td>${v.ro_date}</td>`;
+                        
+                        if (showClosedButNotBilledColumns) {
+                            const vehicleReadyDate = v.vehicle_ready_date || '-';
+                            const tatCurrent = calculateTAT(vehicleReadyDate);
+                            rowHTML += `
+                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                                <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        }
+                        
+                        rowHTML += `
                                 <td><span class="branch-abbr">${branchAbbr}</span></td>
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
                                 <td>${saName}</td>
@@ -865,12 +884,24 @@
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
                             </tr>
                         `;
+                        
+                        tbody.innerHTML += rowHTML;
                     } else {
-                        tbody.innerHTML += `
+                        let rowHTML = `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
                                 <td class="landed-cost-cell">${landedCostDisplay}</td>
-                                <td>${v.ro_date}</td>
+                                <td>${v.ro_date}</td>`;
+                        
+                        if (showClosedButNotBilledColumns) {
+                            const vehicleReadyDate = v.vehicle_ready_date || '-';
+                            const tatCurrent = calculateTAT(vehicleReadyDate);
+                            rowHTML += `
+                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                                <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        }
+                        
+                        rowHTML += `
                                 <td>${v.service_adviser || '-'}</td>
                                 <td><span class="branch-abbr">${branchAbbr}</span></td>
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
@@ -883,6 +914,8 @@
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
                             </tr>
                         `;
+                        
+                        tbody.innerHTML += rowHTML;
                     }
                 });
 
@@ -897,11 +930,21 @@
             const headerRow = document.getElementById('headerRow');
             headerRow.innerHTML = '';
             
+            const showClosedButNotBilledColumns = isClosedButNotBilled();
+            
             if (currentTab === 'bodyshop') {
-                headerRow.innerHTML = `
+                let headers = `
                     <th>RO Number</th>
                     <th>Landed Cost</th>
-                    <th>RO Date</th>
+                    <th>RO Date</th>`;
+                
+                if (showClosedButNotBilledColumns) {
+                    headers += `
+                    <th>Vehicle Ready Date</th>
+                    <th>TAT (Current)</th>`;
+                }
+                
+                headers += `
                     <th>Branch</th>
                     <th>Status</th>
                     <th>SA Name</th>
@@ -913,11 +956,21 @@
                     <th>Remarks</th>
                     <th>Pending Reason</th>
                 `;
+                
+                headerRow.innerHTML = headers;
             } else {
-                headerRow.innerHTML = `
+                let headers = `
                     <th>RO ID</th>
                     <th>Landed Cost</th>
-                    <th>RO Date</th>
+                    <th>RO Date</th>`;
+                
+                if (showClosedButNotBilledColumns) {
+                    headers += `
+                    <th>Vehicle Ready Date</th>
+                    <th>TAT (Current)</th>`;
+                }
+                
+                headers += `
                     <th>SA Name</th>
                     <th>Branch</th>
                     <th>Status</th>
@@ -929,6 +982,8 @@
                     <th>Remarks</th>
                     <th>Pending Reason</th>
                 `;
+                
+                headerRow.innerHTML = headers;
             }
         }
 
@@ -995,7 +1050,6 @@
                     let csvRow = headers.map(col => {
                         let value = row[col] || '-';
                         
-                        // Format total_landed_cost with 2 decimal places
                         if (col === 'total_landed_cost' && value !== '-') {
                             value = parseFloat(value).toFixed(2);
                         }
