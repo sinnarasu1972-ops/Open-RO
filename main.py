@@ -332,10 +332,10 @@ async def mech_filters():
 
 @app.get("/api/filter-options/bodyshop")
 async def bs_filters():
-    """Bodyshop filters - dynamically extracts MJob options"""
+    """Bodyshop filters - dynamically extracts MJob options and billable types"""
     try:
         if df_global.empty:
-            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"], "billable_types": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
         
@@ -350,15 +350,20 @@ async def bs_filters():
             if m in mjobs_set:
                 mjobs_sorted.append(m)
         
+        billable_types = ['All'] + sorted([str(x) for x in df['billable_type'].dropna().unique().tolist() if x != 'Not Billed'])
+        if 'Not Billed' in df['billable_type'].values:
+            billable_types.append('Not Billed')
+        
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
             "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
-            "mjobs": mjobs_sorted
+            "mjobs": mjobs_sorted,
+            "billable_types": billable_types
         }
     except Exception as e:
         print(f"Error in bs_filters: {str(e)}")
-        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"]}
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "mjobs": ["All"], "billable_types": ["All"]}
 
 @app.get("/api/filter-options/accessories")
 async def acc_filters():
@@ -439,18 +444,19 @@ async def get_bodyshop(
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
     mjob: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
     reg_number: Optional[str] = Query(""),
     skip: int = Query(0),
     limit: int = Query(50)
 ):
-    """Get bodyshop vehicles with MJob filtering and Reg Number search"""
+    """Get bodyshop vehicles with MJob filtering, billable type filtering, and Reg Number search"""
     try:
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
         total = len(df)
-        df = apply_filters(df, branch, ro_status, age_bucket, mjob, reg_number=reg_number)
+        df = apply_filters(df, branch, ro_status, age_bucket, mjob, billable_type=billable_type, reg_number=reg_number)
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
@@ -538,14 +544,15 @@ async def export_bs(
     ro_status: Optional[str] = Query("All"),
     age_bucket: Optional[str] = Query("All"),
     mjob: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
     reg_number: Optional[str] = Query("")
 ):
-    """Export bodyshop vehicles with MJob filtering and Reg Number search"""
+    """Export bodyshop vehicles with MJob filtering, billable type filtering, and Reg Number search"""
     try:
         if df_global.empty:
             return {"vehicles": []}
         df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
-        df = apply_filters(df, branch, ro_status, age_bucket, mjob, reg_number=reg_number)
+        df = apply_filters(df, branch, ro_status, age_bucket, mjob, billable_type=billable_type, reg_number=reg_number)
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
