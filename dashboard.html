@@ -706,7 +706,8 @@
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
-                if (currentTab === 'mechanical' || currentTab === 'accessories' || currentTab === 'presale') {
+                // UPDATED: Now includes bodyshop
+                if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
                     billableTypeFilter.style.display = 'block';
                     const billableTypeOptions = data.billable_types || ['All'];
                     document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => 
@@ -765,6 +766,7 @@
             }
             if (currentTab === 'bodyshop') {
                 console.log('MJob:', document.getElementById('mjob').value);
+                console.log('Billable Type:', document.getElementById('billableType').value);
                 console.log('Reg Number:', document.getElementById('regNumber').value);
             }
             
@@ -786,6 +788,7 @@
             }
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
+                document.getElementById('billableType').value = 'All';
                 document.getElementById('regNumber').value = '';
             }
             
@@ -822,6 +825,7 @@
                     const mjob = document.getElementById('mjob').value;
                     const regNumber = document.getElementById('regNumber').value;
                     if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
+                    if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
                     if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
@@ -1050,6 +1054,8 @@
                     const regNumber = document.getElementById('regNumber').value;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
                 }
