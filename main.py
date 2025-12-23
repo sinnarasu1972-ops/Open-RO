@@ -216,6 +216,71 @@ async def statistics():
         print(f"Error in statistics: {str(e)}")
         return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
 
+@app.get("/api/dashboard/division-stats-v2")
+async def division_stats_v2(service_category: str = Query("mechanical")):
+    """Division-wise stats with both Open and Closed But Not Billed counts"""
+    try:
+        if df_global.empty:
+            return {"divisions": [], "total_open": 0, "total_closed_not_billed": 0}
+        
+        # Filter by service category
+        if service_category == "mechanical":
+            df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        elif service_category == "bodyshop":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        elif service_category == "accessories":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
+        elif service_category == "presale":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
+        else:
+            df = df_global
+        
+        # Get unique branches
+        branches = df['Branch'].unique()
+        
+        divisions = []
+        total_open = 0
+        total_closed_not_billed = 0
+        
+        for branch in sorted(branches):
+            df_branch = df[df['Branch'] == branch]
+            
+            # Count Open ROs
+            open_count = len(df_branch[df_branch['RO Status'] == 'Open'])
+            
+            # Count Closed but not billed ROs
+            closed_not_billed_count = len(df_branch[df_branch['RO Status'] == 'Closed but not billed'])
+            
+            total_open += open_count
+            total_closed_not_billed += closed_not_billed_count
+            
+            divisions.append({
+                'branch': branch,
+                'open_count': open_count,
+                'closed_not_billed_count': closed_not_billed_count,
+                'total': open_count + closed_not_billed_count
+            })
+        
+        # Sort by total count descending
+        divisions = sorted(divisions, key=lambda x: x['total'], reverse=True)
+        
+        return {
+            "service_category": service_category,
+            "total_open": total_open,
+            "total_closed_not_billed": total_closed_not_billed,
+            "divisions": divisions
+        }
+    except Exception as e:
+        print(f"Error in division_stats_v2: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "service_category": service_category,
+            "total_open": 0,
+            "total_closed_not_billed": 0,
+            "divisions": []
+        }
+
 @app.get("/api/dashboard/division-stats")
 async def division_stats(service_category: str = Query("mechanical")):
     """Division-wise (Branch-wise) open RO count for each service category"""
