@@ -1017,7 +1017,8 @@
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
-                const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
+                // ✅ Reg. Number for both Mechanical and Bodyshop
+                const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
                 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -1031,6 +1032,7 @@
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
                 if (mjob !== 'All') params.append('mjob', mjob);
+                // ✅ Include reg_number for both Mechanical and Bodyshop
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
                 if (params.toString()) {
@@ -1121,22 +1123,27 @@
 
                 const mjobFilter = document.getElementById('mjobFilter');
                 const regNumberFilter = document.getElementById('regNumberFilter');
+                
+                // Show Reg. Number filter on both Mechanical and Bodyshop
+                if (currentTab === 'mechanical' || currentTab === 'bodyshop') {
+                    regNumberFilter.style.display = 'block';
+                } else {
+                    regNumberFilter.style.display = 'none';
+                }
+                
+                // Show MJob filter only on Bodyshop
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
-                    regNumberFilter.style.display = 'block';
                     const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
                     document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
                         `<option value="${m}">${m}</option>`
                     ).join('');
-                    
-                    loadData();
-                    loadFilteredStats();
                 } else {
                     mjobFilter.style.display = 'none';
-                    regNumberFilter.style.display = 'none';
-                    loadData();
-                    loadFilteredStats();
                 }
+                
+                loadData();
+                loadFilteredStats();
             } catch (error) {
                 console.error('Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
@@ -1167,6 +1174,9 @@
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
+            }
+            // ✅ Clear Reg. Number for both Mechanical and Bodyshop
+            if (document.getElementById('regNumber')) {
                 document.getElementById('regNumber').value = '';
             }
             
@@ -1199,12 +1209,14 @@
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
                 
+                // ✅ Reg. Number search for both Mechanical and Bodyshop
+                const regNumber = document.getElementById('regNumber').value;
+                if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
+                
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
-                    const regNumber = document.getElementById('regNumber').value;
                     if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
-                    if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
                 console.log('Fetching data from:', url);
@@ -1425,15 +1437,19 @@
                 separator = (url.includes('?')) ? '&' : '?';
                 if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
                 
+                // ✅ Reg. Number export for both Mechanical and Bodyshop
+                const regNumber = document.getElementById('regNumber').value;
+                if (regNumber && regNumber.trim() !== '') {
+                    separator = (url.includes('?')) ? '&' : '?';
+                    url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
+                }
+                
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
-                    const regNumber = document.getElementById('regNumber').value;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
-                    separator = (url.includes('?')) ? '&' : '?';
-                    if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
                 const response = await fetch(url);
