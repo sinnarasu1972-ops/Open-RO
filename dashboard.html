@@ -685,7 +685,7 @@
             <div class="filters-grid">
                 <div class="filter-group">
                     <label>Branch</label>
-                    <select id="branch" onchange="onFilterChange()">
+                    <select id="branch" onchange="onBranchChange()">
                         <option>All</option>
                     </select>
                 </div>
@@ -1072,7 +1072,9 @@
 
         async function loadFilters() {
             try {
-                const url = `${API_URL}/api/filter-options/${currentTab}`;
+                const branch = document.getElementById('branch').value;
+                // ✅ Pass branch parameter to get SA Names for that branch
+                const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(branch)}`;
                 console.log('Fetching filters from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1080,8 +1082,11 @@
                 const data = await response.json();
                 console.log('Filters loaded:', data);
                 
+                // Keep branch value
+                const currentBranch = document.getElementById('branch').value;
                 document.getElementById('branch').innerHTML = '<option>All</option>' + 
                     data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
+                document.getElementById('branch').value = currentBranch;
                 
                 document.getElementById('status').innerHTML = '<option>All</option>' + 
                     data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
@@ -1092,11 +1097,12 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
-                // ✅ LOAD SA NAMES
+                // ✅ LOAD SA NAMES - FILTERED BY SELECTED BRANCH
                 if (data.sa_names) {
                     const saNameHTML = '<option>All</option>' + 
                         data.sa_names.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                     document.getElementById('saName').innerHTML = saNameHTML;
+                    console.log('SA Names loaded for branch:', currentBranch, '- Count:', data.sa_names.length);
                 }
 
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
@@ -1142,12 +1148,22 @@
                     mjobFilter.style.display = 'none';
                 }
                 
+                // Load data and stats after filters are loaded
                 loadData();
                 loadFilteredStats();
             } catch (error) {
                 console.error('Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
+        }
+
+        function onBranchChange() {
+            console.log('\n>>> BRANCH CHANGED <<<');
+            // Reset SA Name to "All" when branch changes
+            document.getElementById('saName').value = 'All';
+            // Reload filters to get SA Names for the selected branch
+            loadFilters();
+            console.log('>>> BRANCH CHANGED - FILTERS RELOADED <<<\n');
         }
 
         function onFilterChange() {
