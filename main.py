@@ -216,6 +216,54 @@ async def statistics():
         print(f"Error in statistics: {str(e)}")
         return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
 
+@app.get("/api/dashboard/division-stats")
+async def division_stats(service_category: str = Query("mechanical")):
+    """Division-wise (Branch-wise) open RO count for each service category"""
+    try:
+        if df_global.empty:
+            return {"divisions": []}
+        
+        # Filter by service category
+        if service_category == "mechanical":
+            df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        elif service_category == "bodyshop":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        elif service_category == "accessories":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
+        elif service_category == "presale":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
+        else:
+            df = df_global
+        
+        # Filter only OPEN ROs
+        df_open = df[df['RO Status'] == 'Open'].copy()
+        
+        # Group by Branch and count
+        division_stats = df_open.groupby('Branch').size().reset_index(name='count')
+        division_stats = division_stats.sort_values('count', ascending=False)
+        
+        # Convert to list of dicts
+        divisions = [
+            {
+                'branch': row['Branch'],
+                'open_count': int(row['count'])
+            }
+            for _, row in division_stats.iterrows()
+        ]
+        
+        total_open = int(df_open.shape[0])
+        
+        return {
+            "service_category": service_category,
+            "total_open": total_open,
+            "divisions": divisions
+        }
+    except Exception as e:
+        print(f"Error in division_stats: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"service_category": service_category, "total_open": 0, "divisions": []}
+
 @app.get("/api/dashboard/statistics/filtered")
 async def filtered_statistics(
     branch: Optional[str] = Query("All"),
