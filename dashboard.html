@@ -307,6 +307,10 @@
         th:nth-child(1), td:nth-child(1) { width: 110px; min-width: 110px; }
         th:nth-child(2), td:nth-child(2) { width: 110px; min-width: 110px; }
         th:nth-child(3), td:nth-child(3) { width: 100px; min-width: 100px; }
+        th:nth-child(4), td:nth-child(4) { width: 120px; min-width: 120px; }
+        th:nth-child(5), td:nth-child(5) { width: 100px; min-width: 100px; }
+        th:nth-child(6), td:nth-child(6) { width: 130px; min-width: 130px; }
+        th:nth-child(7), td:nth-child(7) { width: 150px; min-width: 150px; }
         
         .landed-cost-cell {
             background: #f0f7ff;
@@ -330,7 +334,7 @@
             100% { transform: scale(1); }
         }
 
-        /* ==================== COMPACT MODAL WITH SIDE BY SIDE COUNTS ==================== */
+        /* ==================== COMPACT MODAL STYLES ==================== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -358,7 +362,7 @@
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 480px;
+            max-width: 450px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
@@ -418,7 +422,7 @@
             padding: 20px;
         }
 
-        /* DIVISION CARD WITH SIDE BY SIDE COUNTS */
+        /* COMPACT DIVISION CARD LAYOUT */
         .division-card {
             display: flex;
             flex-direction: column;
@@ -437,40 +441,38 @@
         }
 
         .division-branch {
-            font-weight: 700;
+            font-weight: 600;
             color: #333;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-align: center;
-            letter-spacing: 1px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            word-break: break-word;
         }
 
-        .division-counts-row {
+        .division-counts {
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            gap: 20px;
+            justify-content: space-between;
+            gap: 15px;
         }
 
-        .count-column {
+        .count-item {
             flex: 1;
             text-align: center;
         }
 
         .count-label {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 700;
             color: #666;
             text-transform: uppercase;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             letter-spacing: 0.5px;
         }
 
         .count-value {
             font-weight: 700;
-            font-size: 22px;
-            padding: 6px 12px;
-            border-radius: 8px;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 6px;
         }
 
         .count-open {
@@ -481,12 +483,6 @@
         .count-closed {
             background: #e8f5e9;
             color: #27ae60;
-        }
-
-        .divider {
-            width: 2px;
-            height: 50px;
-            background: #ddd;
         }
 
         .modal-footer {
@@ -509,7 +505,6 @@
         .footer-counts {
             display: flex;
             justify-content: space-around;
-            align-items: center;
             gap: 20px;
         }
 
@@ -528,16 +523,10 @@
         }
 
         .footer-count-value {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             color: white;
             display: block;
-        }
-
-        .footer-divider {
-            width: 2px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.3);
         }
 
         .modal-loading {
@@ -597,7 +586,7 @@
             .modal {
                 width: 95%;
                 max-height: 90vh;
-                max-width: 420px;
+                max-width: 400px;
             }
 
             .modal-header h2 {
@@ -614,16 +603,12 @@
             }
 
             .division-branch {
-                font-size: 13px;
-                margin-bottom: 8px;
+                font-size: 11px;
+                margin-bottom: 6px;
             }
 
             .count-value {
-                font-size: 20px;
-            }
-
-            .divider {
-                height: 45px;
+                font-size: 16px;
             }
 
             .modal-footer {
@@ -631,11 +616,7 @@
             }
 
             .footer-count-value {
-                font-size: 24px;
-            }
-
-            .footer-divider {
-                height: 50px;
+                font-size: 22px;
             }
         }
     </style>
@@ -707,6 +688,28 @@
                         <option>All</option>
                     </select>
                 </div>
+                <div class="filter-group" id="billableTypeFilter" style="display:none;">
+                    <label>Billable Type</label>
+                    <select id="billableType" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="serviceTypeFilter" style="display:none;">
+                    <label>Service Type</label>
+                    <select id="serviceType" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="mjobFilter" style="display:none;">
+                    <label>MJob Type</label>
+                    <select id="mjob" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="regNumberFilter" style="display:none;">
+                    <label>Reg. Number (Search)</label>
+                    <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
+                </div>
             </div>
         </div>
 
@@ -721,7 +724,7 @@
                         <option value="100">&gt;50 Records</option>
                     </select>
                 </div>
-                <button class="export-btn" onclick="exportToCSV()">📥 Export</button>
+                <button class="export-btn" onclick="exportToCSV()">📥 Export Filtered Data to Excel</button>
             </div>
             <div class="table-wrapper">
                 <table>
@@ -730,6 +733,10 @@
                             <th>RO Number</th>
                             <th>Landed Cost</th>
                             <th>RO Date</th>
+                            <th>Branch</th>
+                            <th>Status</th>
+                            <th>SA Name</th>
+                            <th>Vehicle No</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -742,7 +749,7 @@
         </div>
     </div>
 
-    <!-- COMPACT MODAL WITH SIDE BY SIDE COUNTS -->
+    <!-- ==================== COMPACT MODAL ==================== -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="divisionModal">
             <div class="modal-header">
@@ -759,7 +766,6 @@
                         <div class="footer-count-label">Open</div>
                         <span class="footer-count-value" id="footerOpenTotal">0</span>
                     </div>
-                    <div class="footer-divider"></div>
                     <div class="footer-count-item">
                         <div class="footer-count-label">Closed</div>
                         <span class="footer-count-value" id="footerClosedTotal">0</span>
@@ -773,6 +779,7 @@
         const API_URL = window.location.origin;
         
         let currentTab = 'mechanical';
+        let allData = [];
 
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
@@ -791,7 +798,43 @@
             return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
         }
 
+        function sortAgeBuckets(ageBuckets) {
+            const ageBucketOrder = [
+                '0-3 days', 
+                '4-10 days', 
+                '11-15 days', 
+                '16-30 days', 
+                '31-60 days',
+                'Above 60'
+            ];
+            
+            let sorted = [];
+            
+            for (let order of ageBucketOrder) {
+                for (let bucket of ageBuckets) {
+                    let bucketLower = bucket.toLowerCase().trim();
+                    let orderLower = order.toLowerCase().trim();
+                    
+                    if (bucketLower === orderLower || bucketLower.includes(orderLower)) {
+                        if (!sorted.includes(bucket)) {
+                            sorted.push(bucket);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            ageBuckets.forEach(bucket => {
+                if (!sorted.includes(bucket)) {
+                    sorted.push(bucket);
+                }
+            });
+            
+            return sorted;
+        }
+
         window.onload = function() {
+            console.log('Dashboard loaded, API_URL:', API_URL);
             loadStats();
             loadFilters();
             loadData();
@@ -804,7 +847,8 @@
 
         async function loadStats() {
             try {
-                const response = await fetch(`${API_URL}/api/dashboard/statistics`);
+                const url = `${API_URL}/api/dashboard/statistics`;
+                const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
@@ -845,17 +889,15 @@
                 let html = '';
                 
                 data.divisions.forEach(div => {
-                    const abbr = abbreviateBranch(div.branch);
                     html += `
                         <div class="division-card">
-                            <div class="division-branch">${abbr}</div>
-                            <div class="division-counts-row">
-                                <div class="count-column">
+                            <div class="division-branch">${div.branch}</div>
+                            <div class="division-counts">
+                                <div class="count-item">
                                     <div class="count-label">Open</div>
                                     <div class="count-value count-open">${div.open_count}</div>
                                 </div>
-                                <div class="divider"></div>
-                                <div class="count-column">
+                                <div class="count-item">
                                     <div class="count-label">Closed</div>
                                     <div class="count-value count-closed">${div.closed_not_billed_count}</div>
                                 </div>
@@ -873,7 +915,7 @@
                 modalBody.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">⚠️</div>
-                        <p>Error loading data</p>
+                        <p>Error loading data: ${error.message}</p>
                     </div>
                 `;
             }
@@ -907,6 +949,10 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
+                const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
+                const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
                 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -916,6 +962,10 @@
                 if (branch !== 'All') params.append('branch', branch);
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
+                if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
+                if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
+                if (mjob !== 'All') params.append('mjob', mjob);
+                if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
                 if (params.toString()) {
                     url += '?' + params.toString();
@@ -958,11 +1008,52 @@
                 document.getElementById('status').innerHTML = '<option>All</option>' + 
                     data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                 
-                document.getElementById('age').innerHTML = '<option>All</option>' + 
-                    data.age_buckets.filter(a => a !== 'All').map(a => `<option>${a}</option>`).join('');
+                let ageBucketsFiltered = data.age_buckets.filter(a => a !== 'All');
+                let sortedAgeBuckets = sortAgeBuckets(ageBucketsFiltered);
                 
-                loadData();
-                loadFilteredStats();
+                document.getElementById('age').innerHTML = '<option>All</option>' + 
+                    sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
+
+                const billableTypeFilter = document.getElementById('billableTypeFilter');
+                if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
+                    billableTypeFilter.style.display = 'block';
+                    const billableTypeOptions = data.billable_types || ['All'];
+                    document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => 
+                        `<option value="${bt}">${bt}</option>`
+                    ).join('');
+                } else {
+                    billableTypeFilter.style.display = 'none';
+                }
+
+                const serviceTypeFilter = document.getElementById('serviceTypeFilter');
+                if (currentTab === 'mechanical') {
+                    serviceTypeFilter.style.display = 'block';
+                    const serviceTypeOptions = data.service_types || ['All'];
+                    document.getElementById('serviceType').innerHTML = serviceTypeOptions.map(st => 
+                        `<option value="${st}">${st}</option>`
+                    ).join('');
+                } else {
+                    serviceTypeFilter.style.display = 'none';
+                }
+
+                const mjobFilter = document.getElementById('mjobFilter');
+                const regNumberFilter = document.getElementById('regNumberFilter');
+                if (currentTab === 'bodyshop') {
+                    mjobFilter.style.display = 'block';
+                    regNumberFilter.style.display = 'block';
+                    const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
+                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
+                        `<option value="${m}">${m}</option>`
+                    ).join('');
+                    
+                    loadData();
+                    loadFilteredStats();
+                } else {
+                    mjobFilter.style.display = 'none';
+                    regNumberFilter.style.display = 'none';
+                    loadData();
+                    loadFilteredStats();
+                }
             } catch (error) {
                 console.error('Error loading filters:', error);
             }
@@ -977,6 +1068,17 @@
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
+            if (document.getElementById('billableType')) {
+                document.getElementById('billableType').value = 'All';
+            }
+            if (document.getElementById('serviceType')) {
+                document.getElementById('serviceType').value = 'All';
+            }
+            if (currentTab === 'bodyshop') {
+                document.getElementById('mjob').value = 'All';
+                document.getElementById('billableType').value = 'All';
+                document.getElementById('regNumber').value = '';
+            }
             
             loadStats();
             loadData();
@@ -999,17 +1101,25 @@
                 
                 const data = await response.json();
                 
+                if (data.error) {
+                    document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                allData = data.vehicles;
+
                 document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = '';
 
                 if (data.vehicles.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="loading">No data found</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="16" class="loading">No data found</td></tr>`;
                     return;
                 }
 
                 data.vehicles.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
+                    const branchAbbr = abbreviateBranch(v.branch);
                     const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                     
                     let rowHTML = `
@@ -1017,6 +1127,10 @@
                             <td><strong>${v.ro_id}</strong></td>
                             <td class="landed-cost-cell">${landedCostDisplay}</td>
                             <td>${v.ro_date}</td>
+                            <td><span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-weight: bold;">${branchAbbr}</span></td>
+                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                            <td>${v.service_adviser || '-'}</td>
+                            <td>${v.reg_number}</td>
                         </tr>
                     `;
                     
@@ -1025,6 +1139,7 @@
 
             } catch (error) {
                 console.error('Error loading data:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
             }
         }
 
@@ -1033,13 +1148,16 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             loadFilters();
+            
+            // Show the modal with division stats
             openModal();
         }
 
         async function exportToCSV() {
             try {
                 const btn = event.target;
-                btn.textContent = '⏳...';
+                const originalText = btn.textContent;
+                btn.textContent = '⏳ Preparing...';
                 btn.disabled = true;
 
                 let url = `${API_URL}/api/export/${currentTab}`;
@@ -1052,16 +1170,19 @@
 
                 if (exportData.length === 0) {
                     alert('No data to export!');
-                    btn.textContent = '📥 Export';
+                    btn.textContent = originalText;
                     btn.disabled = false;
                     return;
                 }
 
                 const allColumns = Object.keys(exportData[0]);
-                let csv = [allColumns.join(',')];
+                const headers = allColumns;
+
+                let csv = [];
+                csv.push(headers.join(','));
 
                 exportData.forEach(row => {
-                    let csvRow = allColumns.map(col => {
+                    let csvRow = headers.map(col => {
                         let value = row[col] || '-';
                         value = String(value).replace(/\"/g, '\"\"');
                         return `"${value}"`;
@@ -1069,19 +1190,25 @@
                     csv.push(csvRow.join(','));
                 });
 
-                const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const csvContent = csv.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `RO_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
+                const url_obj = URL.createObjectURL(blob);
+                const fileName = `RO_Dashboard_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
+                
+                link.href = url_obj;
+                link.download = fileName;
                 link.click();
+                URL.revokeObjectURL(url_obj);
 
-                btn.textContent = '✅ Done!';
+                btn.textContent = '✅ Exported!';
                 setTimeout(() => {
-                    btn.textContent = '📥 Export';
+                    btn.textContent = originalText;
                     btn.disabled = false;
                 }, 2000);
             } catch (error) {
-                alert('Error: ' + error.message);
+                console.error('Export error:', error);
+                alert('Error exporting data: ' + error.message);
                 event.target.textContent = '📥 Export';
                 event.target.disabled = false;
             }
