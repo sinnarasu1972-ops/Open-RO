@@ -709,7 +709,7 @@
             <div class="filters-grid">
                 <div class="filter-group">
                     <label>Branch</label>
-                    <select id="branch" onchange="onFilterChange()">
+                    <select id="branch" onchange="onBranchChange()">
                         <option>All</option>
                     </select>
                 </div>
@@ -734,6 +734,12 @@
                 <div class="filter-group" id="serviceTypeFilter" style="display:none;">
                     <label>Service Type</label>
                     <select id="serviceType" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="saNameFilter" style="display:none;">
+                    <label>SA Name</label>
+                    <select id="saName" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
                 </div>
@@ -1032,7 +1038,8 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
-                const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
+                const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const regNumber = (currentTab === 'bodyshop' || currentTab === 'mechanical') ? document.getElementById('regNumber').value : '';
                 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -1044,6 +1051,7 @@
                 if (age !== 'All') params.append('age_bucket', age);
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
+                if (saName !== 'All' && saName !== undefined) params.append('sa_name', saName);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
@@ -1084,7 +1092,8 @@
 
         async function loadFilters() {
             try {
-                const url = `${API_URL}/api/filter-options/${currentTab}`;
+                const branch = document.getElementById('branch').value;
+                const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(branch)}`;
                 console.log('Fetching filters from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1104,6 +1113,13 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
+                // Load SA Names
+                if (data.sa_names) {
+                    document.getElementById('saName').innerHTML = data.sa_names.map(s => 
+                        `<option value="${s}">${s}</option>`
+                    ).join('');
+                }
+
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
                 if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
                     billableTypeFilter.style.display = 'block';
@@ -1113,6 +1129,13 @@
                     ).join('');
                 } else {
                     billableTypeFilter.style.display = 'none';
+                }
+
+                const saNameFilter = document.getElementById('saNameFilter');
+                if (currentTab !== 'mechanical' && currentTab !== 'bodyshop' && currentTab !== 'accessories' && currentTab !== 'presale') {
+                    saNameFilter.style.display = 'none';
+                } else {
+                    saNameFilter.style.display = 'block';
                 }
 
                 const serviceTypeFilter = document.getElementById('serviceTypeFilter');
@@ -1138,6 +1161,11 @@
                     
                     loadData();
                     loadFilteredStats();
+                } else if (currentTab === 'mechanical') {
+                    mjobFilter.style.display = 'none';
+                    regNumberFilter.style.display = 'block';
+                    loadData();
+                    loadFilteredStats();
                 } else {
                     mjobFilter.style.display = 'none';
                     regNumberFilter.style.display = 'none';
@@ -1148,6 +1176,11 @@
                 console.error('Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
+        }
+
+        function onBranchChange() {
+            console.log('>>> BRANCH CHANGED <<<');
+            loadFilters();
         }
 
         function onFilterChange() {
@@ -1168,14 +1201,19 @@
             if (document.getElementById('serviceType')) {
                 document.getElementById('serviceType').value = 'All';
             }
+            if (document.getElementById('saName')) {
+                document.getElementById('saName').value = 'All';
+            }
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
                 document.getElementById('regNumber').value = '';
+            } else if (currentTab === 'mechanical') {
+                document.getElementById('regNumber').value = '';
             }
             
             loadStats();
-            loadData();
+            loadFilters();
             
             console.log('>>> ALL FILTERS CLEARED <<<\n');
         }
@@ -1192,6 +1230,7 @@
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
+                const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
@@ -1200,12 +1239,16 @@
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
+                if (saName !== 'All' && saName !== undefined) url += `&sa_name=${encodeURIComponent(saName)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
                     const regNumber = document.getElementById('regNumber').value;
                     if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
+                    if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
+                } else if (currentTab === 'mechanical') {
+                    const regNumber = document.getElementById('regNumber').value;
                     if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
@@ -1407,6 +1450,7 @@
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
+                const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
 
                 const btn = event.target;
                 const originalText = btn.textContent;
@@ -1423,6 +1467,8 @@
                 if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (saName !== 'All' && saName !== undefined) url += `${separator}sa_name=${encodeURIComponent(saName)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
@@ -1431,6 +1477,10 @@
                     if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
+                } else if (currentTab === 'mechanical') {
+                    const regNumber = document.getElementById('regNumber').value;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
                 }
