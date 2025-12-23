@@ -304,30 +304,6 @@
             vertical-align: top;
         }
         
-        /* Column widths for regular view (without Vehicle Ready Date) */
-        th:nth-child(1), td:nth-child(1) { width: 110px; min-width: 110px; } /* RO ID */
-        th:nth-child(2), td:nth-child(2) { width: 110px; min-width: 110px; } /* Landed Cost */
-        th:nth-child(3), td:nth-child(3) { width: 100px; min-width: 100px; } /* RO Date */
-        th:nth-child(4), td:nth-child(4) { width: 120px; min-width: 120px; } /* SA Name / Vehicle Ready Date */
-        th:nth-child(5), td:nth-child(5) { width: 100px; min-width: 100px; } /* Branch / TAT Current */
-        th:nth-child(6), td:nth-child(6) { width: 130px; min-width: 130px; } /* Status / SA Name */
-        th:nth-child(7), td:nth-child(7) { width: 150px; min-width: 150px; } /* Service Type / Branch */
-        th:nth-child(8), td:nth-child(8) { width: 100px; min-width: 100px; } /* Model Group / Status */
-        th:nth-child(9), td:nth-child(9) { width: 110px; min-width: 110px; } /* Reg Number / Model */
-        th:nth-child(10), td:nth-child(10) { width: 100px; min-width: 100px; } /* Age / Reg Number */
-        th:nth-child(11), td:nth-child(11) { width: 80px; min-width: 80px; } /* Days / Age */
-        th:nth-child(12), td:nth-child(12) { width: 80px; min-width: 80px; } /* KM / Days */
-        th:nth-child(13), td:nth-child(13) { width: 80px; min-width: 80px; } /* Remarks / KM */
-        th:nth-child(14), td:nth-child(14) { width: 400px; min-width: 400px; } /* Pending / Remarks */
-        th:nth-child(15), td:nth-child(15) { width: 300px; min-width: 300px; } /* Pending Reason */
-        th:nth-child(16), td:nth-child(16) { width: 300px; min-width: 300px; } /* Extra column */
-        
-        /* Special styling for text columns */
-        td:nth-child(14), td:nth-child(15) { 
-            word-break: break-word; 
-            white-space: normal;
-        }
-        
         .landed-cost-cell {
             background: #f0f7ff;
             color: #1967d2;
@@ -709,7 +685,7 @@
             <div class="filters-grid">
                 <div class="filter-group">
                     <label>Branch</label>
-                    <select id="branch" onchange="onBranchChange()">
+                    <select id="branch" onchange="onFilterChange()">
                         <option>All</option>
                     </select>
                 </div>
@@ -737,7 +713,8 @@
                         <option>All</option>
                     </select>
                 </div>
-                <div class="filter-group" id="saNameFilter" style="display:none;">
+                <!-- ✅ NEW: SA NAME FILTER -->
+                <div class="filter-group" id="saNameFilter">
                     <label>SA Name</label>
                     <select id="saName" onchange="onFilterChange()">
                         <option>All</option>
@@ -749,6 +726,7 @@
                         <option>All</option>
                     </select>
                 </div>
+                <!-- ✅ NEW: REG NUMBER SEARCH -->
                 <div class="filter-group" id="regNumberFilter" style="display:none;">
                     <label>Reg. Number (Search)</label>
                     <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
@@ -1037,9 +1015,9 @@
                 const age = document.getElementById('age').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
-                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
-                const regNumber = (currentTab === 'bodyshop' || currentTab === 'mechanical') ? document.getElementById('regNumber').value : '';
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
+                const regNumber = currentTab === 'bodyshop' ? document.getElementById('regNumber').value : '';
                 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -1051,7 +1029,7 @@
                 if (age !== 'All') params.append('age_bucket', age);
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
-                if (saName !== 'All' && saName !== undefined) params.append('sa_name', saName);
+                if (saName !== 'All') params.append('sa_name', saName);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
@@ -1092,108 +1070,32 @@
 
         async function loadFilters() {
             try {
-                // Get current branch BEFORE any changes
-                const currentBranch = document.getElementById('branch').value;
-                const currentSaName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
-                
-                const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(currentBranch)}`;
+                const url = `${API_URL}/api/filter-options/${currentTab}`;
                 console.log('Fetching filters from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
                 console.log('Filters loaded:', data);
-                console.log('Current branch before reload:', currentBranch);
                 
-                // Reload branch dropdown but PRESERVE selected value
-                const branchSelect = document.getElementById('branch');
-                branchSelect.innerHTML = '<option value="All">All</option>' + 
-                    data.branches.filter(b => b !== 'All').map(b => `<option value="${b}">${b}</option>`).join('');
-                branchSelect.value = currentBranch;
-                console.log('Branch value after reload:', branchSelect.value);
+                document.getElementById('branch').innerHTML = '<option>All</option>' + 
+                    data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
                 
-                // Reload RO Status
                 document.getElementById('status').innerHTML = '<option>All</option>' + 
                     data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                 
-                // Reload Age Bucket with proper sorting
                 let ageBucketsFiltered = data.age_buckets.filter(a => a !== 'All');
                 let sortedAgeBuckets = sortAgeBuckets(ageBucketsFiltered);
+                
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
-                // Reload Billable Type if it exists
-                const billableTypeFilter = document.getElementById('billableTypeFilter');
-                if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
-                    billableTypeFilter.style.display = 'block';
-                    const billableTypeOptions = data.billable_types || ['All'];
-                    document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => 
-                        `<option value="${bt}">${bt}</option>`
-                    ).join('');
-                } else {
-                    billableTypeFilter.style.display = 'none';
-                }
-
-                // Reload Service Type if Mechanical
-                const serviceTypeFilter = document.getElementById('serviceTypeFilter');
-                if (currentTab === 'mechanical') {
-                    serviceTypeFilter.style.display = 'block';
-                    const serviceTypeOptions = data.service_types || ['All'];
-                    document.getElementById('serviceType').innerHTML = serviceTypeOptions.map(st => 
-                        `<option value="${st}">${st}</option>`
-                    ).join('');
-                } else {
-                    serviceTypeFilter.style.display = 'none';
-                }
-
-                // Reload SA Names - PRESERVE selected value
-                const saNameSelect = document.getElementById('saName');
+                // ✅ LOAD SA NAMES
                 if (data.sa_names) {
-                    const saNameOptions = data.sa_names.map(s => 
-                        `<option value="${s}">${s}</option>`
-                    ).join('');
-                    saNameSelect.innerHTML = '<option value="All">All</option>' + saNameOptions;
-                    
-                    // Try to restore previous SA Name, if not found reset to All
-                    if (Array.from(saNameSelect.options).some(opt => opt.value === currentSaName)) {
-                        saNameSelect.value = currentSaName;
-                        console.log('SA Name restored to:', currentSaName);
-                    } else {
-                        saNameSelect.value = 'All';
-                        console.log('SA Name reset to All (not found in new branch)');
-                    }
+                    const saNameHTML = '<option>All</option>' + 
+                        data.sa_names.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
+                    document.getElementById('saName').innerHTML = saNameHTML;
                 }
-
-                // Handle MJob and Reg Number filters
-                const mjobFilter = document.getElementById('mjobFilter');
-                const regNumberFilter = document.getElementById('regNumberFilter');
-                
-                if (currentTab === 'bodyshop') {
-                    mjobFilter.style.display = 'block';
-                    regNumberFilter.style.display = 'block';
-                    const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
-                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
-                        `<option value="${m}">${m}</option>`
-                    ).join('');
-                } else if (currentTab === 'mechanical') {
-                    mjobFilter.style.display = 'none';
-                    regNumberFilter.style.display = 'block';
-                } else {
-                    mjobFilter.style.display = 'none';
-                    regNumberFilter.style.display = 'none';
-                }
-
-                // Ensure SA Name filter is visible for all tabs
-                const saNameFilter = document.getElementById('saNameFilter');
-                saNameFilter.style.display = 'block';
-
-                console.log('>>> FILTERS RELOADED - BRANCH VALUE PRESERVED <<<');
-                
-            } catch (error) {
-                console.error('Error loading filters:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
-            }
-        }
 
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
                 if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
@@ -1204,13 +1106,6 @@
                     ).join('');
                 } else {
                     billableTypeFilter.style.display = 'none';
-                }
-
-                const saNameFilter = document.getElementById('saNameFilter');
-                if (currentTab !== 'mechanical' && currentTab !== 'bodyshop' && currentTab !== 'accessories' && currentTab !== 'presale') {
-                    saNameFilter.style.display = 'none';
-                } else {
-                    saNameFilter.style.display = 'block';
                 }
 
                 const serviceTypeFilter = document.getElementById('serviceTypeFilter');
@@ -1236,11 +1131,6 @@
                     
                     loadData();
                     loadFilteredStats();
-                } else if (currentTab === 'mechanical') {
-                    mjobFilter.style.display = 'none';
-                    regNumberFilter.style.display = 'block';
-                    loadData();
-                    loadFilteredStats();
                 } else {
                     mjobFilter.style.display = 'none';
                     regNumberFilter.style.display = 'none';
@@ -1251,43 +1141,6 @@
                 console.error('Error loading filters:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
-        }
-
-        function onBranchChange() {
-            console.log('>>> BRANCH CHANGED <<<');
-            const selectedBranch = document.getElementById('branch').value;
-            console.log('Branch selected:', selectedBranch);
-            
-            // Reset SA Name to All when branch changes (but branch stays selected)
-            const saNameSelect = document.getElementById('saName');
-            if (saNameSelect) {
-                saNameSelect.value = 'All';
-            }
-            
-            // Reset other filters
-            document.getElementById('status').value = 'All';
-            document.getElementById('age').value = 'All';
-            if (document.getElementById('billableType')) {
-                document.getElementById('billableType').value = 'All';
-            }
-            if (document.getElementById('serviceType')) {
-                document.getElementById('serviceType').value = 'All';
-            }
-            if (document.getElementById('mjob')) {
-                document.getElementById('mjob').value = 'All';
-            }
-            if (document.getElementById('regNumber')) {
-                document.getElementById('regNumber').value = '';
-            }
-            
-            // Load filters (which will reload SA Names for selected branch)
-            loadFilters();
-            
-            // Then load updated data and stats
-            setTimeout(() => {
-                loadFilteredStats();
-                loadData();
-            }, 100);
         }
 
         function onFilterChange() {
@@ -1299,11 +1152,9 @@
         function clearAllFilters() {
             console.log('>>> CLEARING ALL FILTERS <<<');
             
-            // Reset all filter values to "All" or empty
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
-            
             if (document.getElementById('billableType')) {
                 document.getElementById('billableType').value = 'All';
             }
@@ -1313,21 +1164,14 @@
             if (document.getElementById('saName')) {
                 document.getElementById('saName').value = 'All';
             }
-            if (document.getElementById('mjob')) {
+            if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
-            }
-            if (document.getElementById('regNumber')) {
+                document.getElementById('billableType').value = 'All';
                 document.getElementById('regNumber').value = '';
             }
             
-            // Reload everything
             loadStats();
-            loadFilters();
-            
-            setTimeout(() => {
-                loadFilteredStats();
-                loadData();
-            }, 100);
+            loadData();
             
             console.log('>>> ALL FILTERS CLEARED <<<\n');
         }
@@ -1353,16 +1197,13 @@
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
-                if (saName !== 'All' && saName !== undefined) url += `&sa_name=${encodeURIComponent(saName)}`;
+                if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
                     const regNumber = document.getElementById('regNumber').value;
                     if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
-                    if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
-                } else if (currentTab === 'mechanical') {
-                    const regNumber = document.getElementById('regNumber').value;
                     if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 }
 
@@ -1582,7 +1423,7 @@
                 separator = (url.includes('?')) ? '&' : '?';
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
-                if (saName !== 'All' && saName !== undefined) url += `${separator}sa_name=${encodeURIComponent(saName)}`;
+                if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
                 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
@@ -1591,10 +1432,6 @@
                     if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
-                    separator = (url.includes('?')) ? '&' : '?';
-                    if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
-                } else if (currentTab === 'mechanical') {
-                    const regNumber = document.getElementById('regNumber').value;
                     separator = (url.includes('?')) ? '&' : '?';
                     if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
                 }
