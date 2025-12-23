@@ -304,17 +304,45 @@
             vertical-align: top;
         }
         
-        th:nth-child(1), td:nth-child(1) { width: 110px; min-width: 110px; }
-        th:nth-child(2), td:nth-child(2) { width: 110px; min-width: 110px; }
-        th:nth-child(3), td:nth-child(3) { width: 100px; min-width: 100px; }
-        th:nth-child(4), td:nth-child(4) { width: 120px; min-width: 120px; }
-        th:nth-child(5), td:nth-child(5) { width: 100px; min-width: 100px; }
-        th:nth-child(6), td:nth-child(6) { width: 130px; min-width: 130px; }
-        th:nth-child(7), td:nth-child(7) { width: 150px; min-width: 150px; }
+        /* Column widths for regular view (without Vehicle Ready Date) */
+        th:nth-child(1), td:nth-child(1) { width: 110px; min-width: 110px; } /* RO ID */
+        th:nth-child(2), td:nth-child(2) { width: 110px; min-width: 110px; } /* Landed Cost */
+        th:nth-child(3), td:nth-child(3) { width: 100px; min-width: 100px; } /* RO Date */
+        th:nth-child(4), td:nth-child(4) { width: 120px; min-width: 120px; } /* SA Name / Vehicle Ready Date */
+        th:nth-child(5), td:nth-child(5) { width: 100px; min-width: 100px; } /* Branch / TAT Current */
+        th:nth-child(6), td:nth-child(6) { width: 130px; min-width: 130px; } /* Status / SA Name */
+        th:nth-child(7), td:nth-child(7) { width: 150px; min-width: 150px; } /* Service Type / Branch */
+        th:nth-child(8), td:nth-child(8) { width: 100px; min-width: 100px; } /* Model Group / Status */
+        th:nth-child(9), td:nth-child(9) { width: 110px; min-width: 110px; } /* Reg Number / Model */
+        th:nth-child(10), td:nth-child(10) { width: 100px; min-width: 100px; } /* Age / Reg Number */
+        th:nth-child(11), td:nth-child(11) { width: 80px; min-width: 80px; } /* Days / Age */
+        th:nth-child(12), td:nth-child(12) { width: 80px; min-width: 80px; } /* KM / Days */
+        th:nth-child(13), td:nth-child(13) { width: 80px; min-width: 80px; } /* Remarks / KM */
+        th:nth-child(14), td:nth-child(14) { width: 400px; min-width: 400px; } /* Pending / Remarks */
+        th:nth-child(15), td:nth-child(15) { width: 300px; min-width: 300px; } /* Pending Reason */
+        th:nth-child(16), td:nth-child(16) { width: 300px; min-width: 300px; } /* Extra column */
+        
+        /* Special styling for text columns */
+        td:nth-child(14), td:nth-child(15) { 
+            word-break: break-word; 
+            white-space: normal;
+        }
         
         .landed-cost-cell {
             background: #f0f7ff;
             color: #1967d2;
+            font-weight: 600;
+        }
+        
+        .vehicle-ready-date-cell {
+            background: #fff3e0;
+            color: #f57c00;
+            font-weight: 600;
+        }
+        
+        .tat-current-cell {
+            background: #e8f5e9;
+            color: #2e7d32;
             font-weight: 600;
         }
         
@@ -324,6 +352,10 @@
         .badge-open { background: #fef3e2; color: #e67e22; }
         .badge-closed { background: #e8f5e9; color: #27ae60; }
         .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
+        .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
+        .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
+        .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
         .loading { text-align: center; padding: 40px; color: #667eea; }
         .stat-updating {
             animation: pulse 0.5s ease-in-out;
@@ -334,7 +366,7 @@
             100% { transform: scale(1); }
         }
 
-        /* ==================== COMPACT MODAL STYLES ==================== */
+        /* ==================== MODAL STYLES ==================== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -362,7 +394,7 @@
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 450px;
+            max-width: 600px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
@@ -394,7 +426,7 @@
 
         .modal-header h2 {
             margin: 0;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
         }
 
@@ -419,60 +451,67 @@
         }
 
         .modal-body {
-            padding: 20px;
+            padding: 30px;
         }
 
-        /* COMPACT DIVISION CARD LAYOUT */
-        .division-card {
-            display: flex;
-            flex-direction: column;
-            padding: 12px;
+        .modal-body h3 {
+            font-size: 14px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            background: #f0f7ff;
+            border-radius: 8px;
+        }
+
+        .division-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             background: #fafafa;
             transition: all 0.2s ease;
         }
 
-        .division-card:hover {
+        .division-item:hover {
             background: #f0f7ff;
             border-color: #667eea;
-            transform: translateX(3px);
+            transform: translateX(5px);
         }
 
-        .division-branch {
+        .division-name {
             font-weight: 600;
             color: #333;
-            font-size: 12px;
-            margin-bottom: 8px;
-            word-break: break-word;
+            font-size: 13px;
         }
 
-        .division-counts {
+        .division-count {
             display: flex;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .count-item {
-            flex: 1;
-            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .count-label {
-            font-size: 9px;
-            font-weight: 700;
+            font-size: 10px;
+            font-weight: 600;
             color: #666;
             text-transform: uppercase;
             margin-bottom: 4px;
-            letter-spacing: 0.5px;
         }
 
         .count-value {
             font-weight: 700;
             font-size: 18px;
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            min-width: 60px;
+            text-align: center;
         }
 
         .count-open {
@@ -486,47 +525,44 @@
         }
 
         .modal-footer {
-            padding: 20px;
+            padding: 25px;
             border-top: 2px solid #e0e0e0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f9f9f9;
             border-radius: 0 0 15px 15px;
         }
 
-        .g-total-label {
-            font-size: 14px;
-            font-weight: 700;
-            color: white;
-            text-align: center;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .footer-counts {
-            display: flex;
-            justify-content: space-around;
+        .footer-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
 
-        .footer-count-item {
-            flex: 1;
+        .footer-stat {
             text-align: center;
         }
 
-        .footer-count-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.9);
+        .footer-stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
             text-transform: uppercase;
             margin-bottom: 8px;
-            letter-spacing: 0.5px;
+            display: block;
         }
 
-        .footer-count-value {
-            font-size: 26px;
+        .footer-stat-value {
+            font-size: 28px;
             font-weight: 700;
-            color: white;
+            color: #333;
             display: block;
+        }
+
+        .footer-stat.open .footer-stat-value {
+            color: #e67e22;
+        }
+
+        .footer-stat.closed .footer-stat-value {
+            color: #27ae60;
         }
 
         .modal-loading {
@@ -586,37 +622,38 @@
             .modal {
                 width: 95%;
                 max-height: 90vh;
-                max-width: 400px;
             }
 
             .modal-header h2 {
-                font-size: 16px;
+                font-size: 18px;
             }
 
             .modal-body {
-                padding: 15px;
+                padding: 20px;
             }
 
-            .division-card {
-                padding: 10px;
-                margin-bottom: 8px;
+            .division-item {
+                grid-template-columns: 1.5fr 1fr 1fr;
+                gap: 10px;
+                padding: 12px;
+                margin-bottom: 10px;
             }
 
-            .division-branch {
-                font-size: 11px;
-                margin-bottom: 6px;
+            .division-name {
+                font-size: 12px;
             }
 
             .count-value {
                 font-size: 16px;
+                padding: 4px 10px;
             }
 
-            .modal-footer {
-                padding: 15px;
+            .footer-stats {
+                gap: 15px;
             }
 
-            .footer-count-value {
-                font-size: 22px;
+            .footer-stat-value {
+                font-size: 24px;
             }
         }
     </style>
@@ -737,6 +774,12 @@
                             <th>Status</th>
                             <th>SA Name</th>
                             <th>Vehicle No</th>
+                            <th>Model</th>
+                            <th>Chassis</th>
+                            <th>MJob</th>
+                            <th>TAT</th>
+                            <th>Remarks</th>
+                            <th>Pending Reason</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -749,26 +792,25 @@
         </div>
     </div>
 
-    <!-- ==================== COMPACT MODAL ==================== -->
+    <!-- ==================== MODAL FOR DIVISION STATS ==================== -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="divisionModal">
             <div class="modal-header">
-                <h2 id="modalTitle">📊 Division Wise ROs</h2>
+                <h2 id="modalTitle">📊 Mechanical - Division Wise ROs</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
                 <div class="modal-loading">Loading...</div>
             </div>
             <div class="modal-footer">
-                <div class="g-total-label">G Total</div>
-                <div class="footer-counts">
-                    <div class="footer-count-item">
-                        <div class="footer-count-label">Open</div>
-                        <span class="footer-count-value" id="footerOpenTotal">0</span>
+                <div class="footer-stats">
+                    <div class="footer-stat open">
+                        <span class="footer-stat-label">Total Open ROs</span>
+                        <span class="footer-stat-value" id="footerOpenTotal">0</span>
                     </div>
-                    <div class="footer-count-item">
-                        <div class="footer-count-label">Closed</div>
-                        <span class="footer-count-value" id="footerClosedTotal">0</span>
+                    <div class="footer-stat closed">
+                        <span class="footer-stat-label">Total Closed But Not Billed</span>
+                        <span class="footer-stat-value" id="footerClosedTotal">0</span>
                     </div>
                 </div>
             </div>
@@ -840,6 +882,41 @@
             loadData();
         };
 
+        function extractMJob(remark) {
+            if (!remark) return 'Not Categorized';
+            const matches = remark.match(/\bM[1-4]\b/g);
+            if (matches && matches.length > 0) {
+                return matches[0];
+            }
+            return 'Not Categorized';
+        }
+
+        function getLastEightChars(text) {
+            if (!text) return '-';
+            const str = String(text).trim();
+            return str.length > 8 ? str.slice(-8) : str;
+        }
+
+        function calculateTAT(roDate) {
+            if (!roDate || roDate === '-') return 0;
+            const date = new Date(roDate);
+            const today = new Date();
+            const diffTime = Math.abs(today - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function getTATStyle(mjob, tat) {
+            let isAlert = false;
+            
+            if (mjob === 'M1' && tat > 1) isAlert = true;
+            else if (mjob === 'M2' && tat > 5) isAlert = true;
+            else if (mjob === 'M3' && tat > 9) isAlert = true;
+            else if (mjob === 'M4' && tat > 25) isAlert = true;
+            
+            return isAlert ? 'tat-alert' : 'tat-normal';
+        }
+
         function formatCurrency(value) {
             if (value === undefined || value === null || value === 0) return '₹0';
             return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
@@ -848,10 +925,12 @@
         async function loadStats() {
             try {
                 const url = `${API_URL}/api/dashboard/statistics`;
+                console.log('Fetching stats from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
+                console.log('Stats loaded:', data);
                 
                 document.getElementById('total').textContent = data.total_vehicles || 0;
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
@@ -861,16 +940,19 @@
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
             } catch (error) {
                 console.error('Error loading stats:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
             }
         }
 
         async function loadDivisionStats() {
             try {
                 const url = `${API_URL}/api/dashboard/division-stats-v2?service_category=${currentTab}`;
+                console.log('Fetching division stats from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
+                console.log('Division stats loaded:', data);
                 
                 const modalBody = document.getElementById('modalBody');
                 
@@ -878,7 +960,7 @@
                     modalBody.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">📭</div>
-                            <p>No ROs found</p>
+                            <p>No ROs found for this category</p>
                         </div>
                     `;
                     document.getElementById('footerOpenTotal').textContent = '0';
@@ -886,21 +968,19 @@
                     return;
                 }
                 
-                let html = '';
+                let html = `<h3>Division-Wise Breakdown</h3>`;
                 
                 data.divisions.forEach(div => {
                     html += `
-                        <div class="division-card">
-                            <div class="division-branch">${div.branch}</div>
-                            <div class="division-counts">
-                                <div class="count-item">
-                                    <div class="count-label">Open</div>
-                                    <div class="count-value count-open">${div.open_count}</div>
-                                </div>
-                                <div class="count-item">
-                                    <div class="count-label">Closed</div>
-                                    <div class="count-value count-closed">${div.closed_not_billed_count}</div>
-                                </div>
+                        <div class="division-item">
+                            <div class="division-name">${div.branch}</div>
+                            <div class="division-count">
+                                <div class="count-label">Open</div>
+                                <div class="count-value count-open">${div.open_count}</div>
+                            </div>
+                            <div class="division-count">
+                                <div class="count-label">Closed Not Billed</div>
+                                <div class="count-value count-closed">${div.closed_not_billed_count}</div>
                             </div>
                         </div>
                     `;
@@ -915,7 +995,7 @@
                 modalBody.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">⚠️</div>
-                        <p>Error loading data: ${error.message}</p>
+                        <p>Error loading division stats: ${error.message}</p>
                     </div>
                 `;
             }
@@ -971,10 +1051,15 @@
                     url += '?' + params.toString();
                 }
                 
+                console.log('=== LOADING FILTERED STATS ===');
+                console.log('Service Category:', currentTab);
+                console.log('URL:', url);
+                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
+                console.log('Filtered stats response:', data);
                 
                 const cards = document.querySelectorAll('.stat-value');
                 cards.forEach(card => card.classList.add('stat-updating'));
@@ -985,6 +1070,9 @@
                 document.getElementById('acc').textContent = data.accessories_count || 0;
                 document.getElementById('presale').textContent = data.presale_count || 0;
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
+                
+                console.log('Updated landed cost to:', formatCurrency(data.total_landed_cost || 0));
+                console.log('=== FILTERED STATS COMPLETE ===\n');
                 
                 setTimeout(() => {
                     cards.forEach(card => card.classList.remove('stat-updating'));
@@ -997,10 +1085,12 @@
         async function loadFilters() {
             try {
                 const url = `${API_URL}/api/filter-options/${currentTab}`;
+                console.log('Fetching filters from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
+                console.log('Filters loaded:', data);
                 
                 document.getElementById('branch').innerHTML = '<option>All</option>' + 
                     data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
@@ -1056,15 +1146,19 @@
                 }
             } catch (error) {
                 console.error('Error loading filters:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
             }
         }
 
         function onFilterChange() {
+            console.log('\n>>> FILTER CHANGED <<<');
             loadFilteredStats();
             loadData();
         }
 
         function clearAllFilters() {
+            console.log('>>> CLEARING ALL FILTERS <<<');
+            
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
@@ -1082,6 +1176,13 @@
             
             loadStats();
             loadData();
+            
+            console.log('>>> ALL FILTERS CLEARED <<<\n');
+        }
+
+        function isClosedButNotBilled() {
+            const status = document.getElementById('status').value;
+            return status === 'Closed but not billed';
         }
 
         async function loadData() {
@@ -1089,17 +1190,31 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
+                const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
+                if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
+                if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
+                
+                if (currentTab === 'bodyshop') {
+                    const mjob = document.getElementById('mjob').value;
+                    const regNumber = document.getElementById('regNumber').value;
+                    if (mjob !== 'All') url += `&mjob=${encodeURIComponent(mjob)}`;
+                    if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
+                    if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
+                }
 
+                console.log('Fetching data from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
+                console.log('Data loaded:', data);
                 
                 if (data.error) {
                     document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
@@ -1117,29 +1232,161 @@
                     return;
                 }
 
+                const showClosedButNotBilledColumns = isClosedButNotBilled();
+
                 data.vehicles.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
+                    
                     const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                     
-                    let rowHTML = `
-                        <tr>
-                            <td><strong>${v.ro_id}</strong></td>
-                            <td class="landed-cost-cell">${landedCostDisplay}</td>
-                            <td>${v.ro_date}</td>
-                            <td><span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-weight: bold;">${branchAbbr}</span></td>
-                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                            <td>${v.service_adviser || '-'}</td>
-                            <td>${v.reg_number}</td>
-                        </tr>
-                    `;
-                    
-                    tbody.innerHTML += rowHTML;
+                    if (currentTab === 'bodyshop') {
+                        const mjob = extractMJob(v.ro_remarks);
+                        const chassis = getLastEightChars(v.vin || '-');
+                        const tat = calculateTAT(v.ro_date);
+                        const tatStyle = getTATStyle(mjob, tat);
+                        const saName = v.service_adviser || '-';
+                        
+                        let rowHTML = `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
+                                <td>${v.ro_date}</td>`;
+                        
+                        if (showClosedButNotBilledColumns) {
+                            const vehicleReadyDate = v.vehicle_ready_date || '-';
+                            const tatCurrent = calculateTAT(vehicleReadyDate);
+                            rowHTML += `
+                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                                <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        }
+                        
+                        rowHTML += `
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${saName}</td>
+                                <td><strong>${v.reg_number}</strong></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${chassis}</td>
+                                <td><span class="mjob-badge">${mjob}</span></td>
+                                <td><span class="${tatStyle}">${tat} days</span></td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                        
+                        tbody.innerHTML += rowHTML;
+                    } else {
+                        let rowHTML = `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
+                                <td>${v.ro_date}</td>`;
+                        
+                        if (showClosedButNotBilledColumns) {
+                            const vehicleReadyDate = v.vehicle_ready_date || '-';
+                            const tatCurrent = calculateTAT(vehicleReadyDate);
+                            rowHTML += `
+                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                                <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        }
+                        
+                        rowHTML += `
+                                <td>${v.service_adviser || '-'}</td>
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>`;
+                        
+                        if (currentTab === 'mechanical') {
+                            rowHTML += `<td>${v.service_type || '-'}</td>`;
+                        }
+                        
+                        rowHTML += `
+                                <td>${v.model_group || '-'}</td>
+                                <td>${v.reg_number}</td>
+                                <td>${v.age_bucket}</td>
+                                <td>${v.days}</td>
+                                <td>${v.km.toLocaleString()}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                        
+                        tbody.innerHTML += rowHTML;
+                    }
                 });
 
+                updateTableHeaders();
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
+            }
+        }
+
+        function updateTableHeaders() {
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = '';
+            
+            const showClosedButNotBilledColumns = isClosedButNotBilled();
+            
+            if (currentTab === 'bodyshop') {
+                let headers = `
+                    <th title="Repair Order Number">RO Number</th>
+                    <th title="Total Landed Cost">Landed Cost</th>
+                    <th title="Repair Order Date">RO Date</th>`;
+                
+                if (showClosedButNotBilledColumns) {
+                    headers += `
+                    <th title="Vehicle Ready Date">Vehicle Ready</th>
+                    <th title="Turn Around Time in Days (from Vehicle Ready Date to Current Date)">TAT Days</th>`;
+                }
+                
+                headers += `
+                    <th title="Branch Location">Branch</th>
+                    <th title="RO Status">Status</th>
+                    <th title="Service Adviser Name">SA Name</th>
+                    <th title="Vehicle Registration Number">Vehicle No</th>
+                    <th title="Model Group">Model</th>
+                    <th title="Last 8 Digits of Chassis Number">Chassis</th>
+                    <th title="MJob Category">MJob</th>
+                    <th title="Turn Around Time in Days">TAT</th>
+                    <th title="RO Remarks">Remarks</th>
+                    <th title="Pending Reason Description">Pending Reason</th>
+                `;
+                
+                headerRow.innerHTML = headers;
+            } else {
+                let headers = `
+                    <th title="Repair Order ID">RO ID</th>
+                    <th title="Total Landed Cost">Landed Cost</th>
+                    <th title="Repair Order Date">RO Date</th>`;
+                
+                if (showClosedButNotBilledColumns) {
+                    headers += `
+                    <th title="Vehicle Ready Date">Vehicle Ready</th>
+                    <th title="Turn Around Time in Days (from Vehicle Ready Date to Current Date)">TAT Days</th>`;
+                }
+                
+                headers += `
+                    <th title="Service Adviser Name">SA Name</th>
+                    <th title="Branch Location">Branch</th>
+                    <th title="RO Status">Status</th>`;
+                
+                if (currentTab === 'mechanical') {
+                    headers += `
+                    <th title="Service Type">Service Type</th>`;
+                }
+                
+                headers += `
+                    <th title="Model Group">Model</th>
+                    <th title="Vehicle Registration Number">Reg Number</th>
+                    <th title="Age Bucket">Age</th>
+                    <th title="Number of Days">Days</th>
+                    <th title="Kilometers">KM</th>
+                    <th title="RO Remarks">Remarks</th>
+                    <th title="Pending Reason Description">Pending Reason</th>
+                `;
+                
+                headerRow.innerHTML = headers;
             }
         }
 
@@ -1155,12 +1402,38 @@
 
         async function exportToCSV() {
             try {
+                const branch = document.getElementById('branch').value;
+                const status = document.getElementById('status').value;
+                const age = document.getElementById('age').value;
+                const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
+                const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
+
                 const btn = event.target;
                 const originalText = btn.textContent;
-                btn.textContent = '⏳ Preparing...';
+                btn.textContent = '⏳ Preparing export...';
                 btn.disabled = true;
 
                 let url = `${API_URL}/api/export/${currentTab}`;
+                if (branch !== 'All') url += `?branch=${encodeURIComponent(branch)}`;
+                let separator = (branch !== 'All') ? '&' : '?';
+                if (status !== 'All') url += `${separator}ro_status=${encodeURIComponent(status)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
+                
+                if (currentTab === 'bodyshop') {
+                    const mjob = document.getElementById('mjob').value;
+                    const regNumber = document.getElementById('regNumber').value;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
+                    separator = (url.includes('?')) ? '&' : '?';
+                    if (regNumber && regNumber.trim() !== '') url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
+                }
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1175,6 +1448,18 @@
                     return;
                 }
 
+                const isClosedButNotBilled = status === 'Closed but not billed';
+                
+                if (isClosedButNotBilled) {
+                    exportData = exportData.map(row => {
+                        const tatDays = calculateTAT(row.vehicle_ready_date);
+                        return {
+                            ...row,
+                            tat_days_from_vehicle_ready: tatDays
+                        };
+                    });
+                }
+
                 const allColumns = Object.keys(exportData[0]);
                 const headers = allColumns;
 
@@ -1184,6 +1469,11 @@
                 exportData.forEach(row => {
                     let csvRow = headers.map(col => {
                         let value = row[col] || '-';
+                        
+                        if (col === 'total_landed_cost' && value !== '-') {
+                            value = parseFloat(value).toFixed(2);
+                        }
+                        
                         value = String(value).replace(/\"/g, '\"\"');
                         return `"${value}"`;
                     });
@@ -1209,7 +1499,7 @@
             } catch (error) {
                 console.error('Export error:', error);
                 alert('Error exporting data: ' + error.message);
-                event.target.textContent = '📥 Export';
+                event.target.textContent = '📥 Export Filtered Data to Excel';
                 event.target.disabled = false;
             }
         }
