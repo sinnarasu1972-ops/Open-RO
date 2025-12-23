@@ -54,8 +54,11 @@
             font-weight: 600;
             flex: 1;
             min-width: 100px;
+            position: relative;
+            transition: all 0.2s ease;
         }
         .tab-button.active { background: #667eea; color: white; }
+        .tab-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
         
         .clear-all-btn {
             padding: 10px 16px;
@@ -362,6 +365,237 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+
+        /* ==================== MODAL STYLES ==================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-body h3 {
+            font-size: 14px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            background: #f0f7ff;
+            border-radius: 8px;
+        }
+
+        .division-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fafafa;
+            transition: all 0.2s ease;
+        }
+
+        .division-item:hover {
+            background: #f0f7ff;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .division-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .division-count {
+            background: #667eea;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            background: #f9f9f9;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .modal-footer p {
+            margin: 0;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .modal-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #667eea;
+        }
+
+        .modal-loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .modal::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .modal::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .modal::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            .modal {
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            .modal-header h2 {
+                font-size: 18px;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .division-item {
+                padding: 10px 12px;
+                margin-bottom: 8px;
+            }
+
+            .division-name {
+                font-size: 12px;
+            }
+
+            .division-count {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -498,6 +732,22 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL FOR DIVISION STATS ==================== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="divisionModal">
+            <div class="modal-header">
+                <h2 id="modalTitle">📊 Mechanical - Division Wise Open ROs</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="modal-loading">Loading...</div>
+            </div>
+            <div class="modal-footer">
+                <p id="modalFooter">Displaying division-wise breakdown of open ROs</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = window.location.origin;
         
@@ -624,6 +874,78 @@
                 document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
             }
         }
+
+        async function loadDivisionStats() {
+            try {
+                const url = `${API_URL}/api/dashboard/division-stats?service_category=${currentTab}`;
+                console.log('Fetching division stats from:', url);
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                console.log('Division stats loaded:', data);
+                
+                const modalBody = document.getElementById('modalBody');
+                const modalFooter = document.getElementById('modalFooter');
+                
+                if (!data.divisions || data.divisions.length === 0) {
+                    modalBody.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>No open ROs found for this category</p>
+                        </div>
+                    `;
+                    modalFooter.textContent = 'Total Open ROs: 0';
+                    return;
+                }
+                
+                let html = `<h3>Total Open ROs: <strong>${data.total_open}</strong></h3>`;
+                
+                data.divisions.forEach(div => {
+                    html += `
+                        <div class="division-item">
+                            <div class="division-name">${div.branch}</div>
+                            <div class="division-count">${div.open_count}</div>
+                        </div>
+                    `;
+                });
+                
+                modalBody.innerHTML = html;
+                modalFooter.textContent = `Total Open ROs: ${data.total_open}`;
+            } catch (error) {
+                console.error('Error loading division stats:', error);
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Error loading division stats: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function openModal() {
+            const categoryNames = {
+                'mechanical': 'Mechanical',
+                'bodyshop': 'Bodyshop',
+                'accessories': 'Accessories',
+                'presale': 'Pre-Sale/PDI'
+            };
+            
+            document.getElementById('modalTitle').textContent = `📊 ${categoryNames[currentTab]} - Division Wise Open ROs`;
+            document.getElementById('modalOverlay').classList.add('show');
+            loadDivisionStats();
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
 
         async function loadFilteredStats() {
             try {
@@ -1023,6 +1345,9 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             loadFilters();
+            
+            // Show the modal with division stats
+            openModal();
         }
 
         async function exportToCSV() {
