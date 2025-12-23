@@ -1092,33 +1092,108 @@
 
         async function loadFilters() {
             try {
-                const branch = document.getElementById('branch').value;
-                const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(branch)}`;
+                // Get current branch BEFORE any changes
+                const currentBranch = document.getElementById('branch').value;
+                const currentSaName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                
+                const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(currentBranch)}`;
                 console.log('Fetching filters from:', url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
                 console.log('Filters loaded:', data);
+                console.log('Current branch before reload:', currentBranch);
                 
-                document.getElementById('branch').innerHTML = '<option>All</option>' + 
-                    data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
+                // Reload branch dropdown but PRESERVE selected value
+                const branchSelect = document.getElementById('branch');
+                branchSelect.innerHTML = '<option value="All">All</option>' + 
+                    data.branches.filter(b => b !== 'All').map(b => `<option value="${b}">${b}</option>`).join('');
+                branchSelect.value = currentBranch;
+                console.log('Branch value after reload:', branchSelect.value);
                 
+                // Reload RO Status
                 document.getElementById('status').innerHTML = '<option>All</option>' + 
                     data.ro_statuses.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                 
+                // Reload Age Bucket with proper sorting
                 let ageBucketsFiltered = data.age_buckets.filter(a => a !== 'All');
                 let sortedAgeBuckets = sortAgeBuckets(ageBucketsFiltered);
-                
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
-                // Load SA Names
+                // Reload Billable Type if it exists
+                const billableTypeFilter = document.getElementById('billableTypeFilter');
+                if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
+                    billableTypeFilter.style.display = 'block';
+                    const billableTypeOptions = data.billable_types || ['All'];
+                    document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => 
+                        `<option value="${bt}">${bt}</option>`
+                    ).join('');
+                } else {
+                    billableTypeFilter.style.display = 'none';
+                }
+
+                // Reload Service Type if Mechanical
+                const serviceTypeFilter = document.getElementById('serviceTypeFilter');
+                if (currentTab === 'mechanical') {
+                    serviceTypeFilter.style.display = 'block';
+                    const serviceTypeOptions = data.service_types || ['All'];
+                    document.getElementById('serviceType').innerHTML = serviceTypeOptions.map(st => 
+                        `<option value="${st}">${st}</option>`
+                    ).join('');
+                } else {
+                    serviceTypeFilter.style.display = 'none';
+                }
+
+                // Reload SA Names - PRESERVE selected value
+                const saNameSelect = document.getElementById('saName');
                 if (data.sa_names) {
-                    document.getElementById('saName').innerHTML = data.sa_names.map(s => 
+                    const saNameOptions = data.sa_names.map(s => 
                         `<option value="${s}">${s}</option>`
                     ).join('');
+                    saNameSelect.innerHTML = '<option value="All">All</option>' + saNameOptions;
+                    
+                    // Try to restore previous SA Name, if not found reset to All
+                    if (Array.from(saNameSelect.options).some(opt => opt.value === currentSaName)) {
+                        saNameSelect.value = currentSaName;
+                        console.log('SA Name restored to:', currentSaName);
+                    } else {
+                        saNameSelect.value = 'All';
+                        console.log('SA Name reset to All (not found in new branch)');
+                    }
                 }
+
+                // Handle MJob and Reg Number filters
+                const mjobFilter = document.getElementById('mjobFilter');
+                const regNumberFilter = document.getElementById('regNumberFilter');
+                
+                if (currentTab === 'bodyshop') {
+                    mjobFilter.style.display = 'block';
+                    regNumberFilter.style.display = 'block';
+                    const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
+                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => 
+                        `<option value="${m}">${m}</option>`
+                    ).join('');
+                } else if (currentTab === 'mechanical') {
+                    mjobFilter.style.display = 'none';
+                    regNumberFilter.style.display = 'block';
+                } else {
+                    mjobFilter.style.display = 'none';
+                    regNumberFilter.style.display = 'none';
+                }
+
+                // Ensure SA Name filter is visible for all tabs
+                const saNameFilter = document.getElementById('saNameFilter');
+                saNameFilter.style.display = 'block';
+
+                console.log('>>> FILTERS RELOADED - BRANCH VALUE PRESERVED <<<');
+                
+            } catch (error) {
+                console.error('Error loading filters:', error);
+                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
+            }
+        }
 
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
                 if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
@@ -1180,7 +1255,39 @@
 
         function onBranchChange() {
             console.log('>>> BRANCH CHANGED <<<');
+            const selectedBranch = document.getElementById('branch').value;
+            console.log('Branch selected:', selectedBranch);
+            
+            // Reset SA Name to All when branch changes (but branch stays selected)
+            const saNameSelect = document.getElementById('saName');
+            if (saNameSelect) {
+                saNameSelect.value = 'All';
+            }
+            
+            // Reset other filters
+            document.getElementById('status').value = 'All';
+            document.getElementById('age').value = 'All';
+            if (document.getElementById('billableType')) {
+                document.getElementById('billableType').value = 'All';
+            }
+            if (document.getElementById('serviceType')) {
+                document.getElementById('serviceType').value = 'All';
+            }
+            if (document.getElementById('mjob')) {
+                document.getElementById('mjob').value = 'All';
+            }
+            if (document.getElementById('regNumber')) {
+                document.getElementById('regNumber').value = '';
+            }
+            
+            // Load filters (which will reload SA Names for selected branch)
             loadFilters();
+            
+            // Then load updated data and stats
+            setTimeout(() => {
+                loadFilteredStats();
+                loadData();
+            }, 100);
         }
 
         function onFilterChange() {
@@ -1192,9 +1299,11 @@
         function clearAllFilters() {
             console.log('>>> CLEARING ALL FILTERS <<<');
             
+            // Reset all filter values to "All" or empty
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
+            
             if (document.getElementById('billableType')) {
                 document.getElementById('billableType').value = 'All';
             }
@@ -1204,16 +1313,21 @@
             if (document.getElementById('saName')) {
                 document.getElementById('saName').value = 'All';
             }
-            if (currentTab === 'bodyshop') {
+            if (document.getElementById('mjob')) {
                 document.getElementById('mjob').value = 'All';
-                document.getElementById('billableType').value = 'All';
-                document.getElementById('regNumber').value = '';
-            } else if (currentTab === 'mechanical') {
+            }
+            if (document.getElementById('regNumber')) {
                 document.getElementById('regNumber').value = '';
             }
             
+            // Reload everything
             loadStats();
             loadFilters();
+            
+            setTimeout(() => {
+                loadFilteredStats();
+                loadData();
+            }, 100);
             
             console.log('>>> ALL FILTERS CLEARED <<<\n');
         }
