@@ -65,32 +65,46 @@ def load_data():
             print(f"  Model Group columns: {list(df_model_group.columns)}")
             print(f"  Open RO columns (first 10): {list(df_global.columns[:10])}")
             
-            # STRATEGY 1: Try direct merge on Model Group
+            # STRATEGY 1: Try direct merge on Model Code (Primary)
             segment_merged = False
+            model_group_mapped = False
+            
             try:
-                if 'Model Group' in df_global.columns and 'Model Group' in df_model_group.columns:
-                    model_mapping = df_model_group[['Model Group', 'Segment']].copy()
+                # Check what column in Open RO contains the model code
+                # It could be 'Model Group' column (which actually has codes) or another column
+                model_code_column = None
+                
+                # First check if 'Model Group' column exists and has codes matching Model_Group.xlsx
+                if 'Model Group' in df_global.columns:
+                    sample_codes = df_global['Model Group'].dropna().unique()[:5]
+                    print(f"  Sample values in Open RO 'Model Group' column: {sample_codes}")
+                    
+                    # Check if these match Model Code values
+                    if any(code in df_model_group['Model Code'].values for code in sample_codes):
+                        model_code_column = 'Model Group'
+                        print(f"  ✓ Identified: Open RO 'Model Group' column contains MODEL CODES")
+                
+                if model_code_column:
+                    # Create mapping: Model Code → (Model Group Name, Segment)
+                    model_mapping = df_model_group[['Model Code', 'Model Group', 'Segment']].copy()
                     model_mapping = model_mapping.drop_duplicates()
-                    model_mapping.columns = ['Model Group', 'segment']
+                    model_mapping.columns = ['Model Code', 'model_group_mapped', 'segment']
                     
-                    print(f"  STRATEGY 1: Merging on 'Model Group'")
-                    print(f"    Mapping has {len(model_mapping)} unique Model Groups")
-                    print(f"    Open RO has {df_global['Model Group'].nunique()} unique Model Groups")
+                    print(f"  STRATEGY 1: Merging on '{model_code_column}'")
+                    print(f"    Mapping has {len(model_mapping)} unique Model Codes")
                     
-                    # Show sample matches
-                    sample_models = df_global['Model Group'].dropna().unique()[:3]
-                    print(f"    Sample Model Groups in Open RO: {sample_models}")
-                    print(f"    Sample Model Groups in mapping: {model_mapping['Model Group'].unique()[:3]}")
-                    
-                    df_global = df_global.merge(model_mapping, on='Model Group', how='left')
+                    df_global = df_global.merge(
+                        model_mapping, 
+                        left_on=model_code_column,
+                        right_on='Model Code',
+                        how='left'
+                    )
                     print(f"  ✓ Merge successful - result shape: {df_global.shape}")
                     segment_merged = True
+                    model_group_mapped = True
                 else:
-                    print(f"  ✗ 'Model Group' column missing in one of the dataframes")
-                    if 'Model Group' not in df_global.columns:
-                        print(f"    - Missing in Open RO")
-                    if 'Model Group' not in df_model_group.columns:
-                        print(f"    - Missing in Model Group")
+                    print(f"  ⚠ Could not identify model code column")
+                    
             except Exception as e:
                 print(f"  ✗ STRATEGY 1 failed: {str(e)}")
                 segment_merged = False
@@ -99,39 +113,49 @@ def load_data():
             if not segment_merged:
                 print(f"  STRATEGY 2: Creating segment mapping from Model_Group data")
                 try:
-                    segment_dict = dict(zip(df_model_group['Model Group'], df_model_group['Segment']))
-                    print(f"    Created mapping dictionary with {len(segment_dict)} entries")
-                    print(f"    Sample mappings: {list(segment_dict.items())[:3]}")
+                    segment_dict = dict(zip(df_model_group['Model Code'], df_model_group['Segment']))
+                    mg_dict = dict(zip(df_model_group['Model Code'], df_model_group['Model Group']))
+                    print(f"    Created mappings with {len(segment_dict)} entries")
                     
                     if 'Model Group' in df_global.columns:
                         df_global['segment'] = df_global['Model Group'].map(segment_dict).fillna('Unknown')
-                        print(f"  ✓ Segment column created using dictionary mapping")
+                        df_global['model_group_mapped'] = df_global['Model Group'].map(mg_dict)
+                        print(f"  ✓ Mappings created using dictionary")
                         segment_merged = True
+                        model_group_mapped = True
                     else:
                         print(f"    ✗ 'Model Group' column not found in Open RO")
                 except Exception as e:
                     print(f"  ✗ STRATEGY 2 failed: {str(e)}")
             
-            # STRATEGY 3: Force create segment column
+            # STRATEGY 3: Force create columns
             if 'segment' not in df_global.columns:
                 print(f"  STRATEGY 3: Force creating segment column")
                 df_global['segment'] = 'Unknown'
-                print(f"  ✓ Segment column created with all 'Unknown' values")
+            
+            if 'model_group_mapped' not in df_global.columns:
+                print(f"  STRATEGY 3: Force creating model_group_mapped column")
+                df_global['model_group_mapped'] = df_global.get('Model Group', '-')
             
             # Fill any nulls
             df_global['segment'] = df_global['segment'].fillna('Unknown')
+            df_global['model_group_mapped'] = df_global['model_group_mapped'].fillna(df_global.get('Model Group', '-'))
+            
+            # Replace original Model Group with mapped version
+            df_global['Model Group'] = df_global['model_group_mapped']
             
             # Final statistics
             print(f"✓ Model Group and Segment data enriched")
             print(f"  Segment column exists: {'segment' in df_global.columns}")
-            print(f"  Segment column shape: {df_global['segment'].shape if 'segment' in df_global.columns else 'N/A'}")
+            print(f"  Model Group mapping exists: {'model_group_mapped' in df_global.columns}")
             print(f"  Segment values: {sorted(df_global['segment'].unique())}")
             print(f"  Segment value counts:")
             for seg, count in df_global['segment'].value_counts().items():
                 print(f"    {seg}: {count}")
         else:
-            print(f"⚠ Model Group dataframe is empty - creating default segment column")
+            print(f"⚠ Model Group dataframe is empty - creating default columns")
             df_global['segment'] = 'Unknown'
+            df_global['model_group_mapped'] = df_global.get('Model Group', '-')
         
         # Load and aggregate Landed Cost data
         parts_file = None
