@@ -329,6 +329,7 @@
         .badge-closed { background: #e8f5e9; color: #27ae60; }
         .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
+        .segment-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #f3e5f5; color: #7b1fa2; }
         .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
@@ -701,6 +702,12 @@
                         <option>All</option>
                     </select>
                 </div>
+                <div class="filter-group" id="segmentFilter">
+                    <label>Segment</label>
+                    <select id="segment" onchange="onFilterChange()">
+                        <option>All</option>
+                    </select>
+                </div>
                 <div class="filter-group" id="billableTypeFilter" style="display:none;">
                     <label>Billable Type</label>
                     <select id="billableType" onchange="onFilterChange()">
@@ -713,7 +720,6 @@
                         <option>All</option>
                     </select>
                 </div>
-                <!-- ✅ NEW: SA NAME FILTER -->
                 <div class="filter-group" id="saNameFilter">
                     <label>SA Name</label>
                     <select id="saName" onchange="onFilterChange()">
@@ -726,7 +732,6 @@
                         <option>All</option>
                     </select>
                 </div>
-                <!-- ✅ NEW: REG NUMBER SEARCH -->
                 <div class="filter-group" id="regNumberFilter" style="display:none;">
                     <label>Reg. Number (Search)</label>
                     <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
@@ -758,7 +763,8 @@
                             <th>Status</th>
                             <th>SA Name</th>
                             <th>Vehicle No</th>
-                            <th>Model</th>
+                            <th>Model Group</th>
+                            <th>Segment</th>
                             <th>Chassis</th>
                             <th>MJob</th>
                             <th>TAT</th>
@@ -1013,11 +1019,11 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const segment = document.getElementById('segment').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
-                // ✅ Reg. Number for both Mechanical and Bodyshop
                 const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
                 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
@@ -1028,11 +1034,11 @@
                 if (branch !== 'All') params.append('branch', branch);
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
+                if (segment !== 'All') params.append('segment', segment);
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
                 if (mjob !== 'All') params.append('mjob', mjob);
-                // ✅ Include reg_number for both Mechanical and Bodyshop
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
                 
                 if (params.toString()) {
@@ -1073,7 +1079,6 @@
         async function loadFilters() {
             try {
                 const branch = document.getElementById('branch').value;
-                // ✅ Pass branch parameter to get SA Names for that branch
                 const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(branch)}`;
                 console.log('Fetching filters from:', url);
                 const response = await fetch(url);
@@ -1082,7 +1087,6 @@
                 const data = await response.json();
                 console.log('Filters loaded:', data);
                 
-                // Keep branch value
                 const currentBranch = document.getElementById('branch').value;
                 document.getElementById('branch').innerHTML = '<option>All</option>' + 
                     data.branches.filter(b => b !== 'All').map(b => `<option>${b}</option>`).join('');
@@ -1097,7 +1101,14 @@
                 document.getElementById('age').innerHTML = '<option>All</option>' + 
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
 
-                // ✅ LOAD SA NAMES - FILTERED BY SELECTED BRANCH
+                // Load Segments - Available for all categories
+                if (data.segments) {
+                    const segmentHTML = data.segments.map(s => `<option value="${s}">${s}</option>`).join('');
+                    document.getElementById('segment').innerHTML = segmentHTML;
+                    console.log('Segments loaded - Count:', data.segments.length);
+                }
+
+                // Load SA Names
                 if (data.sa_names) {
                     const saNameHTML = '<option>All</option>' + 
                         data.sa_names.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
@@ -1130,14 +1141,12 @@
                 const mjobFilter = document.getElementById('mjobFilter');
                 const regNumberFilter = document.getElementById('regNumberFilter');
                 
-                // Show Reg. Number filter on both Mechanical and Bodyshop
                 if (currentTab === 'mechanical' || currentTab === 'bodyshop') {
                     regNumberFilter.style.display = 'block';
                 } else {
                     regNumberFilter.style.display = 'none';
                 }
                 
-                // Show MJob filter only on Bodyshop
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
                     const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
@@ -1148,7 +1157,6 @@
                     mjobFilter.style.display = 'none';
                 }
                 
-                // Load data and stats after filters are loaded
                 loadData();
                 loadFilteredStats();
             } catch (error) {
@@ -1159,9 +1167,7 @@
 
         function onBranchChange() {
             console.log('\n>>> BRANCH CHANGED <<<');
-            // Reset SA Name to "All" when branch changes
             document.getElementById('saName').value = 'All';
-            // Reload filters to get SA Names for the selected branch
             loadFilters();
             console.log('>>> BRANCH CHANGED - FILTERS RELOADED <<<\n');
         }
@@ -1178,6 +1184,7 @@
             document.getElementById('branch').value = 'All';
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
+            document.getElementById('segment').value = 'All';
             if (document.getElementById('billableType')) {
                 document.getElementById('billableType').value = 'All';
             }
@@ -1191,7 +1198,6 @@
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
             }
-            // ✅ Clear Reg. Number for both Mechanical and Bodyshop
             if (document.getElementById('regNumber')) {
                 document.getElementById('regNumber').value = '';
             }
@@ -1212,6 +1218,7 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const segment = document.getElementById('segment').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
@@ -1221,11 +1228,11 @@
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
+                if (segment !== 'All') url += `&segment=${encodeURIComponent(segment)}`;
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
                 
-                // ✅ Reg. Number search for both Mechanical and Bodyshop
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
                 
@@ -1272,6 +1279,7 @@
                         const tat = calculateTAT(v.ro_date);
                         const tatStyle = getTATStyle(mjob, tat);
                         const saName = v.service_adviser || '-';
+                        const segment = v.segment || 'Unknown';
                         
                         let rowHTML = `
                             <tr>
@@ -1293,6 +1301,7 @@
                                 <td>${saName}</td>
                                 <td><strong>${v.reg_number}</strong></td>
                                 <td>${v.model_group || '-'}</td>
+                                <td><span class="segment-badge">${segment}</span></td>
                                 <td>${chassis}</td>
                                 <td><span class="mjob-badge">${mjob}</span></td>
                                 <td><span class="${tatStyle}">${tat} days</span></td>
@@ -1303,6 +1312,7 @@
                         
                         tbody.innerHTML += rowHTML;
                     } else {
+                        const segment = v.segment || 'Unknown';
                         let rowHTML = `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
@@ -1318,17 +1328,18 @@
                         }
                         
                         rowHTML += `
-                                <td>${v.service_adviser || '-'}</td>
                                 <td><span class="branch-abbr">${branchAbbr}</span></td>
-                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>`;
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${v.service_adviser || '-'}</td>
+                                <td><strong>${v.reg_number}</strong></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td><span class="segment-badge">${segment}</span></td>`;
                         
                         if (currentTab === 'mechanical') {
                             rowHTML += `<td>${v.service_type || '-'}</td>`;
                         }
                         
                         rowHTML += `
-                                <td>${v.model_group || '-'}</td>
-                                <td>${v.reg_number}</td>
                                 <td>${v.age_bucket}</td>
                                 <td>${v.days}</td>
                                 <td>${v.km.toLocaleString()}</td>
@@ -1371,7 +1382,8 @@
                     <th title="RO Status">Status</th>
                     <th title="Service Adviser Name">SA Name</th>
                     <th title="Vehicle Registration Number">Vehicle No</th>
-                    <th title="Model Group">Model</th>
+                    <th title="Model Group">Model Group</th>
+                    <th title="Segment">Segment</th>
                     <th title="Last 8 Digits of Chassis Number">Chassis</th>
                     <th title="MJob Category">MJob</th>
                     <th title="Turn Around Time in Days">TAT</th>
@@ -1393,9 +1405,12 @@
                 }
                 
                 headers += `
-                    <th title="Service Adviser Name">SA Name</th>
                     <th title="Branch Location">Branch</th>
-                    <th title="RO Status">Status</th>`;
+                    <th title="RO Status">Status</th>
+                    <th title="Service Adviser Name">SA Name</th>
+                    <th title="Vehicle Registration Number">Reg Number</th>
+                    <th title="Model Group">Model Group</th>
+                    <th title="Segment">Segment</th>`;
                 
                 if (currentTab === 'mechanical') {
                     headers += `
@@ -1403,8 +1418,6 @@
                 }
                 
                 headers += `
-                    <th title="Model Group">Model</th>
-                    <th title="Vehicle Registration Number">Reg Number</th>
                     <th title="Age Bucket">Age</th>
                     <th title="Number of Days">Days</th>
                     <th title="Kilometers">KM</th>
@@ -1422,7 +1435,6 @@
             event.target.classList.add('active');
             loadFilters();
             
-            // Show the modal with division stats
             openModal();
         }
 
@@ -1431,6 +1443,7 @@
                 const branch = document.getElementById('branch').value;
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
+                const segment = document.getElementById('segment').value;
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
@@ -1447,13 +1460,14 @@
                 separator = (url.includes('?')) ? '&' : '?';
                 if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
                 separator = (url.includes('?')) ? '&' : '?';
+                if (segment !== 'All') url += `${separator}segment=${encodeURIComponent(segment)}`;
+                separator = (url.includes('?')) ? '&' : '?';
                 if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
                 
-                // ✅ Reg. Number export for both Mechanical and Bodyshop
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') {
                     separator = (url.includes('?')) ? '&' : '?';
