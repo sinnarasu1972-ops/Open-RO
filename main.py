@@ -46,20 +46,20 @@ def load_data():
                 break
         
         if excel_file is None:
-            print("⚠ Open RO Excel file not found")
+            print(" Open RO Excel file not found")
             df_global = pd.DataFrame()
             df_landed_cost = pd.DataFrame()
             df_billable_type = pd.DataFrame()
             return
         
-        print(f"✓ Loading: {excel_file}")
+        print(f" Loading: {excel_file}")
         df_global = pd.read_excel(excel_file)
-        print(f"✓ Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
-        print(f"✓ Columns: {list(df_global.columns)}")
+        print(f" Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
+        print(f" Columns: {list(df_global.columns)}")
         
         # Merge Model Group data if available
         if not df_model_group.empty:
-            print(f"✓ Merging Model Group data...")
+            print(f"  Merging Model Group data...")
             print(f"  Model Group df shape: {df_model_group.shape}")
             print(f"  Open RO df shape: {df_global.shape}")
             
@@ -90,7 +90,7 @@ def load_data():
                     # Count matches
                     matched = df_global['segment'].notna().sum()
                     unmatched = df_global['segment'].isna().sum()
-                    print(f"  ✓ Mapping complete: {matched} matched, {unmatched} unmatched")
+                    print(f"   Mapping complete: {matched} matched, {unmatched} unmatched")
                     
                     # Fill unmatched with Unknown
                     df_global['segment'] = df_global['segment'].fillna('Unknown')
@@ -100,11 +100,11 @@ def load_data():
                     df_global['Model Group'] = df_global['model_group_mapped']
                     
                 else:
-                    print(f"  ⚠ 'Model Group' column not found in Open RO")
+                    print(f"   'Model Group' column not found in Open RO")
                     df_global['segment'] = 'Unknown'
                     
             except Exception as e:
-                print(f"  ⚠ Error during mapping: {str(e)}")
+                print(f"   Error during mapping: {str(e)}")
                 df_global['segment'] = 'Unknown'
             
             # Final verification
@@ -115,7 +115,7 @@ def load_data():
             for seg, count in df_global['segment'].value_counts().items():
                 print(f"    {seg}: {count}")
         else:
-            print(f"⚠ Model Group dataframe is empty")
+            print(f" Model Group dataframe is empty")
             df_global['segment'] = 'Unknown'
         
         # Load and aggregate Landed Cost data
@@ -126,23 +126,23 @@ def load_data():
                 break
         
         if parts_file is None:
-            print("⚠ Part Issue file not found - Landed Cost and Billable Type will not be available")
+            print(" Part Issue file not found - Landed Cost and Billable Type will not be available")
             df_landed_cost = pd.DataFrame()
             df_billable_type = pd.DataFrame()
         else:
-            print(f"✓ Loading: {parts_file}")
+            print(f" Loading: {parts_file}")
             df_parts = pd.read_excel(parts_file)
-            print(f"✓ Loaded {len(df_parts)} part records")
+            print(f" Loaded {len(df_parts)} part records")
             
             # Aggregate Landed Cost by RO Number
             df_landed_cost = df_parts.groupby('RO Number')['Landed Cost (Total)'].sum().reset_index()
             df_landed_cost.columns = ['RO ID', 'total_landed_cost']
-            print(f"✓ Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
+            print(f" Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
             
             # Extract Billable Type by RO Number
             df_billable_type = df_parts.groupby('RO Number')['Billable Type'].first().reset_index()
             df_billable_type.columns = ['RO ID', 'billable_type']
-            print(f"✓ Extracted billable type for {len(df_billable_type)} RO Numbers")
+            print(f" Extracted billable type for {len(df_billable_type)} RO Numbers")
             
             # Merge with main dataframe
             df_global = df_global.merge(df_landed_cost, on='RO ID', how='left')
@@ -151,10 +151,10 @@ def load_data():
             df_global = df_global.merge(df_billable_type, on='RO ID', how='left')
             df_global['billable_type'] = df_global['billable_type'].fillna('Not Billed')
             
-            print(f"✓ Merged landed cost and billable type data into main dataframe")
+            print(f" Merged landed cost and billable type data into main dataframe")
         
     except Exception as e:
-        print(f"✗ Error: {str(e)}")
+        print(f" Error: {str(e)}")
         import traceback
         traceback.print_exc()
         df_global = pd.DataFrame()
@@ -910,5 +910,5 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"🚀 Running on http://0.0.0.0:{PORT}")
+    print(f" Running on http://0.0.0.0:{PORT}")
     uvicorn.run(app, host=HOST, port=PORT)
