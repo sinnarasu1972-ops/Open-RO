@@ -703,7 +703,7 @@
                     </select>
                 </div>
                 <div class="filter-group" id="segmentFilter" style="display:block !important;">
-                    <label>🎯 Segment</label>
+                    <label> Segment</label>
                     <select id="segment" onchange="onSegmentChange()">
                         <option value="All">All</option>
                     </select>
@@ -750,7 +750,7 @@
                         <option value="100">&gt;50 Records</option>
                     </select>
                 </div>
-                <button class="export-btn" onclick="exportToCSV()">📥 Export Filtered Data to Excel</button>
+                <button class="export-btn" onclick="exportToCSV()"> Export Filtered Data to Excel</button>
             </div>
             <div class="table-wrapper">
                 <table>
@@ -786,7 +786,7 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="divisionModal">
             <div class="modal-header">
-                <h2 id="modalTitle">📊 Mechanical - Division Wise ROs</h2>
+                <h2 id="modalTitle"> Mechanical - Division Wise ROs</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
@@ -999,7 +999,7 @@
                 'presale': 'Pre-Sale/PDI'
             };
             
-            document.getElementById('modalTitle').textContent = `📊 ${categoryNames[currentTab]} - Division Wise ROs`;
+            document.getElementById('modalTitle').textContent = ` ${categoryNames[currentTab]} - Division Wise ROs`;
             document.getElementById('modalOverlay').classList.add('show');
             loadDivisionStats();
         }
@@ -1685,7 +1685,7 @@
             } catch (error) {
                 console.error('Export error:', error);
                 alert('Error exporting data: ' + error.message);
-                event.target.textContent = '📥 Export Filtered Data to Excel';
+                event.target.textContent = ' Export Filtered Data to Excel';
                 event.target.disabled = false;
             }
         }
