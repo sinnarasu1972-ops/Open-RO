@@ -1182,35 +1182,106 @@
         }
 
         async function onSegmentChange() {
-            console.log('\n>>> SEGMENT CHANGED <<<');
+            console.log('\n========== SEGMENT CHANGED ==========');
             const segment = document.getElementById('segment').value;
             const branch = document.getElementById('branch').value;
             
-            console.log(`Current values: Branch=${branch}, Segment=${segment}`);
+            console.log(`Values: Branch="${branch}", Segment="${segment}"`);
             
             try {
-                // If segment is selected, update Branch dropdown
+                // If segment is selected (not "All"), update Branch options
                 if (segment && segment !== 'All') {
-                    console.log('Updating branches for segment...');
+                    console.log('→ Updating branch options for this segment...');
                     await updateBranchesForSegment(segment);
                 } else {
-                    console.log('Segment is "All", reloading all filters');
+                    console.log('→ Segment="All", reloading all filters...');
                     loadFilters();
                 }
                 
-                // IMPORTANT: Always update SA Names based on Branch + Segment
-                console.log('Updating SA Names for Branch + Segment combination...');
-                await updateSANamesForBranchSegment(branch, segment);
-                
-                console.log('>>> SEGMENT CHANGE: All updates completed <<<\n');
-                
             } catch (error) {
-                console.error('Error in onSegmentChange:', error);
+                console.error('✗ Error updating branches:', error);
             }
             
-            // Finally, trigger filter change
-            console.log('Applying filters to data...');
+            try {
+                // NOW UPDATE SA NAMES - THIS IS CRITICAL
+                console.log('→ Updating SA Name dropdown...');
+                await updateSANamesDirectly(branch, segment);
+            } catch (error) {
+                console.error('✗ Error updating SA Names:', error);
+            }
+            
+            // Apply filters to table
+            console.log('→ Applying filters to table data...');
             onFilterChange();
+            console.log('========== SEGMENT CHANGE COMPLETE ==========\n');
+        }
+
+        async function updateSANamesDirectly(branch, segment) {
+            try {
+                const currentBranch = branch || document.getElementById('branch').value;
+                const currentSegment = segment || document.getElementById('segment').value;
+                
+                console.log(`  [SA Update] Branch="${currentBranch}", Segment="${currentSegment}"`);
+                
+                // Build API URL
+                let apiUrl = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=10000`;
+                if (currentBranch && currentBranch !== 'All') {
+                    apiUrl += `&branch=${encodeURIComponent(currentBranch)}`;
+                }
+                if (currentSegment && currentSegment !== 'All') {
+                    apiUrl += `&segment=${encodeURIComponent(currentSegment)}`;
+                }
+                
+                console.log(`  [API] Fetching: ${apiUrl}`);
+                
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    console.error(`  [API] Error: HTTP ${response.status}`);
+                    return;
+                }
+                
+                const vehicles = await response.json();
+                console.log(`  [API] Received ${vehicles.length} vehicles`);
+                
+                // Extract unique SAs
+                const saSet = new Set();
+                saSet.add('All');
+                
+                vehicles.forEach(v => {
+                    if (v.service_adviser) {
+                        const sa = v.service_adviser.trim();
+                        if (sa) saSet.add(sa);
+                    }
+                });
+                
+                const saList = Array.from(saSet).sort();
+                console.log(`  [Extract] Found ${saList.length - 1} unique SAs`);
+                console.log(`  [Sample] ${saList.slice(1, Math.min(4, saList.length)).join(', ')}...`);
+                
+                // Update dropdown
+                const saDropdown = document.getElementById('saName');
+                if (!saDropdown) {
+                    console.error(`  [Update] ✗ SA Name dropdown element not found!`);
+                    return;
+                }
+                
+                // Clear and rebuild
+                saDropdown.innerHTML = '';
+                saList.forEach(sa => {
+                    const option = document.createElement('option');
+                    option.value = sa;
+                    option.textContent = sa;
+                    saDropdown.appendChild(option);
+                });
+                saDropdown.value = 'All';
+                
+                console.log(`  [Update] ✓ Dropdown updated with ${saList.length} options`);
+                console.log(`  [Verify] Dropdown now has ${saDropdown.options.length} options`);
+                
+            } catch (error) {
+                console.error(`  [Error] ${error.message}`);
+                console.error(`  [Stack] ${error.stack}`);
+            }
         }
 
         async function updateBranchesForSegment(segment) {
@@ -1241,77 +1312,6 @@
                 }
             } catch (error) {
                 console.error('Error updating branches:', error);
-            }
-        }
-
-        async function updateSANamesForBranchSegment(branch, segment) {
-            try {
-                // Always get fresh values from DOM
-                const effectiveBranch = branch || document.getElementById('branch').value;
-                const effectiveSegment = segment || document.getElementById('segment').value;
-                
-                console.log(`\n🔄 Updating SA Names...`);
-                console.log(`   Branch: ${effectiveBranch}`);
-                console.log(`   Segment: ${effectiveSegment}`);
-                
-                // Build query parameters
-                let queryParams = `skip=0&limit=10000`;
-                if (effectiveBranch && effectiveBranch !== 'All') {
-                    queryParams += `&branch=${encodeURIComponent(effectiveBranch)}`;
-                }
-                if (effectiveSegment && effectiveSegment !== 'All') {
-                    queryParams += `&segment=${encodeURIComponent(effectiveSegment)}`;
-                }
-                
-                const url = `${API_URL}/api/vehicles/${currentTab}?${queryParams}`;
-                console.log(`   API URL: ${url}`);
-                
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    console.error(`   ❌ API Error: HTTP ${response.status}`);
-                    return false;
-                }
-                
-                const data = await response.json();
-                console.log(`   ✓ Received ${data.length} vehicles`);
-                
-                // Extract unique SA Names
-                const saNames = new Set();
-                saNames.add('All');  // Always include 'All'
-                
-                data.forEach(v => {
-                    const sa = (v.service_adviser || '').trim();
-                    if (sa) {
-                        saNames.add(sa);
-                    }
-                });
-                
-                const saCount = saNames.size - 1;  // Exclude 'All' from count
-                console.log(`   ✓ Extracted ${saCount} unique SAs`);
-                
-                // Update SA Name dropdown
-                const saSelect = document.getElementById('saName');
-                const sortedSAs = Array.from(saNames).sort();
-                
-                // Log first few SAs for verification
-                const sampleSAs = Array.from(saNames).slice(1, 6).join(', ');
-                console.log(`   Sample SAs: ${sampleSAs}${saCount > 5 ? '...' : ''}`);
-                
-                // Build new HTML
-                const newHTML = sortedSAs.map(s => `<option value="${s}">${s}</option>`).join('');
-                
-                // Update dropdown
-                saSelect.innerHTML = newHTML;
-                saSelect.value = 'All';
-                
-                console.log(`   ✅ SA Name dropdown updated with ${saCount} SAs\n`);
-                return true;
-                
-            } catch (error) {
-                console.error(`   ❌ Error in updateSANamesForBranchSegment:`, error);
-                console.error(`   Error details:`, error.message);
-                return false;
             }
         }
 
