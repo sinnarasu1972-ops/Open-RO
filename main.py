@@ -60,25 +60,78 @@ def load_data():
         # Merge Model Group data if available
         if not df_model_group.empty:
             print(f"✓ Merging Model Group data...")
+            print(f"  Model Group df shape: {df_model_group.shape}")
+            print(f"  Open RO df shape: {df_global.shape}")
+            print(f"  Model Group columns: {list(df_model_group.columns)}")
+            print(f"  Open RO columns (first 10): {list(df_global.columns[:10])}")
             
-            # Create mapping from Model Group to Segment
-            model_mapping = df_model_group[['Model Group', 'Segment']].copy()
-            model_mapping.columns = ['Model Group', 'segment']
-            model_mapping = model_mapping.drop_duplicates()
+            # STRATEGY 1: Try direct merge on Model Group
+            segment_merged = False
+            try:
+                if 'Model Group' in df_global.columns and 'Model Group' in df_model_group.columns:
+                    model_mapping = df_model_group[['Model Group', 'Segment']].copy()
+                    model_mapping = model_mapping.drop_duplicates()
+                    model_mapping.columns = ['Model Group', 'segment']
+                    
+                    print(f"  STRATEGY 1: Merging on 'Model Group'")
+                    print(f"    Mapping has {len(model_mapping)} unique Model Groups")
+                    print(f"    Open RO has {df_global['Model Group'].nunique()} unique Model Groups")
+                    
+                    # Show sample matches
+                    sample_models = df_global['Model Group'].dropna().unique()[:3]
+                    print(f"    Sample Model Groups in Open RO: {sample_models}")
+                    print(f"    Sample Model Groups in mapping: {model_mapping['Model Group'].unique()[:3]}")
+                    
+                    df_global = df_global.merge(model_mapping, on='Model Group', how='left')
+                    print(f"  ✓ Merge successful - result shape: {df_global.shape}")
+                    segment_merged = True
+                else:
+                    print(f"  ✗ 'Model Group' column missing in one of the dataframes")
+                    if 'Model Group' not in df_global.columns:
+                        print(f"    - Missing in Open RO")
+                    if 'Model Group' not in df_model_group.columns:
+                        print(f"    - Missing in Model Group")
+            except Exception as e:
+                print(f"  ✗ STRATEGY 1 failed: {str(e)}")
+                segment_merged = False
             
-            # Merge with main dataframe using Model Group column
-            if 'Model Group' in df_global.columns:
-                df_global = df_global.merge(model_mapping, on='Model Group', how='left')
-                print(f"✓ Merged by Model Group")
+            # STRATEGY 2: Create segment mapping dictionary as fallback
+            if not segment_merged:
+                print(f"  STRATEGY 2: Creating segment mapping from Model_Group data")
+                try:
+                    segment_dict = dict(zip(df_model_group['Model Group'], df_model_group['Segment']))
+                    print(f"    Created mapping dictionary with {len(segment_dict)} entries")
+                    print(f"    Sample mappings: {list(segment_dict.items())[:3]}")
+                    
+                    if 'Model Group' in df_global.columns:
+                        df_global['segment'] = df_global['Model Group'].map(segment_dict).fillna('Unknown')
+                        print(f"  ✓ Segment column created using dictionary mapping")
+                        segment_merged = True
+                    else:
+                        print(f"    ✗ 'Model Group' column not found in Open RO")
+                except Exception as e:
+                    print(f"  ✗ STRATEGY 2 failed: {str(e)}")
             
-            # Fill missing segments
-            if 'segment' in df_global.columns:
-                df_global['segment'] = df_global['segment'].fillna('Unknown')
-            else:
-                print("⚠ Segment column not created - Model Group column not found in Open RO data")
+            # STRATEGY 3: Force create segment column
+            if 'segment' not in df_global.columns:
+                print(f"  STRATEGY 3: Force creating segment column")
                 df_global['segment'] = 'Unknown'
+                print(f"  ✓ Segment column created with all 'Unknown' values")
             
+            # Fill any nulls
+            df_global['segment'] = df_global['segment'].fillna('Unknown')
+            
+            # Final statistics
             print(f"✓ Model Group and Segment data enriched")
+            print(f"  Segment column exists: {'segment' in df_global.columns}")
+            print(f"  Segment column shape: {df_global['segment'].shape if 'segment' in df_global.columns else 'N/A'}")
+            print(f"  Segment values: {sorted(df_global['segment'].unique())}")
+            print(f"  Segment value counts:")
+            for seg, count in df_global['segment'].value_counts().items():
+                print(f"    {seg}: {count}")
+        else:
+            print(f"⚠ Model Group dataframe is empty - creating default segment column")
+            df_global['segment'] = 'Unknown'
         
         # Load and aggregate Landed Cost data
         parts_file = None
@@ -495,9 +548,13 @@ async def mech_filters(branch: Optional[str] = Query("All")):
             sa_names = ['All'] + sorted([str(x) for x in df['Service Adviser Name'].dropna().unique().tolist()])
         
         # Get Segments
-        segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
-        if 'Unknown' in df['segment'].values:
-            segments.append('Unknown')
+        if 'segment' in df.columns:
+            segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
+            if 'Unknown' in df['segment'].values:
+                segments.append('Unknown')
+        else:
+            print(f"⚠ WARNING: segment column not found in mechanical filter")
+            segments = ['All', 'Unknown']
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -544,9 +601,13 @@ async def bs_filters(branch: Optional[str] = Query("All")):
             sa_names = ['All'] + sorted([str(x) for x in df['Service Adviser Name'].dropna().unique().tolist()])
         
         # Get Segments
-        segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
-        if 'Unknown' in df['segment'].values:
-            segments.append('Unknown')
+        if 'segment' in df.columns:
+            segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
+            if 'Unknown' in df['segment'].values:
+                segments.append('Unknown')
+        else:
+            print(f"⚠ WARNING: segment column not found in bodyshop filter")
+            segments = ['All', 'Unknown']
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -582,9 +643,13 @@ async def acc_filters(branch: Optional[str] = Query("All")):
             sa_names = ['All'] + sorted([str(x) for x in df['Service Adviser Name'].dropna().unique().tolist()])
         
         # Get Segments
-        segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
-        if 'Unknown' in df['segment'].values:
-            segments.append('Unknown')
+        if 'segment' in df.columns:
+            segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
+            if 'Unknown' in df['segment'].values:
+                segments.append('Unknown')
+        else:
+            print(f"⚠ WARNING: segment column not found in accessories filter")
+            segments = ['All', 'Unknown']
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -619,9 +684,13 @@ async def presale_filters(branch: Optional[str] = Query("All")):
             sa_names = ['All'] + sorted([str(x) for x in df['Service Adviser Name'].dropna().unique().tolist()])
         
         # Get Segments
-        segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
-        if 'Unknown' in df['segment'].values:
-            segments.append('Unknown')
+        if 'segment' in df.columns:
+            segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
+            if 'Unknown' in df['segment'].values:
+                segments.append('Unknown')
+        else:
+            print(f"⚠ WARNING: segment column not found in presale filter")
+            segments = ['All', 'Unknown']
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
