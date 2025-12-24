@@ -651,7 +651,7 @@
                     <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
                     <button class="tab-button" onclick="switchTab(event, 'presale')">Pre-Sale/PDI</button>
                 </div>
-                <button class="clear-all-btn" onclick="clearAllFilters()">🔄 Clear All</button>
+                <button class="clear-all-btn" onclick="clearAllFilters()">[UPDATE] Clear All</button>
             </div>
         </header>
 
@@ -930,7 +930,7 @@
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
             } catch (error) {
                 console.error('Error loading stats:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Cannot connect to server: ${error.message}</div>`;
+                document.getElementById('tableInfo').innerHTML = `<div class="error">[FAIL] Cannot connect to server: ${error.message}</div>`;
             }
         }
 
@@ -1161,7 +1161,7 @@
                 loadFilteredStats();
             } catch (error) {
                 console.error('Error loading filters:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading filters: ${error.message}</div>`;
+                document.getElementById('tableInfo').innerHTML = `<div class="error">[FAIL] Error loading filters: ${error.message}</div>`;
             }
         }
 
@@ -1191,27 +1191,27 @@
             try {
                 // If segment is selected (not "All"), update Branch options
                 if (segment && segment !== 'All') {
-                    console.log('→ Updating branch options for this segment...');
+                    console.log('-> Updating branch options for this segment...');
                     await updateBranchesForSegment(segment);
                 } else {
-                    console.log('→ Segment="All", reloading all filters...');
+                    console.log('-> Segment="All", reloading all filters...');
                     loadFilters();
                 }
                 
             } catch (error) {
-                console.error('✗ Error updating branches:', error);
+                console.error('[ERROR] Error updating branches:', error);
             }
             
             try {
                 // NOW UPDATE SA NAMES - THIS IS CRITICAL
-                console.log('→ Updating SA Name dropdown...');
+                console.log('-> Updating SA Name dropdown...');
                 await updateSANamesDirectly(branch, segment);
             } catch (error) {
-                console.error('✗ Error updating SA Names:', error);
+                console.error('[ERROR] Error updating SA Names:', error);
             }
             
             // Apply filters to table
-            console.log('→ Applying filters to table data...');
+            console.log('-> Applying filters to table data...');
             onFilterChange();
             console.log('========== SEGMENT CHANGE COMPLETE ==========\n');
         }
@@ -1261,7 +1261,7 @@
                 // Update dropdown
                 const saDropdown = document.getElementById('saName');
                 if (!saDropdown) {
-                    console.error(`  [Update] ✗ SA Name dropdown element not found!`);
+                    console.error(`  [Update] [ERROR] SA Name dropdown element not found!`);
                     return;
                 }
                 
@@ -1275,7 +1275,7 @@
                 });
                 saDropdown.value = 'All';
                 
-                console.log(`  [Update] ✓ Dropdown updated with ${saList.length} options`);
+                console.log(`  [Update] [OK] Dropdown updated with ${saList.length} options`);
                 console.log(`  [Verify] Dropdown now has ${saDropdown.options.length} options`);
                 
             } catch (error) {
@@ -1308,7 +1308,7 @@
                     const sortedBranches = Array.from(branches).sort();
                     branchSelect.innerHTML = sortedBranches.map(b => `<option>${b}</option>`).join('');
                     
-                    console.log(`✓ Branches updated for segment: ${segment} - Count: ${branches.size - 1}`);
+                    console.log(`[OK] Branches updated for segment: ${segment} - Count: ${branches.size - 1}`);
                 }
             } catch (error) {
                 console.error('Error updating branches:', error);
@@ -1393,7 +1393,7 @@
                 console.log('Data loaded:', data);
                 
                 if (data.error) {
-                    document.getElementById('tableInfo').innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    document.getElementById('tableInfo').innerHTML = `<div class="error">[FAIL] ${data.error}</div>`;
                     return;
                 }
                 
@@ -1496,7 +1496,7 @@
                 updateTableHeaders();
             } catch (error) {
                 console.error('Error loading data:', error);
-                document.getElementById('tableInfo').innerHTML = `<div class="error">❌ Error loading data: ${error.message}</div>`;
+                document.getElementById('tableInfo').innerHTML = `<div class="error">[FAIL] Error loading data: ${error.message}</div>`;
             }
         }
 
@@ -1677,7 +1677,7 @@
                 link.click();
                 URL.revokeObjectURL(url_obj);
 
-                btn.textContent = '✅ Exported!';
+                btn.textContent = '[OK] Exported!';
                 setTimeout(() => {
                     btn.textContent = originalText;
                     btn.disabled = false;
