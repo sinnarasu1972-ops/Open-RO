@@ -61,22 +61,22 @@ def load_data():
         if not df_model_group.empty:
             print(f"✓ Merging Model Group data...")
             
-            # Create mapping from Model Code to Model Group and Segment
-            model_mapping = df_model_group[['Model Code', 'Model Group', 'Segment']].copy()
-            model_mapping.columns = ['Model Code', 'model_group_enriched', 'segment']
+            # Create mapping from Model Group to Segment
+            model_mapping = df_model_group[['Model Group', 'Segment']].copy()
+            model_mapping.columns = ['Model Group', 'segment']
+            model_mapping = model_mapping.drop_duplicates()
             
-            # Merge with main dataframe using Model Code
-            if 'Model Code' in df_global.columns:
-                df_global = df_global.merge(model_mapping, on='Model Code', how='left')
-                print(f"✓ Merged by Model Code")
-            
-            # Fill missing values from original Model Group column if enriched column is empty
-            if 'model_group_enriched' in df_global.columns:
-                df_global['model_group_enriched'] = df_global['model_group_enriched'].fillna(df_global.get('Model Group', '-'))
+            # Merge with main dataframe using Model Group column
+            if 'Model Group' in df_global.columns:
+                df_global = df_global.merge(model_mapping, on='Model Group', how='left')
+                print(f"✓ Merged by Model Group")
             
             # Fill missing segments
             if 'segment' in df_global.columns:
                 df_global['segment'] = df_global['segment'].fillna('Unknown')
+            else:
+                print("⚠ Segment column not created - Model Group column not found in Open RO data")
+                df_global['segment'] = 'Unknown'
             
             print(f"✓ Model Group and Segment data enriched")
         
@@ -163,7 +163,7 @@ def convert_row(row) -> Dict[str, Any]:
             'service_category': str(row['SERVC_CATGRY_DESC']).strip() if pd.notna(row['SERVC_CATGRY_DESC']) else '-',
             'service_type': str(row['SERVC_TYPE_DESC']).strip() if pd.notna(row['SERVC_TYPE_DESC']) else '-',
             'vehicle_model': str(row['Family']).strip() if pd.notna(row['Family']) else '-',
-            'model_group': str(row.get('model_group_enriched', row.get('Model Group', '-'))).strip() if pd.notna(row.get('model_group_enriched', row.get('Model Group'))) else '-',
+            'model_group': str(row.get('Model Group', '-')).strip() if pd.notna(row.get('Model Group')) else '-',
             'segment': str(row.get('segment', 'Unknown')).strip() if pd.notna(row.get('segment')) else 'Unknown',
             'reg_number': str(row['Reg. Number']).strip() if pd.notna(row['Reg. Number']) else '-',
             'ro_date': safe_date_parse(row['RO Date']),
