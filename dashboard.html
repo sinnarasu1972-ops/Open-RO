@@ -1167,47 +1167,116 @@
 
         function onBranchChange() {
             console.log('\n>>> BRANCH CHANGED <<<');
+            const branch = document.getElementById('branch').value;
+            
+            // Reset Segment and SA Name when Branch changes
+            document.getElementById('segment').value = 'All';
             document.getElementById('saName').value = 'All';
+            
+            // Reload filters to get updated Segments for selected Branch
             loadFilters();
-            console.log('>>> BRANCH CHANGED - FILTERS RELOADED <<<\n');
+            console.log('>>> BRANCH CHANGED - FILTERS RELOADED, SEGMENT OPTIONS UPDATED <<<\n');
         }
 
         async function onSegmentChange() {
-            console.log('>>> SEGMENT CHANGED <<<');
-            // Update SA Names based on selected segment
+            console.log('\n>>> SEGMENT CHANGED <<<');
             const segment = document.getElementById('segment').value;
             const branch = document.getElementById('branch').value;
             
-            if (segment && segment !== 'All') {
-                try {
-                    // Get all data for the segment to extract SA Names
-                    const url = `${API_URL}/api/vehicles/${currentTab}?branch=${encodeURIComponent(branch)}&segment=${encodeURIComponent(segment)}&skip=0&limit=10000`;
-                    const response = await fetch(url);
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Extract unique SA Names from filtered data
-                        const saNames = new Set(['All']);
-                        data.forEach(v => {
-                            if (v.service_adviser && v.service_adviser.trim()) {
-                                saNames.add(v.service_adviser);
-                            }
-                        });
-                        // Update SA Name dropdown
-                        const saSelect = document.getElementById('saName');
-                        const sortedNames = Array.from(saNames).sort();
-                        saSelect.innerHTML = sortedNames.map(s => `<option>${s}</option>`).join('');
-                        console.log('SA Names updated for segment:', segment, '- Count:', saNames.size - 1);
-                    }
-                } catch (error) {
-                    console.error('Error updating SA Names:', error);
+            try {
+                // If segment is selected, update Branch dropdown to show only branches with that segment
+                if (segment && segment !== 'All') {
+                    await updateBranchesForSegment(segment);
+                } else {
+                    // If "All" segments selected, reload all branches
+                    loadFilters();
                 }
-            } else {
-                // If "All" segments, reload all SA Names
-                loadFilters();
+                
+                // Always update SA Names based on current Branch + Segment combo
+                await updateSANamesForBranchSegment(branch, segment);
+                
+            } catch (error) {
+                console.error('Error in onSegmentChange:', error);
+                await updateSANamesForBranchSegment(branch, segment);
             }
             
-            // Now trigger normal filter change
+            // Trigger normal filter change
             onFilterChange();
+            console.log('>>> SEGMENT CHANGED - BRANCH OPTIONS & SA NAMES UPDATED <<<\n');
+        }
+
+        async function updateBranchesForSegment(segment) {
+            try {
+                console.log(`Fetching branches for segment: ${segment}`);
+                
+                // Fetch vehicles with selected segment to extract branches
+                const url = `${API_URL}/api/vehicles/${currentTab}?segment=${encodeURIComponent(segment)}&skip=0&limit=10000`;
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Extract unique branches
+                    const branches = new Set(['All']);
+                    data.forEach(v => {
+                        if (v.branch && v.branch.trim()) {
+                            branches.add(v.branch);
+                        }
+                    });
+                    
+                    // Update Branch dropdown
+                    const branchSelect = document.getElementById('branch');
+                    const sortedBranches = Array.from(branches).sort();
+                    branchSelect.innerHTML = sortedBranches.map(b => `<option>${b}</option>`).join('');
+                    
+                    console.log(`✓ Branches updated for segment: ${segment} - Count: ${branches.size - 1}`);
+                }
+            } catch (error) {
+                console.error('Error updating branches:', error);
+            }
+        }
+
+        async function updateSANamesForBranchSegment(branch, segment) {
+            try {
+                // Build query with both Branch and Segment filters
+                let queryParams = `skip=0&limit=10000`;
+                if (branch && branch !== 'All') {
+                    queryParams += `&branch=${encodeURIComponent(branch)}`;
+                }
+                if (segment && segment !== 'All') {
+                    queryParams += `&segment=${encodeURIComponent(segment)}`;
+                }
+                
+                console.log(`Fetching SA Names for Branch=${branch || 'All'}, Segment=${segment || 'All'}`);
+                const url = `${API_URL}/api/vehicles/${currentTab}?${queryParams}`;
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Extract unique SA Names
+                    const saNames = new Set(['All']);
+                    data.forEach(v => {
+                        if (v.service_adviser && v.service_adviser.trim()) {
+                            saNames.add(v.service_adviser);
+                        }
+                    });
+                    
+                    // Update SA Name dropdown
+                    const saSelect = document.getElementById('saName');
+                    const sortedSAs = Array.from(saNames).sort();
+                    saSelect.innerHTML = sortedSAs.map(s => `<option>${s}</option>`).join('');
+                    
+                    const filterDesc = [];
+                    if (branch && branch !== 'All') filterDesc.push(`Branch: ${branch}`);
+                    if (segment && segment !== 'All') filterDesc.push(`Segment: ${segment}`);
+                    const desc = filterDesc.length > 0 ? filterDesc.join(', ') : 'All';
+                    
+                    console.log(`✓ SA Names updated for ${desc} - Count: ${saNames.size - 1}`);
+                }
+            } catch (error) {
+                console.error('Error updating SA Names:', error);
+            }
         }
 
         function onFilterChange() {
