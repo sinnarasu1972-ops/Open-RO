@@ -704,7 +704,7 @@
                 </div>
                 <div class="filter-group" id="segmentFilter" style="display:block !important;">
                     <label>🎯 Segment</label>
-                    <select id="segment" onchange="onFilterChange()">
+                    <select id="segment" onchange="onSegmentChange()">
                         <option value="All">All</option>
                     </select>
                 </div>
@@ -1172,6 +1172,44 @@
             console.log('>>> BRANCH CHANGED - FILTERS RELOADED <<<\n');
         }
 
+        async function onSegmentChange() {
+            console.log('>>> SEGMENT CHANGED <<<');
+            // Update SA Names based on selected segment
+            const segment = document.getElementById('segment').value;
+            const branch = document.getElementById('branch').value;
+            
+            if (segment && segment !== 'All') {
+                try {
+                    // Get all data for the segment to extract SA Names
+                    const url = `${API_URL}/api/vehicles/${currentTab}?branch=${encodeURIComponent(branch)}&segment=${encodeURIComponent(segment)}&skip=0&limit=10000`;
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Extract unique SA Names from filtered data
+                        const saNames = new Set(['All']);
+                        data.forEach(v => {
+                            if (v.service_adviser && v.service_adviser.trim()) {
+                                saNames.add(v.service_adviser);
+                            }
+                        });
+                        // Update SA Name dropdown
+                        const saSelect = document.getElementById('saName');
+                        const sortedNames = Array.from(saNames).sort();
+                        saSelect.innerHTML = sortedNames.map(s => `<option>${s}</option>`).join('');
+                        console.log('SA Names updated for segment:', segment, '- Count:', saNames.size - 1);
+                    }
+                } catch (error) {
+                    console.error('Error updating SA Names:', error);
+                }
+            } else {
+                // If "All" segments, reload all SA Names
+                loadFilters();
+            }
+            
+            // Now trigger normal filter change
+            onFilterChange();
+        }
+
         function onFilterChange() {
             console.log('\n>>> FILTER CHANGED <<<');
             loadFilteredStats();
@@ -1301,7 +1339,6 @@
                                 <td>${saName}</td>
                                 <td><strong>${v.reg_number}</strong></td>
                                 <td>${v.model_group || '-'}</td>
-                                <td><span class="segment-badge">${segment}</span></td>
                                 <td>${chassis}</td>
                                 <td><span class="mjob-badge">${mjob}</span></td>
                                 <td><span class="${tatStyle}">${tat} days</span></td>
@@ -1332,8 +1369,7 @@
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
                                 <td>${v.service_adviser || '-'}</td>
                                 <td><strong>${v.reg_number}</strong></td>
-                                <td>${v.model_group || '-'}</td>
-                                <td><span class="segment-badge">${segment}</span></td>`;
+                                <td>${v.model_group || '-'}</td>`;
                         
                         if (currentTab === 'mechanical') {
                             rowHTML += `<td>${v.service_type || '-'}</td>`;
@@ -1383,7 +1419,6 @@
                     <th title="Service Adviser Name">SA Name</th>
                     <th title="Vehicle Registration Number">Vehicle No</th>
                     <th title="Model Group">Model Group</th>
-                    <th title="Segment">Segment</th>
                     <th title="Last 8 Digits of Chassis Number">Chassis</th>
                     <th title="MJob Category">MJob</th>
                     <th title="Turn Around Time in Days">TAT</th>
@@ -1409,8 +1444,7 @@
                     <th title="RO Status">Status</th>
                     <th title="Service Adviser Name">SA Name</th>
                     <th title="Vehicle Registration Number">Reg Number</th>
-                    <th title="Model Group">Model Group</th>
-                    <th title="Segment">Segment</th>`;
+                    <th title="Model Group">Model Group</th>`;
                 
                 if (currentTab === 'mechanical') {
                     headers += `
