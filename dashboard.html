@@ -278,93 +278,6 @@
             }
         }
 
-        /* ==================== SORT CONTROLS ==================== */
-        .sort-controls {
-            padding: 12px;
-            background: #f0f7ff;
-            border-bottom: 2px solid #ddd;
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .sort-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sort-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #333;
-            white-space: nowrap;
-            margin: 0;
-        }
-
-        .sort-btn {
-            padding: 6px 12px;
-            border: 1px solid #667eea;
-            background: white;
-            color: #667eea;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .sort-btn:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-        }
-
-        .sort-btn.active {
-            background: #667eea;
-            color: white;
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
-        }
-
-        .sort-btn.reset-btn {
-            border-color: #e74c3c;
-            color: #e74c3c;
-        }
-
-        .sort-btn.reset-btn:hover {
-            background: #e74c3c;
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .sort-controls {
-                padding: 10px;
-                gap: 15px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .sort-group {
-                flex-wrap: wrap;
-                gap: 6px;
-            }
-
-            .sort-group label {
-                font-size: 11px;
-                width: 100%;
-            }
-
-            .sort-btn {
-                padding: 5px 10px;
-                font-size: 10px;
-                flex: 1;
-                min-width: 80px;
-            }
-        }
-
         table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
         thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
         th { 
@@ -382,6 +295,48 @@
         th:hover {
             background: #e9ecef;
         }
+
+        /* Sortable column headers */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            padding-right: 24px;
+        }
+
+        th.sortable:hover {
+            background: #dfe3e9;
+        }
+
+        .sort-arrow {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #667eea;
+            opacity: 0.4;
+            transition: opacity 0.2s ease;
+        }
+
+        th.sortable.sort-asc .sort-arrow::before {
+            content: '↑';
+        }
+
+        th.sortable.sort-asc .sort-arrow {
+            opacity: 1;
+        }
+
+        th.sortable.sort-desc .sort-arrow::before {
+            content: '↓';
+        }
+
+        th.sortable.sort-desc .sort-arrow {
+            opacity: 1;
+        }
+
+        th.sortable .sort-arrow::before {
+            content: '⇅';
+        }
+
         td { 
             padding: 12px 8px; 
             border-bottom: 1px solid #eee; 
@@ -841,35 +796,7 @@
                 <button class="export-btn" onclick="exportToCSV()"> Export Filtered Data to Excel</button>
             </div>
 
-            <!-- ==================== SORT CONTROLS ==================== -->
-            <div class="sort-controls">
-                <div class="sort-group">
-                    <label>Sort by Landed Cost:</label>
-                    <button class="sort-btn" id="sortLandedCostAsc" onclick="applySortLandedCost('asc')" title="Sort Ascending">
-                        ↑ Low to High
-                    </button>
-                    <button class="sort-btn" id="sortLandedCostDesc" onclick="applySortLandedCost('desc')" title="Sort Descending">
-                        ↓ High to Low
-                    </button>
-                    <button class="sort-btn reset-btn" onclick="resetSortLandedCost()" title="Reset Sort">
-                        ↻ Reset
-                    </button>
-                </div>
-                <div class="sort-group">
-                    <label>Sort by RO Date:</label>
-                    <button class="sort-btn" id="sortRoDateAsc" onclick="applySortRoDate('asc')" title="Sort Oldest First">
-                        ↑ Oldest First
-                    </button>
-                    <button class="sort-btn" id="sortRoDateDesc" onclick="applySortRoDate('desc')" title="Sort Newest First">
-                        ↓ Newest First
-                    </button>
-                    <button class="sort-btn reset-btn" onclick="resetSortRoDate()" title="Reset Sort">
-                        ↻ Reset
-                    </button>
-                </div>
-            </div>
 
-            <div class="table-wrapper">
                 <table>
                     <thead id="tableHead">
                         <tr id="headerRow">
@@ -1062,60 +989,61 @@
 
         // ==================== SORTING FUNCTIONS ====================
 
-        function applySortLandedCost(direction) {
-            console.log(`Sorting by Landed Cost - ${direction}`);
-            
-            // Reset RO Date sort buttons
-            document.getElementById('sortRoDateAsc').classList.remove('active');
-            document.getElementById('sortRoDateDesc').classList.remove('active');
-            
-            // Update Landed Cost sort buttons
-            if (direction === 'asc') {
-                document.getElementById('sortLandedCostAsc').classList.add('active');
-                document.getElementById('sortLandedCostDesc').classList.remove('active');
+        function sortByLandedCost() {
+            if (currentSort.type === 'landed_cost') {
+                // Toggle direction
+                if (currentSort.direction === 'asc') {
+                    currentSort.direction = 'desc';
+                } else {
+                    currentSort = { type: null, direction: null }; // Reset
+                }
             } else {
-                document.getElementById('sortLandedCostAsc').classList.remove('active');
-                document.getElementById('sortLandedCostDesc').classList.add('active');
+                // New sort - start with ascending
+                currentSort = { type: 'landed_cost', direction: 'asc' };
+            }
+            renderSortedTable();
+        }
+
+        function sortByRoDate() {
+            if (currentSort.type === 'ro_date') {
+                // Toggle direction
+                if (currentSort.direction === 'asc') {
+                    currentSort.direction = 'desc';
+                } else {
+                    currentSort = { type: null, direction: null }; // Reset
+                }
+            } else {
+                // New sort - start with ascending
+                currentSort = { type: 'ro_date', direction: 'asc' };
+            }
+            renderSortedTable();
+        }
+
+        function updateSortArrows() {
+            const landedCostHeader = document.querySelector('th[onclick="sortByLandedCost()"]');
+            const roDateHeader = document.querySelector('th[onclick="sortByRoDate()"]');
+            
+            if (landedCostHeader) {
+                landedCostHeader.classList.remove('sort-asc', 'sort-desc');
+                if (currentSort.type === 'landed_cost') {
+                    if (currentSort.direction === 'asc') {
+                        landedCostHeader.classList.add('sort-asc');
+                    } else if (currentSort.direction === 'desc') {
+                        landedCostHeader.classList.add('sort-desc');
+                    }
+                }
             }
             
-            currentSort = { type: 'landed_cost', direction: direction };
-            renderSortedTable();
-        }
-
-        function applySortRoDate(direction) {
-            console.log(`Sorting by RO Date - ${direction}`);
-            
-            // Reset Landed Cost sort buttons
-            document.getElementById('sortLandedCostAsc').classList.remove('active');
-            document.getElementById('sortLandedCostDesc').classList.remove('active');
-            
-            // Update RO Date sort buttons
-            if (direction === 'asc') {
-                document.getElementById('sortRoDateAsc').classList.add('active');
-                document.getElementById('sortRoDateDesc').classList.remove('active');
-            } else {
-                document.getElementById('sortRoDateAsc').classList.remove('active');
-                document.getElementById('sortRoDateDesc').classList.add('active');
+            if (roDateHeader) {
+                roDateHeader.classList.remove('sort-asc', 'sort-desc');
+                if (currentSort.type === 'ro_date') {
+                    if (currentSort.direction === 'asc') {
+                        roDateHeader.classList.add('sort-asc');
+                    } else if (currentSort.direction === 'desc') {
+                        roDateHeader.classList.add('sort-desc');
+                    }
+                }
             }
-            
-            currentSort = { type: 'ro_date', direction: direction };
-            renderSortedTable();
-        }
-
-        function resetSortLandedCost() {
-            console.log('Resetting Landed Cost sort');
-            document.getElementById('sortLandedCostAsc').classList.remove('active');
-            document.getElementById('sortLandedCostDesc').classList.remove('active');
-            currentSort = { type: null, direction: null };
-            renderSortedTable();
-        }
-
-        function resetSortRoDate() {
-            console.log('Resetting RO Date sort');
-            document.getElementById('sortRoDateAsc').classList.remove('active');
-            document.getElementById('sortRoDateDesc').classList.remove('active');
-            currentSort = { type: null, direction: null };
-            renderSortedTable();
         }
 
         function renderSortedTable() {
@@ -1651,10 +1579,7 @@
             console.log('\n>>> FILTER CHANGED <<<');
             // Reset sort when filter changes
             currentSort = { type: null, direction: null };
-            document.getElementById('sortLandedCostAsc').classList.remove('active');
-            document.getElementById('sortLandedCostDesc').classList.remove('active');
-            document.getElementById('sortRoDateAsc').classList.remove('active');
-            document.getElementById('sortRoDateDesc').classList.remove('active');
+            updateSortArrows();
             
             loadFilteredStats();
             loadData();
@@ -1686,10 +1611,7 @@
             
             // Reset sort
             currentSort = { type: null, direction: null };
-            document.getElementById('sortLandedCostAsc').classList.remove('active');
-            document.getElementById('sortLandedCostDesc').classList.remove('active');
-            document.getElementById('sortRoDateAsc').classList.remove('active');
-            document.getElementById('sortRoDateDesc').classList.remove('active');
+            updateSortArrows();
             
             loadStats();
             loadData();
@@ -1764,8 +1686,14 @@
             if (currentTab === 'bodyshop') {
                 let headers = `
                     <th title="Repair Order Number">RO Number</th>
-                    <th title="Total Landed Cost">Landed Cost</th>
-                    <th title="Repair Order Date">RO Date</th>`;
+                    <th class="sortable" onclick="sortByLandedCost()" title="Click to sort by Landed Cost">
+                        Landed Cost
+                        <span class="sort-arrow" id="arrow-landed-cost">⇅</span>
+                    </th>
+                    <th class="sortable" onclick="sortByRoDate()" title="Click to sort by RO Date">
+                        RO Date
+                        <span class="sort-arrow" id="arrow-ro-date">⇅</span>
+                    </th>`;
                 
                 if (showClosedButNotBilledColumns) {
                     headers += `
@@ -1790,8 +1718,14 @@
             } else {
                 let headers = `
                     <th title="Repair Order ID">RO ID</th>
-                    <th title="Total Landed Cost">Landed Cost</th>
-                    <th title="Repair Order Date">RO Date</th>`;
+                    <th class="sortable" onclick="sortByLandedCost()" title="Click to sort by Landed Cost">
+                        Landed Cost
+                        <span class="sort-arrow" id="arrow-landed-cost">⇅</span>
+                    </th>
+                    <th class="sortable" onclick="sortByRoDate()" title="Click to sort by RO Date">
+                        RO Date
+                        <span class="sort-arrow" id="arrow-ro-date">⇅</span>
+                    </th>`;
                 
                 if (showClosedButNotBilledColumns) {
                     headers += `
@@ -1821,16 +1755,14 @@
                 
                 headerRow.innerHTML = headers;
             }
+            
+            updateSortArrows();
         }
 
         function switchTab(event, tab) {
             currentTab = tab;
             // Reset sort when switching tabs
             currentSort = { type: null, direction: null };
-            document.getElementById('sortLandedCostAsc').classList.remove('active');
-            document.getElementById('sortLandedCostDesc').classList.remove('active');
-            document.getElementById('sortRoDateAsc').classList.remove('active');
-            document.getElementById('sortRoDateDesc').classList.remove('active');
             
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
