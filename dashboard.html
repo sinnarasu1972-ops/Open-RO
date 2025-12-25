@@ -277,6 +277,94 @@
                 font-size: 11px;
             }
         }
+
+        /* ==================== SORT CONTROLS ==================== */
+        .sort-controls {
+            padding: 12px;
+            background: #f0f7ff;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .sort-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sort-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            margin: 0;
+        }
+
+        .sort-btn {
+            padding: 6px 12px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .sort-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .sort-btn.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .sort-btn.reset-btn {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .sort-btn.reset-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .sort-controls {
+                padding: 10px;
+                gap: 15px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .sort-group {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .sort-group label {
+                font-size: 11px;
+                width: 100%;
+            }
+
+            .sort-btn {
+                padding: 5px 10px;
+                font-size: 10px;
+                flex: 1;
+                min-width: 80px;
+            }
+        }
+
         table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
         thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
         th { 
@@ -752,6 +840,35 @@
                 </div>
                 <button class="export-btn" onclick="exportToCSV()"> Export Filtered Data to Excel</button>
             </div>
+
+            <!-- ==================== SORT CONTROLS ==================== -->
+            <div class="sort-controls">
+                <div class="sort-group">
+                    <label>Sort by Landed Cost:</label>
+                    <button class="sort-btn" id="sortLandedCostAsc" onclick="applySortLandedCost('asc')" title="Sort Ascending">
+                        ↑ Low to High
+                    </button>
+                    <button class="sort-btn" id="sortLandedCostDesc" onclick="applySortLandedCost('desc')" title="Sort Descending">
+                        ↓ High to Low
+                    </button>
+                    <button class="sort-btn reset-btn" onclick="resetSortLandedCost()" title="Reset Sort">
+                        ↻ Reset
+                    </button>
+                </div>
+                <div class="sort-group">
+                    <label>Sort by RO Date:</label>
+                    <button class="sort-btn" id="sortRoDateAsc" onclick="applySortRoDate('asc')" title="Sort Oldest First">
+                        ↑ Oldest First
+                    </button>
+                    <button class="sort-btn" id="sortRoDateDesc" onclick="applySortRoDate('desc')" title="Sort Newest First">
+                        ↓ Newest First
+                    </button>
+                    <button class="sort-btn reset-btn" onclick="resetSortRoDate()" title="Reset Sort">
+                        ↻ Reset
+                    </button>
+                </div>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead id="tableHead">
@@ -812,6 +929,7 @@
         
         let currentTab = 'mechanical';
         let allData = [];
+        let currentSort = { type: null, direction: null }; // Track current sort
 
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
@@ -910,6 +1028,220 @@
         function formatCurrency(value) {
             if (value === undefined || value === null || value === 0) return '₹0';
             return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+        }
+
+        function formatDateToDDMMYYYY(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
+            
+            try {
+                // Handle YYYY-MM-DD format
+                if (dateStr.includes('-')) {
+                    const parts = dateStr.split('-');
+                    if (parts.length === 3) {
+                        const year = parts[0];
+                        const month = parts[1];
+                        const day = parts[2];
+                        return `${day}/${month}/${year}`;
+                    }
+                }
+                
+                // Handle other date formats
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                }
+                
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        // ==================== SORTING FUNCTIONS ====================
+
+        function applySortLandedCost(direction) {
+            console.log(`Sorting by Landed Cost - ${direction}`);
+            
+            // Reset RO Date sort buttons
+            document.getElementById('sortRoDateAsc').classList.remove('active');
+            document.getElementById('sortRoDateDesc').classList.remove('active');
+            
+            // Update Landed Cost sort buttons
+            if (direction === 'asc') {
+                document.getElementById('sortLandedCostAsc').classList.add('active');
+                document.getElementById('sortLandedCostDesc').classList.remove('active');
+            } else {
+                document.getElementById('sortLandedCostAsc').classList.remove('active');
+                document.getElementById('sortLandedCostDesc').classList.add('active');
+            }
+            
+            currentSort = { type: 'landed_cost', direction: direction };
+            renderSortedTable();
+        }
+
+        function applySortRoDate(direction) {
+            console.log(`Sorting by RO Date - ${direction}`);
+            
+            // Reset Landed Cost sort buttons
+            document.getElementById('sortLandedCostAsc').classList.remove('active');
+            document.getElementById('sortLandedCostDesc').classList.remove('active');
+            
+            // Update RO Date sort buttons
+            if (direction === 'asc') {
+                document.getElementById('sortRoDateAsc').classList.add('active');
+                document.getElementById('sortRoDateDesc').classList.remove('active');
+            } else {
+                document.getElementById('sortRoDateAsc').classList.remove('active');
+                document.getElementById('sortRoDateDesc').classList.add('active');
+            }
+            
+            currentSort = { type: 'ro_date', direction: direction };
+            renderSortedTable();
+        }
+
+        function resetSortLandedCost() {
+            console.log('Resetting Landed Cost sort');
+            document.getElementById('sortLandedCostAsc').classList.remove('active');
+            document.getElementById('sortLandedCostDesc').classList.remove('active');
+            currentSort = { type: null, direction: null };
+            renderSortedTable();
+        }
+
+        function resetSortRoDate() {
+            console.log('Resetting RO Date sort');
+            document.getElementById('sortRoDateAsc').classList.remove('active');
+            document.getElementById('sortRoDateDesc').classList.remove('active');
+            currentSort = { type: null, direction: null };
+            renderSortedTable();
+        }
+
+        function renderSortedTable() {
+            let dataToRender = [...allData];
+            
+            if (currentSort.type === 'landed_cost') {
+                dataToRender.sort((a, b) => {
+                    const aVal = a.total_landed_cost || 0;
+                    const bVal = b.total_landed_cost || 0;
+                    
+                    if (currentSort.direction === 'asc') {
+                        return aVal - bVal;
+                    } else {
+                        return bVal - aVal;
+                    }
+                });
+            } else if (currentSort.type === 'ro_date') {
+                dataToRender.sort((a, b) => {
+                    const aDate = new Date(a.ro_date || '1900-01-01');
+                    const bDate = new Date(b.ro_date || '1900-01-01');
+                    
+                    if (currentSort.direction === 'asc') {
+                        return aDate - bDate;
+                    } else {
+                        return bDate - aDate;
+                    }
+                });
+            }
+            
+            renderTable(dataToRender);
+        }
+
+        function renderTable(vehicles) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (vehicles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="16" class="loading">No data found</td></tr>`;
+                return;
+            }
+
+            const showClosedButNotBilledColumns = isClosedButNotBilled();
+
+            vehicles.forEach(v => {
+                const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
+                const branchAbbr = abbreviateBranch(v.branch);
+                
+                const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
+                const roDateFormatted = formatDateToDDMMYYYY(v.ro_date);
+                
+                if (currentTab === 'bodyshop') {
+                    const mjob = extractMJob(v.ro_remarks);
+                    const chassis = getLastEightChars(v.vin || '-');
+                    const tat = calculateTAT(v.ro_date);
+                    const tatStyle = getTATStyle(mjob, tat);
+                    const saName = v.service_adviser || '-';
+                    const segment = v.segment || 'Unknown';
+                    
+                    let rowHTML = `
+                        <tr>
+                            <td><strong>${v.ro_id}</strong></td>
+                            <td class="landed-cost-cell">${landedCostDisplay}</td>
+                            <td>${roDateFormatted}</td>`;
+                    
+                    if (showClosedButNotBilledColumns) {
+                        const vehicleReadyDate = formatDateToDDMMYYYY(v.vehicle_ready_date);
+                        const tatCurrent = calculateTAT(v.vehicle_ready_date);
+                        rowHTML += `
+                            <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                            <td class="tat-current-cell">${tatCurrent} days</td>`;
+                    }
+                    
+                    rowHTML += `
+                            <td><span class="branch-abbr">${branchAbbr}</span></td>
+                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                            <td>${saName}</td>
+                            <td><strong>${v.reg_number}</strong></td>
+                            <td>${v.model_group || '-'}</td>
+                            <td>${chassis}</td>
+                            <td><span class="mjob-badge">${mjob}</span></td>
+                            <td><span class="${tatStyle}">${tat} days</span></td>
+                            <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
+                            <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                        </tr>
+                    `;
+                    
+                    tbody.innerHTML += rowHTML;
+                } else {
+                    const segment = v.segment || 'Unknown';
+                    let rowHTML = `
+                        <tr>
+                            <td><strong>${v.ro_id}</strong></td>
+                            <td class="landed-cost-cell">${landedCostDisplay}</td>
+                            <td>${roDateFormatted}</td>`;
+                    
+                    if (showClosedButNotBilledColumns) {
+                        const vehicleReadyDate = formatDateToDDMMYYYY(v.vehicle_ready_date);
+                        const tatCurrent = calculateTAT(v.vehicle_ready_date);
+                        rowHTML += `
+                            <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                            <td class="tat-current-cell">${tatCurrent} days</td>`;
+                    }
+                    
+                    rowHTML += `
+                            <td><span class="branch-abbr">${branchAbbr}</span></td>
+                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                            <td>${v.service_adviser || '-'}</td>
+                            <td><strong>${v.reg_number}</strong></td>
+                            <td>${v.model_group || '-'}</td>`;
+                    
+                    if (currentTab === 'mechanical') {
+                        rowHTML += `<td>${v.service_type || '-'}</td>`;
+                    }
+                    
+                    rowHTML += `
+                            <td>${v.age_bucket}</td>
+                            <td>${v.days}</td>
+                            <td>${v.km.toLocaleString()}</td>
+                            <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
+                            <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                        </tr>
+                    `;
+                    
+                    tbody.innerHTML += rowHTML;
+                }
+            });
         }
 
         async function loadStats() {
@@ -1317,6 +1649,13 @@
 
         function onFilterChange() {
             console.log('\n>>> FILTER CHANGED <<<');
+            // Reset sort when filter changes
+            currentSort = { type: null, direction: null };
+            document.getElementById('sortLandedCostAsc').classList.remove('active');
+            document.getElementById('sortLandedCostDesc').classList.remove('active');
+            document.getElementById('sortRoDateAsc').classList.remove('active');
+            document.getElementById('sortRoDateDesc').classList.remove('active');
+            
             loadFilteredStats();
             loadData();
         }
@@ -1344,6 +1683,13 @@
             if (document.getElementById('regNumber')) {
                 document.getElementById('regNumber').value = '';
             }
+            
+            // Reset sort
+            currentSort = { type: null, direction: null };
+            document.getElementById('sortLandedCostAsc').classList.remove('active');
+            document.getElementById('sortLandedCostDesc').classList.remove('active');
+            document.getElementById('sortRoDateAsc').classList.remove('active');
+            document.getElementById('sortRoDateDesc').classList.remove('active');
             
             loadStats();
             loadData();
@@ -1400,100 +1746,9 @@
                 allData = data.vehicles;
 
                 document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = '';
-
-                if (data.vehicles.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="16" class="loading">No data found</td></tr>`;
-                    return;
-                }
-
-                const showClosedButNotBilledColumns = isClosedButNotBilled();
-
-                data.vehicles.forEach(v => {
-                    const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
-                    const branchAbbr = abbreviateBranch(v.branch);
-                    
-                    const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
-                    
-                    if (currentTab === 'bodyshop') {
-                        const mjob = extractMJob(v.ro_remarks);
-                        const chassis = getLastEightChars(v.vin || '-');
-                        const tat = calculateTAT(v.ro_date);
-                        const tatStyle = getTATStyle(mjob, tat);
-                        const saName = v.service_adviser || '-';
-                        const segment = v.segment || 'Unknown';
-                        
-                        let rowHTML = `
-                            <tr>
-                                <td><strong>${v.ro_id}</strong></td>
-                                <td class="landed-cost-cell">${landedCostDisplay}</td>
-                                <td>${v.ro_date}</td>`;
-                        
-                        if (showClosedButNotBilledColumns) {
-                            const vehicleReadyDate = v.vehicle_ready_date || '-';
-                            const tatCurrent = calculateTAT(vehicleReadyDate);
-                            rowHTML += `
-                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
-                                <td class="tat-current-cell">${tatCurrent} days</td>`;
-                        }
-                        
-                        rowHTML += `
-                                <td><span class="branch-abbr">${branchAbbr}</span></td>
-                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                                <td>${saName}</td>
-                                <td><strong>${v.reg_number}</strong></td>
-                                <td>${v.model_group || '-'}</td>
-                                <td>${chassis}</td>
-                                <td><span class="mjob-badge">${mjob}</span></td>
-                                <td><span class="${tatStyle}">${tat} days</span></td>
-                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
-                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
-                            </tr>
-                        `;
-                        
-                        tbody.innerHTML += rowHTML;
-                    } else {
-                        const segment = v.segment || 'Unknown';
-                        let rowHTML = `
-                            <tr>
-                                <td><strong>${v.ro_id}</strong></td>
-                                <td class="landed-cost-cell">${landedCostDisplay}</td>
-                                <td>${v.ro_date}</td>`;
-                        
-                        if (showClosedButNotBilledColumns) {
-                            const vehicleReadyDate = v.vehicle_ready_date || '-';
-                            const tatCurrent = calculateTAT(vehicleReadyDate);
-                            rowHTML += `
-                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
-                                <td class="tat-current-cell">${tatCurrent} days</td>`;
-                        }
-                        
-                        rowHTML += `
-                                <td><span class="branch-abbr">${branchAbbr}</span></td>
-                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                                <td>${v.service_adviser || '-'}</td>
-                                <td><strong>${v.reg_number}</strong></td>
-                                <td>${v.model_group || '-'}</td>`;
-                        
-                        if (currentTab === 'mechanical') {
-                            rowHTML += `<td>${v.service_type || '-'}</td>`;
-                        }
-                        
-                        rowHTML += `
-                                <td>${v.age_bucket}</td>
-                                <td>${v.days}</td>
-                                <td>${v.km.toLocaleString()}</td>
-                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
-                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
-                            </tr>
-                        `;
-                        
-                        tbody.innerHTML += rowHTML;
-                    }
-                });
-
+                
                 updateTableHeaders();
+                renderTable(allData);
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">[FAIL] Error loading data: ${error.message}</div>`;
@@ -1570,6 +1825,13 @@
 
         function switchTab(event, tab) {
             currentTab = tab;
+            // Reset sort when switching tabs
+            currentSort = { type: null, direction: null };
+            document.getElementById('sortLandedCostAsc').classList.remove('active');
+            document.getElementById('sortLandedCostDesc').classList.remove('active');
+            document.getElementById('sortRoDateAsc').classList.remove('active');
+            document.getElementById('sortRoDateDesc').classList.remove('active');
+            
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             loadFilters();
@@ -1645,6 +1907,13 @@
                         };
                     });
                 }
+
+                // Format dates in export data
+                exportData = exportData.map(row => ({
+                    ...row,
+                    ro_date: formatDateToDDMMYYYY(row.ro_date),
+                    vehicle_ready_date: row.vehicle_ready_date ? formatDateToDDMMYYYY(row.vehicle_ready_date) : '-'
+                }));
 
                 const allColumns = Object.keys(exportData[0]);
                 const headers = allColumns;
