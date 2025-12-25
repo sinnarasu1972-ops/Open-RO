@@ -158,8 +158,8 @@
         }
         .filters-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-            gap: 15px; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 12px; 
         }
         .filter-group label { 
             display: block; 
@@ -204,13 +204,14 @@
             margin-bottom: 20px;
         }
         .table-wrapper {
-            overflow-x: scroll !important;
+            overflow-x: auto;
             overflow-y: auto;
             max-height: 550px;
             border-radius: 0 0 10px 10px;
             display: block;
             scroll-behavior: smooth;
             padding-bottom: 5px;
+            scroll-snap-type: x mandatory;
         }
         .table-wrapper::-webkit-scrollbar {
             width: 15px;
@@ -278,7 +279,12 @@
             }
         }
 
-        table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 1800px; 
+            table-layout: fixed;
+        }
         thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
         th { 
             padding: 12px 8px; 
@@ -365,8 +371,13 @@
             font-weight: 600;
         }
         
-        tr:hover { background: #f9f9f9; }
-        tbody tr { height: auto; }
+        tbody tr:hover { 
+            background: #f0f0f0 !important;
+        }
+        tbody tr { 
+            height: auto;
+            background: white !important;
+        }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge-open { background: #fef3e2; color: #e67e22; }
         .badge-closed { background: #e8f5e9; color: #27ae60; }
@@ -1094,81 +1105,74 @@
                 const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
                 const roDateFormatted = formatDateToDDMMYYYY(v.ro_date);
                 
+                let rowHTML = `<tr>`;
+                
                 if (currentTab === 'bodyshop') {
                     const mjob = extractMJob(v.ro_remarks);
                     const chassis = getLastEightChars(v.vin || '-');
                     const tat = calculateTAT(v.ro_date);
                     const tatStyle = getTATStyle(mjob, tat);
                     const saName = v.service_adviser || '-';
-                    const segment = v.segment || 'Unknown';
                     
-                    let rowHTML = `
-                        <tr>
-                            <td><strong>${v.ro_id}</strong></td>
-                            <td class="landed-cost-cell">${landedCostDisplay}</td>
-                            <td>${roDateFormatted}</td>`;
+                    rowHTML += `
+                        <td><strong>${v.ro_id}</strong></td>
+                        <td class="landed-cost-cell">${landedCostDisplay}</td>
+                        <td>${roDateFormatted}</td>`;
                     
                     if (showClosedButNotBilledColumns) {
                         const vehicleReadyDate = formatDateToDDMMYYYY(v.vehicle_ready_date);
                         const tatCurrent = calculateTAT(v.vehicle_ready_date);
                         rowHTML += `
-                            <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
-                            <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                        <td class="tat-current-cell">${tatCurrent} days</td>`;
                     }
                     
                     rowHTML += `
-                            <td><span class="branch-abbr">${branchAbbr}</span></td>
-                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                            <td>${saName}</td>
-                            <td><strong>${v.reg_number}</strong></td>
-                            <td>${v.model_group || '-'}</td>
-                            <td>${chassis}</td>
-                            <td><span class="mjob-badge">${mjob}</span></td>
-                            <td><span class="${tatStyle}">${tat} days</span></td>
-                            <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
-                            <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
-                        </tr>
-                    `;
-                    
-                    tbody.innerHTML += rowHTML;
+                        <td><span class="branch-abbr">${branchAbbr}</span></td>
+                        <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                        <td>${saName}</td>
+                        <td><strong>${v.reg_number}</strong></td>
+                        <td>${v.model_group || '-'}</td>
+                        <td>${chassis}</td>
+                        <td><span class="mjob-badge">${mjob}</span></td>
+                        <td><span class="${tatStyle}">${tat} days</span></td>
+                        <td style="font-size:11px; max-width:200px;">${v.ro_remarks || '-'}</td>
+                        <td style="font-size:11px; max-width:200px;">${v.pendncy_resn_desc || '-'}</td>`;
                 } else {
-                    const segment = v.segment || 'Unknown';
-                    let rowHTML = `
-                        <tr>
-                            <td><strong>${v.ro_id}</strong></td>
-                            <td class="landed-cost-cell">${landedCostDisplay}</td>
-                            <td>${roDateFormatted}</td>`;
+                    rowHTML += `
+                        <td><strong>${v.ro_id}</strong></td>
+                        <td class="landed-cost-cell">${landedCostDisplay}</td>
+                        <td>${roDateFormatted}</td>`;
                     
                     if (showClosedButNotBilledColumns) {
                         const vehicleReadyDate = formatDateToDDMMYYYY(v.vehicle_ready_date);
                         const tatCurrent = calculateTAT(v.vehicle_ready_date);
                         rowHTML += `
-                            <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
-                            <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                        <td class="tat-current-cell">${tatCurrent} days</td>`;
                     }
                     
                     rowHTML += `
-                            <td><span class="branch-abbr">${branchAbbr}</span></td>
-                            <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                            <td>${v.service_adviser || '-'}</td>
-                            <td><strong>${v.reg_number}</strong></td>
-                            <td>${v.model_group || '-'}</td>`;
+                        <td><span class="branch-abbr">${branchAbbr}</span></td>
+                        <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                        <td>${v.service_adviser || '-'}</td>
+                        <td><strong>${v.reg_number}</strong></td>
+                        <td>${v.model_group || '-'}</td>`;
                     
                     if (currentTab === 'mechanical') {
                         rowHTML += `<td>${v.service_type || '-'}</td>`;
                     }
                     
                     rowHTML += `
-                            <td>${v.age_bucket}</td>
-                            <td>${v.days}</td>
-                            <td>${v.km.toLocaleString()}</td>
-                            <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
-                            <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
-                        </tr>
-                    `;
-                    
-                    tbody.innerHTML += rowHTML;
+                        <td>${v.age_bucket}</td>
+                        <td>${v.days}</td>
+                        <td>${v.km.toLocaleString()}</td>
+                        <td style="font-size:11px; max-width:200px;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
+                        <td style="font-size:11px; max-width:200px;">${v.pendncy_resn_desc || '-'}</td>`;
                 }
+                
+                rowHTML += `</tr>`;
+                tbody.innerHTML += rowHTML;
             });
         }
 
