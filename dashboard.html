@@ -158,8 +158,8 @@
         }
         .filters-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 12px; 
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 15px; 
         }
         .filter-group label { 
             display: block; 
@@ -204,14 +204,13 @@
             margin-bottom: 20px;
         }
         .table-wrapper {
-            overflow-x: auto;
+            overflow-x: scroll !important;
             overflow-y: auto;
             max-height: 550px;
             border-radius: 0 0 10px 10px;
             display: block;
             scroll-behavior: smooth;
             padding-bottom: 5px;
-            scroll-snap-type: x mandatory;
         }
         .table-wrapper::-webkit-scrollbar {
             width: 15px;
@@ -278,13 +277,7 @@
                 font-size: 11px;
             }
         }
-
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 1800px; 
-            table-layout: fixed;
-        }
+        table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
         thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
         th { 
             padding: 12px 8px; 
@@ -301,48 +294,6 @@
         th:hover {
             background: #e9ecef;
         }
-
-        /* Sortable column headers */
-        th.sortable {
-            cursor: pointer;
-            user-select: none;
-            padding-right: 24px;
-        }
-
-        th.sortable:hover {
-            background: #dfe3e9;
-        }
-
-        .sort-arrow {
-            display: inline-block;
-            margin-left: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #667eea;
-            opacity: 0.4;
-            transition: opacity 0.2s ease;
-        }
-
-        th.sortable.sort-asc .sort-arrow::before {
-            content: '↑';
-        }
-
-        th.sortable.sort-asc .sort-arrow {
-            opacity: 1;
-        }
-
-        th.sortable.sort-desc .sort-arrow::before {
-            content: '↓';
-        }
-
-        th.sortable.sort-desc .sort-arrow {
-            opacity: 1;
-        }
-
-        th.sortable .sort-arrow::before {
-            content: '⇅';
-        }
-
         td { 
             padding: 12px 8px; 
             border-bottom: 1px solid #eee; 
@@ -371,13 +322,8 @@
             font-weight: 600;
         }
         
-        tbody tr:hover { 
-            background: #f0f0f0 !important;
-        }
-        tbody tr { 
-            height: auto;
-            background: white !important;
-        }
+        tr:hover { background: #f9f9f9; }
+        tbody tr { height: auto; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge-open { background: #fef3e2; color: #e67e22; }
         .badge-closed { background: #e8f5e9; color: #27ae60; }
@@ -806,8 +752,7 @@
                 </div>
                 <button class="export-btn" onclick="exportToCSV()"> Export Filtered Data to Excel</button>
             </div>
-
-
+            <div class="table-wrapper">
                 <table>
                     <thead id="tableHead">
                         <tr id="headerRow">
@@ -867,7 +812,6 @@
         
         let currentTab = 'mechanical';
         let allData = [];
-        let currentSort = { type: null, direction: null }; // Track current sort
 
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
@@ -966,214 +910,6 @@
         function formatCurrency(value) {
             if (value === undefined || value === null || value === 0) return '₹0';
             return '₹' + parseFloat(value).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
-        }
-
-        function formatDateToDDMMYYYY(dateStr) {
-            if (!dateStr || dateStr === '-') return '-';
-            
-            try {
-                // Handle YYYY-MM-DD format
-                if (dateStr.includes('-')) {
-                    const parts = dateStr.split('-');
-                    if (parts.length === 3) {
-                        const year = parts[0];
-                        const month = parts[1];
-                        const day = parts[2];
-                        return `${day}/${month}/${year}`;
-                    }
-                }
-                
-                // Handle other date formats
-                const date = new Date(dateStr);
-                if (!isNaN(date.getTime())) {
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                }
-                
-                return dateStr;
-            } catch (e) {
-                return dateStr;
-            }
-        }
-
-        // ==================== SORTING FUNCTIONS ====================
-
-        function sortByLandedCost() {
-            if (currentSort.type === 'landed_cost') {
-                // Toggle direction
-                if (currentSort.direction === 'asc') {
-                    currentSort.direction = 'desc';
-                } else {
-                    currentSort = { type: null, direction: null }; // Reset
-                }
-            } else {
-                // New sort - start with ascending
-                currentSort = { type: 'landed_cost', direction: 'asc' };
-            }
-            renderSortedTable();
-        }
-
-        function sortByRoDate() {
-            if (currentSort.type === 'ro_date') {
-                // Toggle direction
-                if (currentSort.direction === 'asc') {
-                    currentSort.direction = 'desc';
-                } else {
-                    currentSort = { type: null, direction: null }; // Reset
-                }
-            } else {
-                // New sort - start with ascending
-                currentSort = { type: 'ro_date', direction: 'asc' };
-            }
-            renderSortedTable();
-        }
-
-        function updateSortArrows() {
-            const landedCostHeader = document.querySelector('th[onclick="sortByLandedCost()"]');
-            const roDateHeader = document.querySelector('th[onclick="sortByRoDate()"]');
-            
-            if (landedCostHeader) {
-                landedCostHeader.classList.remove('sort-asc', 'sort-desc');
-                if (currentSort.type === 'landed_cost') {
-                    if (currentSort.direction === 'asc') {
-                        landedCostHeader.classList.add('sort-asc');
-                    } else if (currentSort.direction === 'desc') {
-                        landedCostHeader.classList.add('sort-desc');
-                    }
-                }
-            }
-            
-            if (roDateHeader) {
-                roDateHeader.classList.remove('sort-asc', 'sort-desc');
-                if (currentSort.type === 'ro_date') {
-                    if (currentSort.direction === 'asc') {
-                        roDateHeader.classList.add('sort-asc');
-                    } else if (currentSort.direction === 'desc') {
-                        roDateHeader.classList.add('sort-desc');
-                    }
-                }
-            }
-        }
-
-        function renderSortedTable() {
-            let dataToRender = [...allData];
-            
-            if (currentSort.type === 'landed_cost') {
-                dataToRender.sort((a, b) => {
-                    const aVal = a.total_landed_cost || 0;
-                    const bVal = b.total_landed_cost || 0;
-                    
-                    if (currentSort.direction === 'asc') {
-                        return aVal - bVal;
-                    } else {
-                        return bVal - aVal;
-                    }
-                });
-            } else if (currentSort.type === 'ro_date') {
-                dataToRender.sort((a, b) => {
-                    const aDate = new Date(a.ro_date || '1900-01-01');
-                    const bDate = new Date(b.ro_date || '1900-01-01');
-                    
-                    if (currentSort.direction === 'asc') {
-                        return aDate - bDate;
-                    } else {
-                        return bDate - aDate;
-                    }
-                });
-            }
-            
-            renderTable(dataToRender);
-        }
-
-        function renderTable(vehicles) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            if (vehicles.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="16" class="loading">No data found</td></tr>`;
-                return;
-            }
-
-            const showClosedButNotBilledColumns = isClosedButNotBilled();
-
-            vehicles.forEach(v => {
-                const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
-                const branchAbbr = abbreviateBranch(v.branch);
-                
-                const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
-                const roDateFormatted = formatDateToDDMMYYYY(v.ro_date);
-                
-                let rowHTML = `<tr>`;
-                
-                if (currentTab === 'bodyshop') {
-                    const mjob = extractMJob(v.ro_remarks);
-                    const chassis = getLastEightChars(v.vin || '-');
-                    const tat = calculateTAT(v.ro_date);
-                    const tatStyle = getTATStyle(mjob, tat);
-                    const saName = v.service_adviser || '-';
-                    
-                    rowHTML += `
-                        <td><strong>${v.ro_id}</strong></td>
-                        <td class="landed-cost-cell">${landedCostDisplay}</td>
-                        <td>${roDateFormatted}</td>`;
-                    
-                    if (showClosedButNotBilledColumns) {
-                        const vehicleReadyDate = formatDateToDDMMYYYY(v.vehicle_ready_date);
-                        const tatCurrent = calculateTAT(v.vehicle_ready_date);
-                        rowHTML += `
-                        <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
-                        <td class="tat-current-cell">${tatCurrent} days</td>`;
-                    }
-                    
-                    rowHTML += `
-                        <td><span class="branch-abbr">${branchAbbr}</span></td>
-                        <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                        <td>${saName}</td>
-                        <td><strong>${v.reg_number}</strong></td>
-                        <td>${v.model_group || '-'}</td>
-                        <td>${chassis}</td>
-                        <td><span class="mjob-badge">${mjob}</span></td>
-                        <td><span class="${tatStyle}">${tat} days</span></td>
-                        <td style="font-size:11px; max-width:200px;">${v.ro_remarks || '-'}</td>
-                        <td style="font-size:11px; max-width:200px;">${v.pendncy_resn_desc || '-'}</td>`;
-                } else {
-                    rowHTML += `
-                        <td><strong>${v.ro_id}</strong></td>
-                        <td class="landed-cost-cell">${landedCostDisplay}</td>
-                        <td>${roDateFormatted}</td>`;
-                    
-                    if (showClosedButNotBilledColumns) {
-                        const vehicleReadyDate = formatDateToDDMMYYYY(v.vehicle_ready_date);
-                        const tatCurrent = calculateTAT(v.vehicle_ready_date);
-                        rowHTML += `
-                        <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
-                        <td class="tat-current-cell">${tatCurrent} days</td>`;
-                    }
-                    
-                    rowHTML += `
-                        <td><span class="branch-abbr">${branchAbbr}</span></td>
-                        <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
-                        <td>${v.service_adviser || '-'}</td>
-                        <td><strong>${v.reg_number}</strong></td>
-                        <td>${v.model_group || '-'}</td>`;
-                    
-                    if (currentTab === 'mechanical') {
-                        rowHTML += `<td>${v.service_type || '-'}</td>`;
-                    }
-                    
-                    rowHTML += `
-                        <td>${v.age_bucket}</td>
-                        <td>${v.days}</td>
-                        <td>${v.km.toLocaleString()}</td>
-                        <td style="font-size:11px; max-width:200px;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
-                        <td style="font-size:11px; max-width:200px;">${v.pendncy_resn_desc || '-'}</td>`;
-                }
-                
-                rowHTML += `</tr>`;
-                tbody.innerHTML += rowHTML;
-            });
         }
 
         async function loadStats() {
@@ -1581,10 +1317,6 @@
 
         function onFilterChange() {
             console.log('\n>>> FILTER CHANGED <<<');
-            // Reset sort when filter changes
-            currentSort = { type: null, direction: null };
-            updateSortArrows();
-            
             loadFilteredStats();
             loadData();
         }
@@ -1612,10 +1344,6 @@
             if (document.getElementById('regNumber')) {
                 document.getElementById('regNumber').value = '';
             }
-            
-            // Reset sort
-            currentSort = { type: null, direction: null };
-            updateSortArrows();
             
             loadStats();
             loadData();
@@ -1672,9 +1400,100 @@
                 allData = data.vehicles;
 
                 document.getElementById('tableInfo').textContent = `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
-                
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                if (data.vehicles.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="16" class="loading">No data found</td></tr>`;
+                    return;
+                }
+
+                const showClosedButNotBilledColumns = isClosedButNotBilled();
+
+                data.vehicles.forEach(v => {
+                    const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
+                    const branchAbbr = abbreviateBranch(v.branch);
+                    
+                    const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
+                    
+                    if (currentTab === 'bodyshop') {
+                        const mjob = extractMJob(v.ro_remarks);
+                        const chassis = getLastEightChars(v.vin || '-');
+                        const tat = calculateTAT(v.ro_date);
+                        const tatStyle = getTATStyle(mjob, tat);
+                        const saName = v.service_adviser || '-';
+                        const segment = v.segment || 'Unknown';
+                        
+                        let rowHTML = `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
+                                <td>${v.ro_date}</td>`;
+                        
+                        if (showClosedButNotBilledColumns) {
+                            const vehicleReadyDate = v.vehicle_ready_date || '-';
+                            const tatCurrent = calculateTAT(vehicleReadyDate);
+                            rowHTML += `
+                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                                <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        }
+                        
+                        rowHTML += `
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${saName}</td>
+                                <td><strong>${v.reg_number}</strong></td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${chassis}</td>
+                                <td><span class="mjob-badge">${mjob}</span></td>
+                                <td><span class="${tatStyle}">${tat} days</span></td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                        
+                        tbody.innerHTML += rowHTML;
+                    } else {
+                        const segment = v.segment || 'Unknown';
+                        let rowHTML = `
+                            <tr>
+                                <td><strong>${v.ro_id}</strong></td>
+                                <td class="landed-cost-cell">${landedCostDisplay}</td>
+                                <td>${v.ro_date}</td>`;
+                        
+                        if (showClosedButNotBilledColumns) {
+                            const vehicleReadyDate = v.vehicle_ready_date || '-';
+                            const tatCurrent = calculateTAT(vehicleReadyDate);
+                            rowHTML += `
+                                <td class="vehicle-ready-date-cell">${vehicleReadyDate}</td>
+                                <td class="tat-current-cell">${tatCurrent} days</td>`;
+                        }
+                        
+                        rowHTML += `
+                                <td><span class="branch-abbr">${branchAbbr}</span></td>
+                                <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
+                                <td>${v.service_adviser || '-'}</td>
+                                <td><strong>${v.reg_number}</strong></td>
+                                <td>${v.model_group || '-'}</td>`;
+                        
+                        if (currentTab === 'mechanical') {
+                            rowHTML += `<td>${v.service_type || '-'}</td>`;
+                        }
+                        
+                        rowHTML += `
+                                <td>${v.age_bucket}</td>
+                                <td>${v.days}</td>
+                                <td>${v.km.toLocaleString()}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
+                                <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
+                            </tr>
+                        `;
+                        
+                        tbody.innerHTML += rowHTML;
+                    }
+                });
+
                 updateTableHeaders();
-                renderTable(allData);
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('tableInfo').innerHTML = `<div class="error">[FAIL] Error loading data: ${error.message}</div>`;
@@ -1690,14 +1509,8 @@
             if (currentTab === 'bodyshop') {
                 let headers = `
                     <th title="Repair Order Number">RO Number</th>
-                    <th class="sortable" onclick="sortByLandedCost()" title="Click to sort by Landed Cost">
-                        Landed Cost
-                        <span class="sort-arrow" id="arrow-landed-cost">⇅</span>
-                    </th>
-                    <th class="sortable" onclick="sortByRoDate()" title="Click to sort by RO Date">
-                        RO Date
-                        <span class="sort-arrow" id="arrow-ro-date">⇅</span>
-                    </th>`;
+                    <th title="Total Landed Cost">Landed Cost</th>
+                    <th title="Repair Order Date">RO Date</th>`;
                 
                 if (showClosedButNotBilledColumns) {
                     headers += `
@@ -1722,14 +1535,8 @@
             } else {
                 let headers = `
                     <th title="Repair Order ID">RO ID</th>
-                    <th class="sortable" onclick="sortByLandedCost()" title="Click to sort by Landed Cost">
-                        Landed Cost
-                        <span class="sort-arrow" id="arrow-landed-cost">⇅</span>
-                    </th>
-                    <th class="sortable" onclick="sortByRoDate()" title="Click to sort by RO Date">
-                        RO Date
-                        <span class="sort-arrow" id="arrow-ro-date">⇅</span>
-                    </th>`;
+                    <th title="Total Landed Cost">Landed Cost</th>
+                    <th title="Repair Order Date">RO Date</th>`;
                 
                 if (showClosedButNotBilledColumns) {
                     headers += `
@@ -1759,15 +1566,10 @@
                 
                 headerRow.innerHTML = headers;
             }
-            
-            updateSortArrows();
         }
 
         function switchTab(event, tab) {
             currentTab = tab;
-            // Reset sort when switching tabs
-            currentSort = { type: null, direction: null };
-            
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             loadFilters();
@@ -1843,13 +1645,6 @@
                         };
                     });
                 }
-
-                // Format dates in export data
-                exportData = exportData.map(row => ({
-                    ...row,
-                    ro_date: formatDateToDDMMYYYY(row.ro_date),
-                    vehicle_ready_date: row.vehicle_ready_date ? formatDateToDDMMYYYY(row.vehicle_ready_date) : '-'
-                }));
 
                 const allColumns = Object.keys(exportData[0]);
                 const headers = allColumns;
