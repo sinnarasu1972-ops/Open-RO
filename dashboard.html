@@ -24,11 +24,7 @@
             gap: 15px;
         }
         h1 { color: #333; font-size: 28px; margin: 0; }
-        #companyLogo {
-            height: 50px;
-            object-fit: contain;
-            max-width: 200px;
-        }
+        #companyLogo { height: 50px; object-fit: contain; max-width: 200px; }
 
         .header-wrapper {
             display: flex;
@@ -38,12 +34,7 @@
             gap: 15px;
         }
 
-        .tabs {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            flex: 1;
-        }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
         .tab-button {
             padding: 10px 16px;
             border: none;
@@ -75,27 +66,12 @@
         .clear-all-btn:hover { background: #c0392b; }
 
         @media (max-width: 768px) {
-            header {
-                padding: 15px;
-                gap: 10px;
-                margin-bottom: 15px;
-            }
+            header { padding: 15px; gap: 10px; margin-bottom: 15px; }
             h1 { font-size: 22px; }
-            .header-wrapper {
-                flex-direction: column;
-                align-items: stretch;
-            }
+            .header-wrapper { flex-direction: column; align-items: stretch; }
             .tabs { gap: 6px; }
-            .tab-button {
-                padding: 8px 12px;
-                font-size: 12px;
-                min-width: 80px;
-            }
-            .clear-all-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-                width: 100%;
-            }
+            .tab-button { padding: 8px 12px; font-size: 12px; min-width: 80px; }
+            .clear-all-btn { padding: 8px 12px; font-size: 12px; width: 100%; }
         }
 
         .stats-grid {
@@ -112,34 +88,19 @@
             text-align: center;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); }
         .stat-label { color: #999; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; }
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-            transition: all 0.3s ease;
-        }
+        .stat-value { font-size: 24px; font-weight: bold; color: #667eea; transition: all 0.3s ease; }
 
         .stat-card.landed-cost-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
         .stat-card.landed-cost-card .stat-label { color: rgba(255, 255, 255, 0.8); }
-        .stat-card.landed-cost-card .stat-value {
-            color: #ffffff;
-            font-size: 22px;
-        }
+        .stat-card.landed-cost-card .stat-value { color: #ffffff; font-size: 22px; }
 
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-                margin-bottom: 15px;
-            }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px; }
             .stat-card { padding: 12px; }
             .stat-label { font-size: 10px; margin-bottom: 6px; }
             .stat-value { font-size: 20px; }
@@ -174,22 +135,10 @@
         input[type="text"]::placeholder { color: #999; }
 
         @media (max-width: 768px) {
-            .filters-section {
-                padding: 12px;
-                margin-bottom: 12px;
-            }
-            .filters-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            .filter-group label {
-                font-size: 11px;
-                margin-bottom: 5px;
-            }
-            select, input[type="text"] {
-                padding: 6px;
-                font-size: 12px;
-            }
+            .filters-section { padding: 12px; margin-bottom: 12px; }
+            .filters-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .filter-group label { font-size: 11px; margin-bottom: 5px; }
+            select, input[type="text"] { padding: 6px; font-size: 12px; }
         }
 
         .table-section {
@@ -208,16 +157,8 @@
             padding-bottom: 5px;
         }
         .table-wrapper::-webkit-scrollbar { width: 15px; height: 15px; }
-        .table-wrapper::-webkit-scrollbar-track {
-            background: #e8e8e8;
-            border-radius: 10px;
-            margin: 0 5px;
-        }
-        .table-wrapper::-webkit-scrollbar-thumb {
-            background: #666;
-            border-radius: 10px;
-            min-height: 40px;
-        }
+        .table-wrapper::-webkit-scrollbar-track { background: #e8e8e8; border-radius: 10px; margin: 0 5px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; min-height: 40px; }
         .table-wrapper::-webkit-scrollbar-thumb:hover { background: #333; }
 
         .table-header {
@@ -246,32 +187,13 @@
         .export-btn:hover { background: #229954; }
         .export-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
 
-        .records-select {
-            width: 110px;
-            padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 12px;
-        }
+        .records-select { width: 110px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
 
         @media (max-width: 768px) {
-            .table-header {
-                padding: 10px;
-                gap: 8px;
-                flex-direction: column;
-                align-items: stretch;
-            }
+            .table-header { padding: 10px; gap: 8px; flex-direction: column; align-items: stretch; }
             .table-info { font-size: 11px; }
-            .export-btn {
-                padding: 6px 12px;
-                font-size: 10px;
-                width: 100%;
-            }
-            .records-select {
-                width: 100%;
-                padding: 6px;
-                font-size: 11px;
-            }
+            .export-btn { padding: 6px 12px; font-size: 10px; width: 100%; }
+            .records-select { width: 100%; padding: 6px; font-size: 11px; }
         }
 
         table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
@@ -287,6 +209,7 @@
             text-overflow: ellipsis;
             cursor: help;
             position: relative;
+            user-select: none;
         }
         th:hover { background: #e9ecef; }
         td {
@@ -308,29 +231,30 @@
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge-open { background: #fef3e2; color: #e67e22; }
         .badge-closed { background: #e8f5e9; color: #27ae60; }
+
         .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+
         .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
         .segment-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #f3e5f5; color: #7b1fa2; }
+
         .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
 
         .loading { text-align: center; padding: 40px; color: #667eea; }
         .stat-updating { animation: pulse 0.5s ease-in-out; }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* Sort indicators */
+        .sort-indicator { font-size: 11px; margin-left: 6px; opacity: 0.9; }
+        .sortable { cursor: pointer; }
+        .sortable:hover { background: #e9ecef; }
 
         /* ==================== MODAL STYLES ==================== */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             animation: fadeIn 0.3s ease;
@@ -349,10 +273,7 @@
             animation: slideUp 0.3s ease;
             position: relative;
         }
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         .modal-header {
             padding: 18px 20px;
@@ -365,11 +286,7 @@
             border-radius: 15px 15px 0 0;
             gap: 10px;
         }
-        .modal-header h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-        }
+        .modal-header h2 { margin: 0; font-size: 18px; font-weight: 700; }
         .modal-close {
             background: rgba(255,255,255,0.18);
             border: none;
@@ -407,32 +324,14 @@
             background: #fafafa;
             transition: all 0.2s ease;
         }
-        .division-item:hover {
-            background: #f0f7ff;
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
+        .division-item:hover { background: #f0f7ff; border-color: #667eea; transform: translateX(5px); }
         .division-name { font-weight: 600; color: #333; font-size: 13px; }
         .division-count { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .count-label {
-            font-size: 10px;
-            font-weight: 600;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .count-value {
-            font-weight: 700;
-            font-size: 16px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            min-width: 60px;
-            text-align: center;
-        }
+        .count-label { font-size: 10px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+        .count-value { font-weight: 700; font-size: 16px; padding: 6px 12px; border-radius: 20px; min-width: 60px; text-align: center; }
         .count-open { background: #fef3e2; color: #e67e22; }
         .count-closed { background: #e8f5e9; color: #27ae60; }
 
-        /* Footer totals - hidden until data loaded */
         .modal-footer {
             display: none;
             padding: 16px 20px;
@@ -440,50 +339,18 @@
             background: #f9f9f9;
             border-radius: 0 0 15px 15px;
         }
-        .footer-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
+        .footer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .footer-stat { text-align: center; }
-        .footer-stat-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            display: block;
-        }
-        .footer-stat-value {
-            font-size: 26px;
-            font-weight: 800;
-            color: #333;
-            display: block;
-        }
+        .footer-stat-label { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .footer-stat-value { font-size: 26px; font-weight: 800; color: #333; display: block; }
         .footer-stat.open .footer-stat-value { color: #e67e22; }
         .footer-stat.closed .footer-stat-value { color: #27ae60; }
 
         .empty-state { text-align: center; padding: 22px 10px; color: #777; font-size: 13px; }
 
-        /* Spinner without text */
-        .modal-loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px 10px;
-        }
-        .spinner {
-            width: 22px;
-            height: 22px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .modal-loading { display: flex; justify-content: center; align-items: center; padding: 24px 10px; }
+        .spinner { width: 22px; height: 22px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .modal::-webkit-scrollbar { width: 8px; }
         .modal::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
@@ -623,8 +490,8 @@
                     <thead id="tableHead">
                         <tr id="headerRow">
                             <th>RO Number</th>
-                            <th>Landed Cost</th>
-                            <th>RO Date</th>
+                            <th class="sortable" onclick="toggleSort('landed_cost')" title="Sort Landed Cost">Landed Cost<span class="sort-indicator" id="sort_landed_cost"></span></th>
+                            <th class="sortable" onclick="toggleSort('ro_date')" title="Sort RO Date">RO Date<span class="sort-indicator" id="sort_ro_date"></span></th>
                             <th>Branch</th>
                             <th>Status</th>
                             <th>SA Name</th>
@@ -639,9 +506,7 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr>
-                            <td colspan="16" class="loading">Loading...</td>
-                        </tr>
+                        <tr><td colspan="16" class="loading">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -679,6 +544,9 @@
         let currentTab = 'mechanical';
         let allData = [];
 
+        // Sorting state
+        let sortState = { key: null, dir: null }; // dir: 'asc' | 'desc'
+
         const branchAbbreviations = {
             'KOLHAPUR_WS': 'KOL',
             'WAGHOLI': 'WAG',
@@ -698,35 +566,19 @@
         }
 
         function sortAgeBuckets(ageBuckets) {
-            const ageBucketOrder = [
-                '0-3 days',
-                '4-10 days',
-                '11-15 days',
-                '16-30 days',
-                '31-60 days',
-                'Above 60'
-            ];
-
+            const ageBucketOrder = ['0-3 days', '4-10 days', '11-15 days', '16-30 days', '31-60 days', 'Above 60'];
             let sorted = [];
-
             for (let order of ageBucketOrder) {
                 for (let bucket of ageBuckets) {
                     let bucketLower = String(bucket).toLowerCase().trim();
                     let orderLower = String(order).toLowerCase().trim();
-
                     if (bucketLower === orderLower || bucketLower.includes(orderLower)) {
-                        if (!sorted.includes(bucket)) {
-                            sorted.push(bucket);
-                        }
+                        if (!sorted.includes(bucket)) sorted.push(bucket);
                         break;
                     }
                 }
             }
-
-            ageBuckets.forEach(bucket => {
-                if (!sorted.includes(bucket)) sorted.push(bucket);
-            });
-
+            ageBuckets.forEach(bucket => { if (!sorted.includes(bucket)) sorted.push(bucket); });
             return sorted;
         }
 
@@ -755,7 +607,6 @@
             const s = String(input).trim();
             if (!s || s === '-') return null;
 
-            // If ISO with T: 2025-12-25T00:00:00
             const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
             if (iso) {
                 const y = parseInt(iso[1], 10);
@@ -765,7 +616,6 @@
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            // DD/MM/YYYY or D/M/YYYY
             let m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
             if (m1) {
                 const d = parseInt(m1[1], 10);
@@ -775,7 +625,6 @@
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            // DD-MM-YYYY or D-M-YYYY
             let m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
             if (m2) {
                 const d = parseInt(m2[1], 10);
@@ -785,7 +634,6 @@
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            // Fallback: try JS Date (may work for some formats)
             const dt2 = new Date(s);
             return isNaN(dt2.getTime()) ? null : dt2;
         }
@@ -828,14 +676,42 @@
             return '₹' + num.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
         }
 
+        function toNumber(value) {
+            const n = Number(value);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function getSortIndicator(dir) {
+            if (dir === 'asc') return '▲';
+            if (dir === 'desc') return '▼';
+            return '';
+        }
+
+        function updateSortIcons() {
+            const lc = document.getElementById('sort_landed_cost');
+            const rd = document.getElementById('sort_ro_date');
+            if (lc) lc.textContent = (sortState.key === 'landed_cost') ? getSortIndicator(sortState.dir) : '';
+            if (rd) rd.textContent = (sortState.key === 'ro_date') ? getSortIndicator(sortState.dir) : '';
+        }
+
+        function toggleSort(key) {
+            if (sortState.key !== key) {
+                sortState.key = key;
+                sortState.dir = 'asc';
+            } else {
+                if (sortState.dir === 'asc') sortState.dir = 'desc';
+                else if (sortState.dir === 'desc') { sortState.dir = null; sortState.key = null; }
+                else sortState.dir = 'asc';
+            }
+            updateSortIcons();
+            loadData();
+        }
+
         async function loadStats() {
             try {
-                const url = `${API_URL}/api/dashboard/statistics`;
-                const response = await fetch(url);
+                const response = await fetch(`${API_URL}/api/dashboard/statistics`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const data = await response.json();
-
                 document.getElementById('total').textContent = data.total_vehicles || 0;
                 document.getElementById('mech').textContent = data.mechanical_count || 0;
                 document.getElementById('body').textContent = data.bodyshop_count || 0;
@@ -843,32 +719,19 @@
                 document.getElementById('presale').textContent = data.presale_count || 0;
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
             } catch (error) {
-                document.getElementById('tableInfo').innerHTML =
-                    `<div class="error">Cannot connect to server: ${error.message}</div>`;
+                document.getElementById('tableInfo').innerHTML = `<div class="error">Cannot connect to server: ${error.message}</div>`;
             }
         }
 
         function openModal() {
-            const categoryNames = {
-                mechanical: 'Mechanical',
-                bodyshop: 'Bodyshop',
-                accessories: 'Accessories',
-                presale: 'Pre-Sale/PDI'
-            };
-
-            document.getElementById('modalTitle').textContent =
-                `${categoryNames[currentTab] || 'Category'} - Division Wise ROs`;
-
+            const categoryNames = { mechanical: 'Mechanical', bodyshop: 'Bodyshop', accessories: 'Accessories', presale: 'Pre-Sale/PDI' };
+            document.getElementById('modalTitle').textContent = `${categoryNames[currentTab] || 'Category'} - Division Wise ROs`;
             document.getElementById('modalOverlay').classList.add('show');
 
-            // Hide footer until data loaded
             document.getElementById('modalFooter').style.display = 'none';
             document.getElementById('footerOpenTotal').textContent = '';
             document.getElementById('footerClosedTotal').textContent = '';
-
-            document.getElementById('modalBody').innerHTML =
-                `<div class="modal-loading"><div class="spinner"></div></div>`;
-
+            document.getElementById('modalBody').innerHTML = `<div class="modal-loading"><div class="spinner"></div></div>`;
             loadDivisionStats();
         }
 
@@ -882,16 +745,14 @@
 
         async function loadDivisionStats() {
             try {
-                const url = `${API_URL}/api/dashboard/division-stats-v2?service_category=${currentTab}`;
-                const response = await fetch(url);
+                const response = await fetch(`${API_URL}/api/dashboard/division-stats-v2?service_category=${currentTab}`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const data = await response.json();
+
                 const modalBody = document.getElementById('modalBody');
 
                 if (!data.divisions || data.divisions.length === 0) {
                     modalBody.innerHTML = `<div class="empty-state">No ROs found for this category</div>`;
-                    // show footer totals as 0 only after load
                     document.getElementById('footerOpenTotal').textContent = '0';
                     document.getElementById('footerClosedTotal').textContent = '0';
                     document.getElementById('modalFooter').style.display = 'block';
@@ -902,7 +763,6 @@
                 let totalClosedNB = 0;
 
                 let html = `<h3>Division-Wise Breakdown</h3>`;
-
                 data.divisions.forEach(div => {
                     const openCnt = Number(div.open_count || 0);
                     const closedCnt = Number(div.closed_not_billed_count || 0);
@@ -927,16 +787,13 @@
                 modalBody.innerHTML = html;
 
                 const apiOpen = (data.total_open !== undefined && data.total_open !== null) ? data.total_open : totalOpen;
-                const apiClosed = (data.total_closed_not_billed !== undefined && data.total_closed_not_billed !== null)
-                    ? data.total_closed_not_billed : totalClosedNB;
+                const apiClosed = (data.total_closed_not_billed !== undefined && data.total_closed_not_billed !== null) ? data.total_closed_not_billed : totalClosedNB;
 
                 document.getElementById('footerOpenTotal').textContent = String(apiOpen);
                 document.getElementById('footerClosedTotal').textContent = String(apiClosed);
-
                 document.getElementById('modalFooter').style.display = 'block';
             } catch (error) {
-                document.getElementById('modalBody').innerHTML =
-                    `<div class="empty-state">Error loading division stats: ${error.message}</div>`;
+                document.getElementById('modalBody').innerHTML = `<div class="empty-state">Error loading division stats: ${error.message}</div>`;
                 document.getElementById('footerOpenTotal').textContent = '0';
                 document.getElementById('footerClosedTotal').textContent = '0';
                 document.getElementById('modalFooter').style.display = 'block';
@@ -957,7 +814,6 @@
 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
-
                 params.append('service_category', currentTab);
 
                 if (branch !== 'All') params.append('branch', branch);
@@ -974,7 +830,6 @@
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const data = await response.json();
 
                 const cards = document.querySelectorAll('.stat-value');
@@ -987,21 +842,15 @@
                 document.getElementById('presale').textContent = data.presale_count || 0;
                 document.getElementById('landedCost').textContent = formatCurrency(data.total_landed_cost || 0);
 
-                setTimeout(() => {
-                    cards.forEach(card => card.classList.remove('stat-updating'));
-                }, 500);
-            } catch (error) {
-                // keep silent
-            }
+                setTimeout(() => { cards.forEach(card => card.classList.remove('stat-updating')); }, 500);
+            } catch (error) {}
         }
 
         async function loadFilters() {
             try {
                 const branch = document.getElementById('branch').value;
-                const url = `${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(branch)}`;
-                const response = await fetch(url);
+                const response = await fetch(`${API_URL}/api/filter-options/${currentTab}?branch=${encodeURIComponent(branch)}`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const data = await response.json();
 
                 const currentBranch = document.getElementById('branch').value;
@@ -1032,23 +881,15 @@
                 if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
                     billableTypeFilter.style.display = 'block';
                     const billableTypeOptions = data.billable_types || ['All'];
-                    document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt =>
-                        `<option value="${bt}">${bt}</option>`
-                    ).join('');
-                } else {
-                    billableTypeFilter.style.display = 'none';
-                }
+                    document.getElementById('billableType').innerHTML = billableTypeOptions.map(bt => `<option value="${bt}">${bt}</option>`).join('');
+                } else billableTypeFilter.style.display = 'none';
 
                 const serviceTypeFilter = document.getElementById('serviceTypeFilter');
                 if (currentTab === 'mechanical') {
                     serviceTypeFilter.style.display = 'block';
                     const serviceTypeOptions = data.service_types || ['All'];
-                    document.getElementById('serviceType').innerHTML = serviceTypeOptions.map(st =>
-                        `<option value="${st}">${st}</option>`
-                    ).join('');
-                } else {
-                    serviceTypeFilter.style.display = 'none';
-                }
+                    document.getElementById('serviceType').innerHTML = serviceTypeOptions.map(st => `<option value="${st}">${st}</option>`).join('');
+                } else serviceTypeFilter.style.display = 'none';
 
                 const mjobFilter = document.getElementById('mjobFilter');
                 const regNumberFilter = document.getElementById('regNumberFilter');
@@ -1059,18 +900,13 @@
                 if (currentTab === 'bodyshop') {
                     mjobFilter.style.display = 'block';
                     const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
-                    document.getElementById('mjob').innerHTML = mjobOptions.map(m =>
-                        `<option value="${m}">${m}</option>`
-                    ).join('');
-                } else {
-                    mjobFilter.style.display = 'none';
-                }
+                    document.getElementById('mjob').innerHTML = mjobOptions.map(m => `<option value="${m}">${m}</option>`).join('');
+                } else mjobFilter.style.display = 'none';
 
                 loadData();
                 loadFilteredStats();
             } catch (error) {
-                document.getElementById('tableInfo').innerHTML =
-                    `<div class="error">Error loading filters: ${error.message}</div>`;
+                document.getElementById('tableInfo').innerHTML = `<div class="error">Error loading filters: ${error.message}</div>`;
             }
         }
 
@@ -1085,17 +921,11 @@
             const branch = document.getElementById('branch').value;
 
             try {
-                if (segment && segment !== 'All') {
-                    await updateBranchesForSegment(segment);
-                } else {
-                    loadFilters();
-                }
+                if (segment && segment !== 'All') await updateBranchesForSegment(segment);
+                else loadFilters();
             } catch (error) {}
 
-            try {
-                await updateSANamesDirectly(branch, segment);
-            } catch (error) {}
-
+            try { await updateSANamesDirectly(branch, segment); } catch (error) {}
             onFilterChange();
         }
 
@@ -1109,7 +939,6 @@
 
             const response = await fetch(apiUrl);
             if (!response.ok) return;
-
             const vehicles = await response.json();
 
             const saSet = new Set();
@@ -1136,15 +965,12 @@
         }
 
         async function updateBranchesForSegment(segment) {
-            const url = `${API_URL}/api/vehicles/${currentTab}?segment=${encodeURIComponent(segment)}&skip=0&limit=10000`;
-            const response = await fetch(url);
+            const response = await fetch(`${API_URL}/api/vehicles/${currentTab}?segment=${encodeURIComponent(segment)}&skip=0&limit=10000`);
             if (!response.ok) return;
 
             const data = await response.json();
             const branches = new Set(['All']);
-            data.forEach(v => {
-                if (v.branch && String(v.branch).trim()) branches.add(v.branch);
-            });
+            data.forEach(v => { if (v.branch && String(v.branch).trim()) branches.add(v.branch); });
 
             const branchSelect = document.getElementById('branch');
             const sortedBranches = Array.from(branches).sort();
@@ -1170,13 +996,49 @@
             }
             if (document.getElementById('regNumber')) document.getElementById('regNumber').value = '';
 
+            // Keep sorting state as-is OR reset if you want:
+            // sortState = { key: null, dir: null }; updateSortIcons();
+
             loadStats();
             loadData();
         }
 
         function isClosedButNotBilled() {
-            const status = document.getElementById('status').value;
-            return status === 'Closed but not billed';
+            return document.getElementById('status').value === 'Closed but not billed';
+        }
+
+        // Apply sort by calling API with sort params (preferred) OR local sort fallback
+        function buildSortParams() {
+            if (!sortState.key || !sortState.dir) return '';
+            // Your backend may support different param names. We will send:
+            // sort_by=landed_cost or ro_date
+            // sort_dir=asc or desc
+            return `&sort_by=${encodeURIComponent(sortState.key)}&sort_dir=${encodeURIComponent(sortState.dir)}`;
+        }
+
+        function applyLocalSortIfNeeded(vehicles) {
+            if (!sortState.key || !sortState.dir) return vehicles;
+
+            const dirMul = (sortState.dir === 'asc') ? 1 : -1;
+            const key = sortState.key;
+
+            const copy = vehicles.slice();
+            copy.sort((a, b) => {
+                if (key === 'landed_cost') {
+                    const av = toNumber(a.total_landed_cost || 0);
+                    const bv = toNumber(b.total_landed_cost || 0);
+                    return (av - bv) * dirMul;
+                }
+                if (key === 'ro_date') {
+                    const ad = parseAnyDate(a.ro_date);
+                    const bd = parseAnyDate(b.ro_date);
+                    const at = ad ? ad.getTime() : 0;
+                    const bt = bd ? bd.getTime() : 0;
+                    return (at - bt) * dirMul;
+                }
+                return 0;
+            });
+            return copy;
         }
 
         async function loadData() {
@@ -1208,36 +1070,39 @@
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
                 }
 
+                // Add sorting to API call
+                url += buildSortParams();
+
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
-
                 if (data.error) {
                     document.getElementById('tableInfo').innerHTML = `<div class="error">${data.error}</div>`;
                     return;
                 }
 
-                allData = data.vehicles;
+                // If backend ignores sort params, apply local sort fallback
+                const vehiclesSorted = applyLocalSortIfNeeded(data.vehicles || []);
+                allData = vehiclesSorted;
 
                 document.getElementById('tableInfo').textContent =
-                    `Showing ${data.vehicles.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
+                    `Showing ${vehiclesSorted.length} of ${data.filtered_count} vehicles (Total: ${data.total_count})`;
 
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = '';
 
-                if (data.vehicles.length === 0) {
+                if (vehiclesSorted.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="16" class="loading">No data found</td></tr>`;
                     return;
                 }
 
                 const showClosedButNotBilledColumns = isClosedButNotBilled();
 
-                data.vehicles.forEach(v => {
+                vehiclesSorted.forEach(v => {
                     const statusClass = v.ro_status === 'Open' ? 'badge-open' : 'badge-closed';
                     const branchAbbr = abbreviateBranch(v.branch);
                     const landedCostDisplay = formatCurrency(v.total_landed_cost || 0);
-
                     const roDateDisplay = formatDateDDMMYYYY(v.ro_date);
 
                     if (currentTab === 'bodyshop') {
@@ -1275,7 +1140,6 @@
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
                             </tr>
                         `;
-
                         tbody.innerHTML += rowHTML;
                     } else {
                         let rowHTML = `
@@ -1311,15 +1175,14 @@
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
                             </tr>
                         `;
-
                         tbody.innerHTML += rowHTML;
                     }
                 });
 
                 updateTableHeaders();
+                updateSortIcons();
             } catch (error) {
-                document.getElementById('tableInfo').innerHTML =
-                    `<div class="error">Error loading data: ${error.message}</div>`;
+                document.getElementById('tableInfo').innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
             }
         }
 
@@ -1332,8 +1195,8 @@
             if (currentTab === 'bodyshop') {
                 let headers = `
                     <th title="Repair Order Number">RO Number</th>
-                    <th title="Total Landed Cost">Landed Cost</th>
-                    <th title="Repair Order Date">RO Date</th>`;
+                    <th class="sortable" onclick="toggleSort('landed_cost')" title="Sort Landed Cost">Landed Cost<span class="sort-indicator" id="sort_landed_cost"></span></th>
+                    <th class="sortable" onclick="toggleSort('ro_date')" title="Sort RO Date">RO Date<span class="sort-indicator" id="sort_ro_date"></span></th>`;
 
                 if (showClosedButNotBilledColumns) {
                     headers += `
@@ -1358,8 +1221,8 @@
             } else {
                 let headers = `
                     <th title="Repair Order ID">RO ID</th>
-                    <th title="Total Landed Cost">Landed Cost</th>
-                    <th title="Repair Order Date">RO Date</th>`;
+                    <th class="sortable" onclick="toggleSort('landed_cost')" title="Sort Landed Cost">Landed Cost<span class="sort-indicator" id="sort_landed_cost"></span></th>
+                    <th class="sortable" onclick="toggleSort('ro_date')" title="Sort RO Date">RO Date<span class="sort-indicator" id="sort_ro_date"></span></th>`;
 
                 if (showClosedButNotBilledColumns) {
                     headers += `
@@ -1393,6 +1256,10 @@
             currentTab = tab;
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
+
+            // Keep sortState as-is (so sorting works across tabs). If you want reset on tab change, uncomment below:
+            // sortState = { key: null, dir: null }; updateSortIcons();
+
             loadFilters();
             openModal();
         }
@@ -1441,18 +1308,23 @@
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 }
 
+                // Add sorting to export also
+                url += (url.includes('?') ? '&' : '?') + buildSortParams().replace(/^&/, '');
+
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
                 let exportData = data.vehicles;
-
                 if (!exportData || exportData.length === 0) {
                     alert('No data to export!');
                     btn.textContent = originalText;
                     btn.disabled = false;
                     return;
                 }
+
+                // Local sort fallback for export
+                exportData = applyLocalSortIfNeeded(exportData);
 
                 const isClosedNB = status === 'Closed but not billed';
                 if (isClosedNB) {
@@ -1462,7 +1334,7 @@
                     });
                 }
 
-                // Ensure RO Date exported in DD/MM/YYYY
+                // Export date format
                 exportData = exportData.map(row => {
                     return {
                         ...row,
@@ -1478,12 +1350,10 @@
                 exportData.forEach(row => {
                     let csvRow = headers.map(col => {
                         let value = (row[col] === undefined || row[col] === null) ? '-' : row[col];
-
                         if (col === 'total_landed_cost' && value !== '-') {
                             const num = parseFloat(value);
                             value = isNaN(num) ? value : num.toFixed(2);
                         }
-
                         value = String(value).replace(/\"/g, '\"\"');
                         return `"${value}"`;
                     });
