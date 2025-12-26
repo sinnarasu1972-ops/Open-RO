@@ -217,9 +217,9 @@ def load_data():
                     unmatched = df_global['segment'].isna().sum()
                     print(f"  [OK] Mapping complete: {matched} matched, {unmatched} unmatched")
                     
-                    # Fill remaining nulls
-                    df_global['segment'].fillna('Unknown', inplace=True)
-                    df_global['model_group_name'].fillna(df_global['Model Group'], inplace=True)
+                    # Fill remaining nulls (using proper pandas syntax)
+                    df_global['segment'] = df_global['segment'].fillna('Unknown')
+                    df_global['model_group_name'] = df_global['model_group_name'].fillna(df_global['Model Group'])
                     
                     print(f"[OK] Model Group and Segment data enriched")
                     print(f"  Segment column exists: {('segment' in df_global.columns)}")
@@ -254,27 +254,60 @@ def load_data():
             df_billable_type = pd.DataFrame()
         else:
             print(f"[OK] Loading: {parts_file}")
-            df_temp = pd.read_excel(parts_file)
-            print(f"[OK] Loaded {len(df_temp)} part records")
-            
-            # Aggregate by RO Number - Sum landed costs
-            df_landed_cost = df_temp.groupby('RO Number')['Landed Cost'].sum().reset_index()
-            
-            # Get billable type - take first non-null value per RO Number
-            df_billable_type = df_temp.groupby('RO Number')['Billable Type'].first().reset_index()
-            
-            print(f"[OK] Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
-            print(f"[OK] Extracted billable type for {len(df_billable_type)} RO Numbers")
-            
-            # Merge into main dataframe
-            df_global = df_global.merge(df_landed_cost, left_on='RO ID', right_on='RO Number', how='left')
-            df_global = df_global.merge(df_billable_type, left_on='RO ID', right_on='RO Number', how='left')
-            
-            # Fill NAs
-            df_global['Landed Cost'].fillna(0, inplace=True)
-            df_global['Billable Type'].fillna('-', inplace=True)
-            
-            print(f"[OK] Merged landed cost and billable type data into main dataframe")
+            try:
+                df_temp = pd.read_excel(parts_file)
+                print(f"[OK] Loaded {len(df_temp)} part records")
+                print(f"[DEBUG] Part Issue columns: {df_temp.columns.tolist()}")
+                
+                # Find the correct column names (handle variations)
+                ro_col = None
+                cost_col = None
+                billable_col = None
+                
+                for col in df_temp.columns:
+                    col_lower = col.lower().strip()
+                    if 'ro' in col_lower and 'number' in col_lower:
+                        ro_col = col
+                    elif 'landed' in col_lower and 'cost' in col_lower:
+                        cost_col = col
+                    elif 'billable' in col_lower and 'type' in col_lower:
+                        billable_col = col
+                
+                print(f"[DEBUG] Found columns: RO={ro_col}, Cost={cost_col}, Billable={billable_col}")
+                
+                # If we found the columns, use them
+                if ro_col and cost_col:
+                    df_landed_cost = df_temp.groupby(ro_col)[cost_col].sum().reset_index()
+                    df_landed_cost.columns = ['RO Number', 'Landed Cost']
+                    
+                    if billable_col:
+                        df_billable_type = df_temp.groupby(ro_col)[billable_col].first().reset_index()
+                        df_billable_type.columns = ['RO Number', 'Billable Type']
+                    else:
+                        df_billable_type = pd.DataFrame({'RO Number': df_landed_cost['RO Number'], 'Billable Type': '-'})
+                    
+                    print(f"[OK] Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
+                    print(f"[OK] Extracted billable type for {len(df_billable_type)} RO Numbers")
+                    
+                    # Merge into main dataframe
+                    df_global = df_global.merge(df_landed_cost, left_on='RO ID', right_on='RO Number', how='left')
+                    df_global = df_global.merge(df_billable_type, left_on='RO ID', right_on='RO Number', how='left')
+                    
+                    # Fill NAs (using proper pandas syntax)
+                    df_global['Landed Cost'] = df_global['Landed Cost'].fillna(0)
+                    df_global['Billable Type'] = df_global['Billable Type'].fillna('-')
+                    
+                    print(f"[OK] Merged landed cost and billable type data into main dataframe")
+                else:
+                    print(f"⚠ Could not find required columns in Part Issue file")
+                    print(f"⚠ Available columns: {df_temp.columns.tolist()}")
+                    df_global['Landed Cost'] = 0
+                    df_global['Billable Type'] = '-'
+                    
+            except Exception as e:
+                print(f"⚠ Error processing Part Issue file: {e}")
+                df_global['Landed Cost'] = 0
+                df_global['Billable Type'] = '-'
         
         print("[OK] Data loading complete")
         
