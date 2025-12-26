@@ -17,30 +17,15 @@ df_global = None
 df_landed_cost = None
 df_billable_type = None
 df_model_group = None
-ro_remark_codes = []  # List of valid RO Remark codes
+ro_remark_codes = []  # List of RO Remark codes found in data
+# Known RO status codes to look for
+KNOWN_RO_CODES = ['WIP', 'RBND', 'PNA', 'WCA', 'WNS', 'MGP', 'CNA', 'WFC', 'WFCA']
 
 def load_data():
     """Load Excel files and merge data"""
     global df_global, df_landed_cost, df_billable_type, df_model_group, ro_remark_codes
     try:
-        # Load RO Remark codes
-        remark_file = None
-        for fn in ['RO_Remark.xlsx', 'RO_REMARK.xlsx', 'ro_remark.xlsx']:
-            if os.path.exists(fn):
-                remark_file = fn
-                break
-        
-        if remark_file:
-            print(f"[OK] Loading: {remark_file}")
-            df_remark = pd.read_excel(remark_file)
-            # Get the column name (handle potential whitespace)
-            remark_col = df_remark.columns[0]
-            ro_remark_codes = [str(x).strip().upper() for x in df_remark[remark_col].dropna().unique().tolist()]
-            ro_remark_codes = sorted(list(set(ro_remark_codes)))
-            print(f"[OK] Loaded RO Remark codes: {ro_remark_codes}")
-        else:
-            print("⚠ RO_Remark.xlsx file not found - RO Remarks filter will be empty")
-            ro_remark_codes = []
+        print(f"[OK] Initializing RO Remark code extraction with known codes: {KNOWN_RO_CODES}")
         
         # Load Model Group mapping
         model_file = None
@@ -76,6 +61,20 @@ def load_data():
         df_global = pd.read_excel(excel_file)
         print(f"[OK] Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
         print(f"[OK] Columns: {list(df_global.columns)}")
+        
+        # Extract RO Remark codes from actual remarks
+        print(f"[OK] Extracting RO codes from remarks...")
+        df_global['ro_remark_code'] = df_global['RO Remarks'].apply(extract_remark_code)
+        
+        # Get unique codes found in data
+        found_codes = df_global['ro_remark_code'].dropna().unique()
+        ro_remark_codes = sorted([str(code) for code in found_codes])
+        print(f"[OK] Found {len(ro_remark_codes)} unique RO codes in remarks: {ro_remark_codes}")
+        
+        # Count occurrences
+        for code in ro_remark_codes:
+            count = (df_global['ro_remark_code'] == code).sum()
+            print(f"    {code}: {count} occurrences")
         
         # Merge Model Group data if available
         if not df_model_group.empty:
@@ -138,13 +137,6 @@ def load_data():
             print(f"⚠ Model Group dataframe is empty")
             df_global['segment'] = 'Unknown'
         
-        # Extract and add RO Remark codes to dataframe
-        if ro_remark_codes:
-            print(f"[OK] Adding RO Remark code extraction...")
-            df_global['ro_remark_code'] = df_global['RO Remarks'].apply(extract_remark_code)
-            print(f"[OK] RO Remark codes extracted")
-            print(f"  Found codes: {sorted(df_global['ro_remark_code'].dropna().unique().tolist())}")
-        
         # Load and aggregate Landed Cost data
         parts_file = None
         for fn in ['Part Issue But Not Bill.xlsx', 'Part_Issue_But_Not_Bill.xlsx', 'part_issue_but_not_bill.xlsx']:
@@ -194,18 +186,17 @@ load_data()
 # ==================== HELPER FUNCTIONS ====================
 
 def extract_remark_code(remark):
-    """Extract first 3-4 letter code from RO Remarks"""
+    """Extract RO code from remarks - looks for known codes"""
     if pd.isna(remark) or remark == '-' or remark == '':
         return None
     
     remark_str = str(remark).strip().upper()
     
-    # Try to find any of the known codes
-    for code in ro_remark_codes:
+    # Look for any known RO status code in the remarks
+    for code in KNOWN_RO_CODES:
         if code in remark_str:
             return code
     
-    # If no known code found, return None
     return None
 
 def extract_mjobs(remark):
