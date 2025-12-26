@@ -51,21 +51,28 @@ def extract_mjobs(remark):
     return matches if matches else None
 
 
+def filter_by_service_category(df, service_category):
+    """Filter dataframe by service category"""
+    if service_category == 'All':
+        return df
+    elif service_category == 'mechanical':
+        return df[df['SERVC_CATGRY_DESC'].isin(['Paid Service', 'Repair', 'Free Service'])]
+    elif service_category == 'bodyshop':
+        return df[df['SERVC_CATGRY_DESC'] == 'Bodyshop']
+    elif service_category == 'accessories':
+        return df[df['SERVC_CATGRY_DESC'] == 'Accessories']
+    elif service_category == 'presale':
+        return df[df['SERVC_CATGRY_DESC'].str.contains('Pre-Sale', case=False, na=False)]
+    return df
+
+
 def apply_filters(data, service_category, branch, ro_status, age_bucket, segment, 
                  billable_type, sa_name, service_type, ro_remark_code):
     """Apply all filters to dataframe"""
     df = data.copy()
     
-    # Service category filter
-    if service_category != 'All':
-        if service_category == 'mechanical':
-            df = df[df['SERVC_CATGRY_DESC'].str.contains('MECHANICAL', case=False, na=False)]
-        elif service_category == 'bodyshop':
-            df = df[df['SERVC_CATGRY_DESC'].str.contains('BODY', case=False, na=False)]
-        elif service_category == 'accessories':
-            df = df[df['SERVC_CATGRY_DESC'].str.contains('ACCESSORY', case=False, na=False)]
-        elif service_category == 'presale':
-            df = df[df['SERVC_CATGRY_DESC'].str.contains('PRE-SALE', case=False, na=False)]
+    # Service category filter - use helper
+    df = filter_by_service_category(df, service_category)
     
     # Other filters
     if branch != 'All':
@@ -359,14 +366,7 @@ def get_filter_options(service_category: str, branch: str = "All"):
     df = df_global.copy()
     
     # Filter by service category first
-    if service_category == 'mechanical':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('MECHANICAL', case=False, na=False)]
-    elif service_category == 'bodyshop':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('BODY', case=False, na=False)]
-    elif service_category == 'accessories':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('ACCESSORY', case=False, na=False)]
-    elif service_category == 'presale':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('PRE-SALE', case=False, na=False)]
+    df = filter_by_service_category(df, service_category)
     
     # Then filter by branch if specified
     if branch != 'All':
@@ -428,10 +428,10 @@ def get_statistics():
     
     return {
         'total_ros': len(df),
-        'mechanical': len(df[df['SERVC_CATGRY_DESC'].str.contains('MECHANICAL', case=False, na=False)]),
-        'bodyshop': len(df[df['SERVC_CATGRY_DESC'].str.contains('BODY', case=False, na=False)]),
-        'accessories': len(df[df['SERVC_CATGRY_DESC'].str.contains('ACCESSORY', case=False, na=False)]),
-        'presale': len(df[df['SERVC_CATGRY_DESC'].str.contains('PRE-SALE', case=False, na=False)]),
+        'mechanical': len(filter_by_service_category(df, 'mechanical')),
+        'bodyshop': len(filter_by_service_category(df, 'bodyshop')),
+        'accessories': len(filter_by_service_category(df, 'accessories')),
+        'presale': len(filter_by_service_category(df, 'presale')),
         'part_issued_value': f"₹{df['Landed Cost'].sum():,.2f}"
     }
 
@@ -470,14 +470,7 @@ def get_division_stats(service_category: str = "All"):
     df = df_global.copy()
     
     # Filter by service category
-    if service_category == 'mechanical':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('MECHANICAL', case=False, na=False)]
-    elif service_category == 'bodyshop':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('BODY', case=False, na=False)]
-    elif service_category == 'accessories':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('ACCESSORY', case=False, na=False)]
-    elif service_category == 'presale':
-        df = df[df['SERVC_CATGRY_DESC'].str.contains('PRE-SALE', case=False, na=False)]
+    df = filter_by_service_category(df, service_category)
     
     # Group by branch
     branch_stats = df.groupby('Branch').agg({
