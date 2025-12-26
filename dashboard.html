@@ -469,13 +469,6 @@
                     <label>Reg. Number (Search)</label>
                     <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
                 </div>
-                <!-- NEW: RO Remark Code Filter (Only for Mechanical tab) -->
-                <div class="filter-group" id="roRemarkCodeFilter" style="display:none;">
-                    <label>RO Remark Code</label>
-                    <select id="roRemarkCode" onchange="onFilterChange()">
-                        <option value="All">All</option>
-                    </select>
-                </div>
             </div>
         </div>
 
@@ -816,8 +809,8 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
-                // FIX: Add RO Remark Code to filtered stats
-                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
+                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
+                const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -830,8 +823,8 @@
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
-                // FIX: Add roRemarkCode to params
-                if (roRemarkCode !== 'All') params.append('ro_remark_code', roRemarkCode);
+                if (mjob !== 'All') params.append('mjob', mjob);
+                if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
 
                 if (params.toString()) url += '?' + params.toString();
 
@@ -910,12 +903,6 @@
                     document.getElementById('mjob').innerHTML = mjobOptions.map(m => `<option value="${m}">${m}</option>`).join('');
                 } else mjobFilter.style.display = 'none';
 
-                // FIX: Load RO Remark Codes
-                if (data.ro_remark_codes) {
-                    const roRemarkHTML = data.ro_remark_codes.map(code => `<option value="${code}">${code}</option>`).join('');
-                    document.getElementById('roRemarkCode').innerHTML = roRemarkHTML;
-                }
-
                 loadData();
                 loadFilteredStats();
             } catch (error) {
@@ -990,9 +977,8 @@
             branchSelect.innerHTML = sortedBranches.map(b => `<option>${b}</option>`).join('');
         }
 
-        // FIX: Update onFilterChange to call loadFilteredStats
         function onFilterChange() {
-            loadFilteredStats();  // ADD THIS LINE TO FIX STATS UPDATING
+            loadFilteredStats();
             loadData();
         }
 
@@ -1009,8 +995,9 @@
                 document.getElementById('billableType').value = 'All';
             }
             if (document.getElementById('regNumber')) document.getElementById('regNumber').value = '';
-            // FIX: Clear RO Remark Code filter
-            if (document.getElementById('roRemarkCode')) document.getElementById('roRemarkCode').value = 'All';
+
+            // Keep sorting state as-is OR reset if you want:
+            // sortState = { key: null, dir: null }; updateSortIcons();
 
             loadStats();
             loadData();
@@ -1020,8 +1007,12 @@
             return document.getElementById('status').value === 'Closed but not billed';
         }
 
+        // Apply sort by calling API with sort params (preferred) OR local sort fallback
         function buildSortParams() {
             if (!sortState.key || !sortState.dir) return '';
+            // Your backend may support different param names. We will send:
+            // sort_by=landed_cost or ro_date
+            // sort_dir=asc or desc
             return `&sort_by=${encodeURIComponent(sortState.key)}&sort_dir=${encodeURIComponent(sortState.dir)}`;
         }
 
@@ -1060,8 +1051,6 @@
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value, 10);
-                // FIX: Add RO Remark Code
-                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
@@ -1071,8 +1060,6 @@
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
-                // FIX: Add RO Remark Code to URL
-                if (roRemarkCode !== 'All') url += `&ro_remark_code=${encodeURIComponent(roRemarkCode)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
@@ -1083,6 +1070,7 @@
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
                 }
 
+                // Add sorting to API call
                 url += buildSortParams();
 
                 const response = await fetch(url);
@@ -1094,6 +1082,7 @@
                     return;
                 }
 
+                // If backend ignores sort params, apply local sort fallback
                 const vehiclesSorted = applyLocalSortIfNeeded(data.vehicles || []);
                 allData = vehiclesSorted;
 
@@ -1263,28 +1252,14 @@
             }
         }
 
-        // FIX: Update switchTab to show/hide RO Remark Code filter
         function switchTab(event, tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            // SHOW/HIDE RO REMARK CODE FILTER BASED ON TAB
-            const roRemarkFilter = document.getElementById('roRemarkCode');
-            const roRemarkParent = document.getElementById('roRemarkCodeFilter');
-            
-            if (currentTab === 'mechanical') {
-                // Show RO Remark Code for Mechanical tab
-                if (roRemarkParent) roRemarkParent.style.display = 'block';
-            } else {
-                // Hide RO Remark Code for Bodyshop, Accessories, Pre-Sale tabs
-                if (roRemarkParent) roRemarkParent.style.display = 'none';
-                if (roRemarkFilter) roRemarkFilter.value = 'All';  // Reset to All
-            }
+            // Keep sortState as-is (so sorting works across tabs). If you want reset on tab change, uncomment below:
+            // sortState = { key: null, dir: null }; updateSortIcons();
 
-            sortState = { key: null, dir: null }; 
-            updateSortIcons();
-            
             loadFilters();
             openModal();
         }
@@ -1298,7 +1273,6 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
-                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
 
                 const btn = evt.target;
                 const originalText = btn.textContent;
@@ -1319,8 +1293,6 @@
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (roRemarkCode !== 'All') url += `${separator}ro_remark_code=${encodeURIComponent(roRemarkCode)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') {
@@ -1336,6 +1308,7 @@
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 }
 
+                // Add sorting to export also
                 url += (url.includes('?') ? '&' : '?') + buildSortParams().replace(/^&/, '');
 
                 const response = await fetch(url);
@@ -1350,6 +1323,7 @@
                     return;
                 }
 
+                // Local sort fallback for export
                 exportData = applyLocalSortIfNeeded(exportData);
 
                 const isClosedNB = status === 'Closed but not billed';
@@ -1360,6 +1334,7 @@
                     });
                 }
 
+                // Export date format
                 exportData = exportData.map(row => {
                     return {
                         ...row,
