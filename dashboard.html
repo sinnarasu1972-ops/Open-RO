@@ -235,7 +235,6 @@
         .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
 
         .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
-        .ro-remark-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #ffe8f0; color: #c2185b; }
         .segment-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #f3e5f5; color: #7b1fa2; }
 
         .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
@@ -460,12 +459,6 @@
                         <option>All</option>
                     </select>
                 </div>
-                <div class="filter-group" id="roRemarkCodeFilter" style="display:block;">
-                    <label>RO Remark Code</label>
-                    <select id="roRemarkCode" onchange="onFilterChange()">
-                        <option value="All">All</option>
-                    </select>
-                </div>
                 <div class="filter-group" id="mjobFilter" style="display:none;">
                     <label>MJob Type</label>
                     <select id="mjob" onchange="onFilterChange()">
@@ -475,6 +468,13 @@
                 <div class="filter-group" id="regNumberFilter" style="display:none;">
                     <label>Reg. Number (Search)</label>
                     <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
+                </div>
+                <!-- NEW: RO Remark Code Filter (Only for Mechanical tab) -->
+                <div class="filter-group" id="roRemarkCodeFilter" style="display:none;">
+                    <label>RO Remark Code</label>
+                    <select id="roRemarkCode" onchange="onFilterChange()">
+                        <option value="All">All</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -506,7 +506,6 @@
                             <th>Model Group</th>
                             <th>Segment</th>
                             <th>Chassis</th>
-                            <th>RO Remark Code</th>
                             <th>MJob</th>
                             <th>TAT</th>
                             <th>Remarks</th>
@@ -817,9 +816,8 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                // FIX: Add RO Remark Code to filtered stats
                 const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
-                const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
-                const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
 
                 let url = `${API_URL}/api/dashboard/statistics/filtered`;
                 const params = new URLSearchParams();
@@ -832,9 +830,8 @@
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
+                // FIX: Add roRemarkCode to params
                 if (roRemarkCode !== 'All') params.append('ro_remark_code', roRemarkCode);
-                if (mjob !== 'All') params.append('mjob', mjob);
-                if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
 
                 if (params.toString()) url += '?' + params.toString();
 
@@ -887,12 +884,6 @@
                     document.getElementById('saName').innerHTML = saNameHTML;
                 }
 
-                // Load RO Remark Codes
-                if (data.ro_remark_codes) {
-                    const roRemarkCodeHTML = data.ro_remark_codes.map(code => `<option value="${code}">${code}</option>`).join('');
-                    document.getElementById('roRemarkCode').innerHTML = roRemarkCodeHTML;
-                }
-
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
                 if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
                     billableTypeFilter.style.display = 'block';
@@ -918,6 +909,12 @@
                     const mjobOptions = ['All', 'M1', 'M2', 'M3', 'M4', 'Not Categorized'];
                     document.getElementById('mjob').innerHTML = mjobOptions.map(m => `<option value="${m}">${m}</option>`).join('');
                 } else mjobFilter.style.display = 'none';
+
+                // FIX: Load RO Remark Codes
+                if (data.ro_remark_codes) {
+                    const roRemarkHTML = data.ro_remark_codes.map(code => `<option value="${code}">${code}</option>`).join('');
+                    document.getElementById('roRemarkCode').innerHTML = roRemarkHTML;
+                }
 
                 loadData();
                 loadFilteredStats();
@@ -993,8 +990,9 @@
             branchSelect.innerHTML = sortedBranches.map(b => `<option>${b}</option>`).join('');
         }
 
+        // FIX: Update onFilterChange to call loadFilteredStats
         function onFilterChange() {
-            loadFilteredStats();
+            loadFilteredStats();  // ADD THIS LINE TO FIX STATS UPDATING
             loadData();
         }
 
@@ -1006,12 +1004,13 @@
             if (document.getElementById('billableType')) document.getElementById('billableType').value = 'All';
             if (document.getElementById('serviceType')) document.getElementById('serviceType').value = 'All';
             if (document.getElementById('saName')) document.getElementById('saName').value = 'All';
-            if (document.getElementById('roRemarkCode')) document.getElementById('roRemarkCode').value = 'All';
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
             }
             if (document.getElementById('regNumber')) document.getElementById('regNumber').value = '';
+            // FIX: Clear RO Remark Code filter
+            if (document.getElementById('roRemarkCode')) document.getElementById('roRemarkCode').value = 'All';
 
             loadStats();
             loadData();
@@ -1060,8 +1059,9 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
-                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value, 10);
+                // FIX: Add RO Remark Code
+                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
                 if (branch !== 'All') url += `&branch=${encodeURIComponent(branch)}`;
@@ -1071,6 +1071,7 @@
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
+                // FIX: Add RO Remark Code to URL
                 if (roRemarkCode !== 'All') url += `&ro_remark_code=${encodeURIComponent(roRemarkCode)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
@@ -1121,7 +1122,6 @@
                         const tat = calculateTAT(v.ro_date);
                         const tatStyle = getTATStyle(mjob, tat);
                         const saNameDisp = v.service_adviser || '-';
-                        const roRemarkCodeDisp = v.ro_remark_code || '-';
 
                         let rowHTML = `
                             <tr>
@@ -1145,7 +1145,6 @@
                                 <td>${v.model_group || '-'}</td>
                                 <td>${v.segment || 'Unknown'}</td>
                                 <td>${chassis}</td>
-                                <td><span class="ro-remark-badge">${roRemarkCodeDisp}</span></td>
                                 <td><span class="mjob-badge">${mjob}</span></td>
                                 <td><span class="${tatStyle}">${tat} days</span></td>
                                 <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
@@ -1154,7 +1153,6 @@
                         `;
                         tbody.innerHTML += rowHTML;
                     } else {
-                        const roRemarkCodeDisp = v.ro_remark_code || '-';
                         let rowHTML = `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
@@ -1174,10 +1172,16 @@
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
                                 <td>${v.service_adviser || '-'}</td>
                                 <td><strong>${v.reg_number || '-'}</strong></td>
-                                <td>${v.model_group || '-'}</td>
-                                <td>${v.segment || 'Unknown'}</td>
-                                <td>${getLastEightChars(v.vin || '-')}</td>
-                                <td><span class="ro-remark-badge">${roRemarkCodeDisp}</span></td>
+                                <td>${v.model_group || '-'}</td>`;
+
+                        if (currentTab === 'mechanical') {
+                            rowHTML += `<td>${v.service_type || '-'}</td>`;
+                        }
+
+                        rowHTML += `
+                                <td>${v.age_bucket || '-'}</td>
+                                <td>${v.days || '-'}</td>
+                                <td>${(v.km !== undefined && v.km !== null && !isNaN(Number(v.km))) ? Number(v.km).toLocaleString() : '-'}</td>
                                 <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
                             </tr>
@@ -1219,7 +1223,6 @@
                     <th title="Model Group">Model Group</th>
                     <th title="Segment">Segment</th>
                     <th title="Last 8 Digits of Chassis Number">Chassis</th>
-                    <th title="RO Remark Code">RO Remark Code</th>
                     <th title="MJob Category">MJob</th>
                     <th title="Turn Around Time in Days">TAT</th>
                     <th title="RO Remarks">Remarks</th>
@@ -1243,10 +1246,16 @@
                     <th title="RO Status">Status</th>
                     <th title="Service Adviser Name">SA Name</th>
                     <th title="Vehicle Registration Number">Reg Number</th>
-                    <th title="Model Group">Model Group</th>
-                    <th title="Segment">Segment</th>
-                    <th title="Chassis Number">Chassis</th>
-                    <th title="RO Remark Code">RO Remark Code</th>
+                    <th title="Model Group">Model Group</th>`;
+
+                if (currentTab === 'mechanical') {
+                    headers += `<th title="Service Type">Service Type</th>`;
+                }
+
+                headers += `
+                    <th title="Age Bucket">Age</th>
+                    <th title="Number of Days">Days</th>
+                    <th title="Kilometers">KM</th>
                     <th title="RO Remarks">Remarks</th>
                     <th title="Pending Reason Description">Pending Reason</th>
                 `;
@@ -1254,11 +1263,28 @@
             }
         }
 
+        // FIX: Update switchTab to show/hide RO Remark Code filter
         function switchTab(event, tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
+            // SHOW/HIDE RO REMARK CODE FILTER BASED ON TAB
+            const roRemarkFilter = document.getElementById('roRemarkCode');
+            const roRemarkParent = document.getElementById('roRemarkCodeFilter');
+            
+            if (currentTab === 'mechanical') {
+                // Show RO Remark Code for Mechanical tab
+                if (roRemarkParent) roRemarkParent.style.display = 'block';
+            } else {
+                // Hide RO Remark Code for Bodyshop, Accessories, Pre-Sale tabs
+                if (roRemarkParent) roRemarkParent.style.display = 'none';
+                if (roRemarkFilter) roRemarkFilter.value = 'All';  // Reset to All
+            }
+
+            sortState = { key: null, dir: null }; 
+            updateSortIcons();
+            
             loadFilters();
             openModal();
         }
