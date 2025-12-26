@@ -235,6 +235,7 @@
         .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
 
         .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
+        .ro-remark-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #ffe8f0; color: #c2185b; }
         .segment-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #f3e5f5; color: #7b1fa2; }
 
         .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
@@ -459,6 +460,12 @@
                         <option>All</option>
                     </select>
                 </div>
+                <div class="filter-group" id="roRemarkCodeFilter" style="display:block;">
+                    <label>RO Remark Code</label>
+                    <select id="roRemarkCode" onchange="onFilterChange()">
+                        <option value="All">All</option>
+                    </select>
+                </div>
                 <div class="filter-group" id="mjobFilter" style="display:none;">
                     <label>MJob Type</label>
                     <select id="mjob" onchange="onFilterChange()">
@@ -499,6 +506,7 @@
                             <th>Model Group</th>
                             <th>Segment</th>
                             <th>Chassis</th>
+                            <th>RO Remark Code</th>
                             <th>MJob</th>
                             <th>TAT</th>
                             <th>Remarks</th>
@@ -809,6 +817,7 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
 
@@ -823,6 +832,7 @@
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
+                if (roRemarkCode !== 'All') params.append('ro_remark_code', roRemarkCode);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
 
@@ -875,6 +885,12 @@
                     const saNameHTML = '<option>All</option>' +
                         data.sa_names.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                     document.getElementById('saName').innerHTML = saNameHTML;
+                }
+
+                // Load RO Remark Codes
+                if (data.ro_remark_codes) {
+                    const roRemarkCodeHTML = data.ro_remark_codes.map(code => `<option value="${code}">${code}</option>`).join('');
+                    document.getElementById('roRemarkCode').innerHTML = roRemarkCodeHTML;
                 }
 
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
@@ -990,14 +1006,12 @@
             if (document.getElementById('billableType')) document.getElementById('billableType').value = 'All';
             if (document.getElementById('serviceType')) document.getElementById('serviceType').value = 'All';
             if (document.getElementById('saName')) document.getElementById('saName').value = 'All';
+            if (document.getElementById('roRemarkCode')) document.getElementById('roRemarkCode').value = 'All';
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
             }
             if (document.getElementById('regNumber')) document.getElementById('regNumber').value = '';
-
-            // Keep sorting state as-is OR reset if you want:
-            // sortState = { key: null, dir: null }; updateSortIcons();
 
             loadStats();
             loadData();
@@ -1007,12 +1021,8 @@
             return document.getElementById('status').value === 'Closed but not billed';
         }
 
-        // Apply sort by calling API with sort params (preferred) OR local sort fallback
         function buildSortParams() {
             if (!sortState.key || !sortState.dir) return '';
-            // Your backend may support different param names. We will send:
-            // sort_by=landed_cost or ro_date
-            // sort_dir=asc or desc
             return `&sort_by=${encodeURIComponent(sortState.key)}&sort_dir=${encodeURIComponent(sortState.dir)}`;
         }
 
@@ -1050,6 +1060,7 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value, 10);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
@@ -1060,6 +1071,7 @@
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
+                if (roRemarkCode !== 'All') url += `&ro_remark_code=${encodeURIComponent(roRemarkCode)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
@@ -1070,7 +1082,6 @@
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
                 }
 
-                // Add sorting to API call
                 url += buildSortParams();
 
                 const response = await fetch(url);
@@ -1082,7 +1093,6 @@
                     return;
                 }
 
-                // If backend ignores sort params, apply local sort fallback
                 const vehiclesSorted = applyLocalSortIfNeeded(data.vehicles || []);
                 allData = vehiclesSorted;
 
@@ -1111,6 +1121,7 @@
                         const tat = calculateTAT(v.ro_date);
                         const tatStyle = getTATStyle(mjob, tat);
                         const saNameDisp = v.service_adviser || '-';
+                        const roRemarkCodeDisp = v.ro_remark_code || '-';
 
                         let rowHTML = `
                             <tr>
@@ -1134,6 +1145,7 @@
                                 <td>${v.model_group || '-'}</td>
                                 <td>${v.segment || 'Unknown'}</td>
                                 <td>${chassis}</td>
+                                <td><span class="ro-remark-badge">${roRemarkCodeDisp}</span></td>
                                 <td><span class="mjob-badge">${mjob}</span></td>
                                 <td><span class="${tatStyle}">${tat} days</span></td>
                                 <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
@@ -1142,6 +1154,7 @@
                         `;
                         tbody.innerHTML += rowHTML;
                     } else {
+                        const roRemarkCodeDisp = v.ro_remark_code || '-';
                         let rowHTML = `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
@@ -1161,16 +1174,10 @@
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
                                 <td>${v.service_adviser || '-'}</td>
                                 <td><strong>${v.reg_number || '-'}</strong></td>
-                                <td>${v.model_group || '-'}</td>`;
-
-                        if (currentTab === 'mechanical') {
-                            rowHTML += `<td>${v.service_type || '-'}</td>`;
-                        }
-
-                        rowHTML += `
-                                <td>${v.age_bucket || '-'}</td>
-                                <td>${v.days || '-'}</td>
-                                <td>${(v.km !== undefined && v.km !== null && !isNaN(Number(v.km))) ? Number(v.km).toLocaleString() : '-'}</td>
+                                <td>${v.model_group || '-'}</td>
+                                <td>${v.segment || 'Unknown'}</td>
+                                <td>${getLastEightChars(v.vin || '-')}</td>
+                                <td><span class="ro-remark-badge">${roRemarkCodeDisp}</span></td>
                                 <td style="font-size:11px; white-space: normal;">${v.ro_remarks ? v.ro_remarks : '-'}</td>
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
                             </tr>
@@ -1212,6 +1219,7 @@
                     <th title="Model Group">Model Group</th>
                     <th title="Segment">Segment</th>
                     <th title="Last 8 Digits of Chassis Number">Chassis</th>
+                    <th title="RO Remark Code">RO Remark Code</th>
                     <th title="MJob Category">MJob</th>
                     <th title="Turn Around Time in Days">TAT</th>
                     <th title="RO Remarks">Remarks</th>
@@ -1235,16 +1243,10 @@
                     <th title="RO Status">Status</th>
                     <th title="Service Adviser Name">SA Name</th>
                     <th title="Vehicle Registration Number">Reg Number</th>
-                    <th title="Model Group">Model Group</th>`;
-
-                if (currentTab === 'mechanical') {
-                    headers += `<th title="Service Type">Service Type</th>`;
-                }
-
-                headers += `
-                    <th title="Age Bucket">Age</th>
-                    <th title="Number of Days">Days</th>
-                    <th title="Kilometers">KM</th>
+                    <th title="Model Group">Model Group</th>
+                    <th title="Segment">Segment</th>
+                    <th title="Chassis Number">Chassis</th>
+                    <th title="RO Remark Code">RO Remark Code</th>
                     <th title="RO Remarks">Remarks</th>
                     <th title="Pending Reason Description">Pending Reason</th>
                 `;
@@ -1256,9 +1258,6 @@
             currentTab = tab;
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-
-            // Keep sortState as-is (so sorting works across tabs). If you want reset on tab change, uncomment below:
-            // sortState = { key: null, dir: null }; updateSortIcons();
 
             loadFilters();
             openModal();
@@ -1273,6 +1272,7 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const roRemarkCode = document.getElementById('roRemarkCode') ? document.getElementById('roRemarkCode').value : 'All';
 
                 const btn = evt.target;
                 const originalText = btn.textContent;
@@ -1293,6 +1293,8 @@
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (roRemarkCode !== 'All') url += `${separator}ro_remark_code=${encodeURIComponent(roRemarkCode)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') {
@@ -1308,7 +1310,6 @@
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 }
 
-                // Add sorting to export also
                 url += (url.includes('?') ? '&' : '?') + buildSortParams().replace(/^&/, '');
 
                 const response = await fetch(url);
@@ -1323,7 +1324,6 @@
                     return;
                 }
 
-                // Local sort fallback for export
                 exportData = applyLocalSortIfNeeded(exportData);
 
                 const isClosedNB = status === 'Closed but not billed';
@@ -1334,7 +1334,6 @@
                     });
                 }
 
-                // Export date format
                 exportData = exportData.map(row => {
                     return {
                         ...row,
