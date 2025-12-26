@@ -1,12 +1,10 @@
 import os
 import pandas as pd
 import re
-from io import BytesIO
 from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 
 # ==================== CONFIGURATION ====================
 
@@ -19,27 +17,23 @@ df_global = None
 df_landed_cost = None
 df_billable_type = None
 df_model_group = None
-ro_remark_codes = []
+ro_remark_codes = []  # NEW: Store RO Remark codes
 
-# Known RO status codes to look for
 KNOWN_RO_CODES = ['WIP', 'RBND', 'PNA', 'WCA', 'WNS', 'MGP', 'CNA', 'WFC', 'WFCA']
 
-# ==================== HELPER FUNCTIONS (DEFINED FIRST) ====================
+# ==================== HELPER FUNCTIONS ====================
 
 def extract_remark_code(remark):
-    """Extract RO code from remarks - looks for known codes"""
+    """Extract RO Remark code (WIP, RBND, PNA, etc.) from remarks"""
     if pd.isna(remark) or remark == '-' or remark == '':
         return None
     
     remark_str = str(remark).strip().upper()
     
-    # Look for any known RO status code in the remarks
     for code in KNOWN_RO_CODES:
         if code in remark_str:
             return code
-    
     return None
-
 
 def extract_mjobs(remark):
     """Extract MJob codes from remarks"""
@@ -50,96 +44,102 @@ def extract_mjobs(remark):
     matches = re.findall(r'\bM/?[1-4]\b', remark_str)
     return matches if matches else None
 
+def get_mjob_category(remark):
+    """Categorize a remark as M1, M2, M3, M4, M/4, or "Not Categorized" """
+    mjobs = extract_mjobs(remark)
+    if mjobs:
+        return mjobs[0]
+    return "Not Categorized"
 
-def filter_by_service_category(df, service_category):
-    """Filter dataframe by service category"""
-    if service_category == 'All':
-        return df
-    elif service_category == 'mechanical':
-        return df[df['SERVC_CATGRY_DESC'].isin(['Paid Service', 'Repair', 'Free Service'])]
-    elif service_category == 'bodyshop':
-        return df[df['SERVC_CATGRY_DESC'] == 'Bodyshop']
-    elif service_category == 'accessories':
-        return df[df['SERVC_CATGRY_DESC'] == 'Accessories']
-    elif service_category == 'presale':
-        return df[df['SERVC_CATGRY_DESC'].str.contains('Pre-Sale', case=False, na=False)]
-    return df
+def convert_row(row) -> Dict[str, Any]:
+    """Convert pandas row to JSON-safe dict"""
+    try:
+        # Helper function to parse dates safely
+        def safe_date_parse(date_value):
+            if pd.notna(date_value) and str(date_value).strip() not in ['-', '', 'nan', 'NaT']:
+                try:
+                    return pd.Timestamp(date_value).strftime('%Y-%m-%d')
+                except:
+                    return '-'
+            return '-'
+        
+        return {
+            'ro_id': str(row['RO ID']).strip() if pd.notna(row['RO ID']) else '-',
+            'branch': str(row['Branch']).strip() if pd.notna(row['Branch']) else '-',
+            'ro_status': str(row['RO Status']).strip() if pd.notna(row['RO Status']) else '-',
+            'age_bucket': str(row['Age Bucket']).strip() if pd.notna(row['Age Bucket']) else '-',
+            'service_category': str(row['SERVC_CATGRY_DESC']).strip() if pd.notna(row['SERVC_CATGRY_DESC']) else '-',
+            'service_type': str(row['SERVC_TYPE_DESC']).strip() if pd.notna(row['SERVC_TYPE_DESC']) else '-',
+            'vehicle_model': str(row['Family']).strip() if pd.notna(row['Family']) else '-',
+            'model_group': str(row.get('Model Group', '-')).strip() if pd.notna(row.get('Model Group')) else '-',
+            'segment': str(row.get('segment', 'Unknown')).strip() if pd.notna(row.get('segment')) else 'Unknown',
+            'reg_number': str(row['Reg. Number']).strip() if pd.notna(row['Reg. Number']) else '-',
+            'ro_date': safe_date_parse(row['RO Date']),
+            'vehicle_ready_date': safe_date_parse(row['Vehicle  Ready Date']),
+            'ro_remarks': str(row['RO Remarks']).strip() if pd.notna(row['RO Remarks']) else '-',
+            'km': int(row['KM']) if pd.notna(row['KM']) else 0,
+            'days': int(row['Days']) if pd.notna(row['Days']) else 0,
+            'days_open': int(row['[No of Visits (In last 90 days)]']) if pd.notna(row['[No of Visits (In last 90 days)]']) else 0,
+            'service_adviser': str(row['Service Adviser Name']).strip() if pd.notna(row['Service Adviser Name']) else '-',
+            'vin': str(row['VIN']).strip() if pd.notna(row['VIN']) else '-',
+            'pendncy_resn_desc': str(row['PENDNCY_RESN_DESC']).strip() if pd.notna(row['PENDNCY_RESN_DESC']) else '-',
+            'total_landed_cost': round(float(row['total_landed_cost']), 2) if pd.notna(row['total_landed_cost']) else 0.00,
+            'billable_type': str(row['billable_type']).strip() if pd.notna(row['billable_type']) else 'Not Billed',
+            'ro_remark_code': str(row.get('ro_remark_code', '-')) if pd.notna(row.get('ro_remark_code')) else '-',  # NEW
+        }
+    except Exception as e:
+        print(f"Error converting row: {str(e)}")
+        raise
 
-
-def apply_filters(data, service_category, branch, ro_status, age_bucket, segment, 
-                 billable_type, sa_name, service_type, ro_remark_code):
-    """Apply all filters to dataframe"""
-    df = data.copy()
+def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None, service_type=None, sa_name=None, segment=None, ro_remark_code=None):
+    """Apply filters to dataframe"""
+    result = df.copy()
     
-    # Service category filter - use helper
-    df = filter_by_service_category(df, service_category)
+    if branch and branch != "All":
+        result = result[result['Branch'] == branch]
     
-    # Other filters
-    if branch != 'All':
-        df = df[df['Branch'] == branch]
+    if ro_status and ro_status != "All":
+        result = result[result['RO Status'] == ro_status]
     
-    if ro_status != 'All':
-        df = df[df['RO Status'] == ro_status]
+    if age_bucket and age_bucket != "All":
+        result = result[result['Age Bucket'] == age_bucket]
     
-    if age_bucket != 'All':
-        df = df[df['Age Bucket'] == age_bucket]
+    if billable_type and billable_type != "All":
+        result = result[result['billable_type'] == billable_type]
     
-    if segment != 'All':
-        df = df[df['segment'] == segment]
+    if service_type and service_type != "All":
+        result = result[result['SERVC_TYPE_DESC'] == service_type]
     
-    if billable_type != 'All':
-        df = df[df['Billable Type'] == billable_type]
+    if sa_name and sa_name != "All":
+        result = result[result['Service Adviser Name'] == sa_name]
     
-    if sa_name != 'All':
-        df = df[df['Service Adviser Name'] == sa_name]
+    if segment and segment != "All":
+        result = result[result['segment'] == segment]
     
-    if service_type != 'All':
-        df = df[df['SERVC_TYPE_DESC'] == service_type]
+    if mjob and mjob != "All":
+        if mjob == "Not Categorized":
+            result = result[result['RO Remarks'].apply(lambda x: extract_mjobs(x) is None)]
+        else:
+            search_mjob = mjob.upper()
+            result = result[result['RO Remarks'].apply(
+                lambda x: any(m.upper() in [search_mjob, search_mjob.replace('/', '')] 
+                            for m in (extract_mjobs(x) or []))
+            )]
     
-    if ro_remark_code != 'All':
-        df = df[df['ro_remark_code'] == ro_remark_code]
+    if reg_number and reg_number.strip() != "":
+        search_reg = reg_number.strip().upper()
+        result = result[result['Reg. Number'].astype(str).str.upper().str.contains(search_reg, na=False)]
     
-    return df
-
-
-def convert_row(row, service_category='mechanical'):
-    """Convert DataFrame row to API response format"""
-    base_dict = {
-        'ro_id': str(row.get('RO ID', '-')),
-        'landed_cost': float(row.get('Landed Cost', 0)) if pd.notna(row.get('Landed Cost')) else 0,
-        'ro_date': str(row.get('RO Date', '-')),
-        'branch': str(row.get('Branch', '-')),
-        'status': str(row.get('RO Status', '-')),
-        'sa_name': str(row.get('Service Adviser Name', '-')),
-        'model_group': str(row.get('model_group_name', row.get('Model Group', '-'))),
-        'segment': str(row.get('segment', '-')),
-        'chassis': str(row.get('VIN', '-')),
-        'ro_remark_code': str(row.get('ro_remark_code', '-')) if pd.notna(row.get('ro_remark_code')) else '-',
-        'remarks': str(row.get('RO Remarks', '-')),
-        'pending_reason': str(row.get('PENDNCY_RESN_DESC', '-')),
-    }
+    # NEW: Filter by RO Remark Code
+    if ro_remark_code and ro_remark_code != "All":
+        result = result[result['ro_remark_code'] == ro_remark_code]
     
-    # Add service category specific fields
-    if service_category == 'bodyshop':
-        base_dict['ro_number'] = str(row.get('RO ID', '-'))
-        base_dict['reg_number'] = str(row.get('Reg. Number', '-'))
-        base_dict['mjob'] = str(row.get('mjob', '-')) if pd.notna(row.get('mjob')) else '-'
-        base_dict['tat'] = str(row.get('TAT', '-'))
-    else:
-        base_dict['reg_number'] = str(row.get('Reg. Number', '-'))
-    
-    return base_dict
-
-
-# ==================== DATA LOADING ====================
+    return result
 
 def load_data():
-    """Load and process all Excel files"""
+    """Load Excel files and merge data"""
     global df_global, df_landed_cost, df_billable_type, df_model_group, ro_remark_codes
-    
     try:
-        print(f"[OK] Initializing RO Remark code extraction with known codes: {KNOWN_RO_CODES}")
-        
         # Load Model Group mapping
         model_file = None
         for fn in ['Model Group.xlsx', 'Model_Group.xlsx', 'model_group.xlsx']:
@@ -151,9 +151,8 @@ def load_data():
             print(f"[OK] Loading: {model_file}")
             df_model_group = pd.read_excel(model_file)
             print(f"[OK] Loaded {len(df_model_group)} model group records")
-            print(f"[OK] Model Group columns: {list(df_model_group.columns)}")
         else:
-            print("⚠ Model Group Excel file not found - Model Group and Segment will not be enriched")
+            print("⚠ Model Group Excel file not found")
             df_model_group = pd.DataFrame()
         
         # Load Open RO data
@@ -172,171 +171,85 @@ def load_data():
         
         print(f"[OK] Loading: {excel_file}")
         df_global = pd.read_excel(excel_file)
-        print(f"[OK] Loaded {len(df_global)} rows, {len(df_global.columns)} cols")
-        print(f"[OK] Columns: {list(df_global.columns)}")
+        print(f"[OK] Loaded {len(df_global)} rows")
         
-        # ===== EXTRACT RO REMARK CODES =====
-        print(f"[OK] Extracting RO codes from remarks...")
-        df_global['ro_remark_code'] = df_global['RO Remarks'].apply(extract_remark_code)
-        
-        # Extract MJob codes
-        print(f"[OK] Extracting MJob codes from remarks...")
-        df_global['mjob'] = df_global['RO Remarks'].apply(extract_mjobs)
-        
-        # Get unique codes found in data
-        found_codes = df_global['ro_remark_code'].dropna().unique()
-        ro_remark_codes = sorted([str(code) for code in found_codes])
-        print(f"[OK] Found {len(ro_remark_codes)} unique RO codes in remarks: {ro_remark_codes}")
-        
-        # Count occurrences
-        for code in ro_remark_codes:
-            count = (df_global['ro_remark_code'] == code).sum()
-            print(f"    {code}: {count} occurrences")
-        
-        # ===== MERGE MODEL GROUP DATA =====
+        # Merge Model Group data
         if not df_model_group.empty:
             print(f"[OK] Merging Model Group data...")
-            print(f"  Model Group df shape: {df_model_group.shape}")
-            print(f"  Open RO df shape: {df_global.shape}")
-            
             try:
                 if 'Model Group' in df_global.columns:
-                    # Create mappings from Model_Group.xlsx
                     segment_mapping = dict(zip(df_model_group['Model Code'], df_model_group['Segment']))
                     mg_mapping = dict(zip(df_model_group['Model Code'], df_model_group['Model Group']))
                     
-                    print(f"  Created mappings:")
-                    print(f"    - Model Code -> Segment: {len(segment_mapping)} entries")
-                    print(f"    - Model Code -> Model Group Name: {len(mg_mapping)} entries")
-                    
-                    # Show sample mappings
-                    sample_codes = list(segment_mapping.keys())[:5]
-                    print(f"    Sample: {sample_codes}")
-                    for code in sample_codes:
-                        print(f"      {code} -> Segment: {segment_mapping[code]}, Name: {mg_mapping[code]}")
-                    
-                    # Apply mappings
-                    print(f"  Applying mappings to Open RO 'Model Group' column...")
                     df_global['segment'] = df_global['Model Group'].map(segment_mapping)
-                    df_global['model_group_name'] = df_global['Model Group'].map(mg_mapping)
+                    df_global['model_group_mapped'] = df_global['Model Group'].map(mg_mapping)
                     
                     matched = df_global['segment'].notna().sum()
                     unmatched = df_global['segment'].isna().sum()
-                    print(f"  [OK] Mapping complete: {matched} matched, {unmatched} unmatched")
+                    print(f"  Mapping complete: {matched} matched, {unmatched} unmatched")
                     
-                    # Fill remaining nulls (using proper pandas syntax)
                     df_global['segment'] = df_global['segment'].fillna('Unknown')
-                    df_global['model_group_name'] = df_global['model_group_name'].fillna(df_global['Model Group'])
-                    
-                    print(f"[OK] Model Group and Segment data enriched")
-                    print(f"  Segment column exists: {('segment' in df_global.columns)}")
-                    print(f"  Segment values: {sorted(df_global['segment'].dropna().unique().tolist())}")
-                    
-                    # Count segments
-                    segment_counts = df_global['segment'].value_counts()
-                    print(f"  Segment value counts:")
-                    for seg, count in segment_counts.items():
-                        print(f"    {seg}: {count}")
-                        
+                    df_global['model_group_mapped'] = df_global['model_group_mapped'].fillna(df_global['Model Group'])
+                    df_global['Model Group'] = df_global['model_group_mapped']
+                else:
+                    df_global['segment'] = 'Unknown'
             except Exception as e:
-                print(f"⚠ Error merging Model Group: {e}")
+                print(f"  Error during mapping: {str(e)}")
                 df_global['segment'] = 'Unknown'
-                df_global['model_group_name'] = df_global['Model Group']
+            
+            print(f"[OK] Model Group and Segment data enriched")
         else:
             df_global['segment'] = 'Unknown'
-            df_global['model_group_name'] = df_global['Model Group']
         
-        # ===== LOAD LANDED COST DATA =====
+        # NEW: Extract RO Remark codes
+        print(f"[OK] Extracting RO Remark codes...")
+        df_global['ro_remark_code'] = df_global['RO Remarks'].apply(extract_remark_code)
+        
+        found_codes = df_global['ro_remark_code'].dropna().unique()
+        ro_remark_codes = sorted([str(code) for code in found_codes])
+        print(f"[OK] Found {len(ro_remark_codes)} unique RO codes: {ro_remark_codes}")
+        
+        # Load and aggregate Landed Cost data
         parts_file = None
-        for fn in ['Part Issue But Not Bill.xlsx', 'Part_Issue_But_Not_Bill.xlsx', 'part_issue_but_not_bill.xlsx']:
+        for fn in ['Part Issue But Not Bill.xlsx', 'Part_Issue_But_Not_Bill.xlsx']:
             if os.path.exists(fn):
                 parts_file = fn
                 break
         
         if parts_file is None:
-            print("⚠ Part Issue file not found - Landed Cost and Billable Type will not be available")
-            df_global['Landed Cost'] = 0
-            df_global['Billable Type'] = '-'
+            print("⚠ Part Issue file not found")
             df_landed_cost = pd.DataFrame()
             df_billable_type = pd.DataFrame()
         else:
             print(f"[OK] Loading: {parts_file}")
-            try:
-                df_temp = pd.read_excel(parts_file)
-                print(f"[OK] Loaded {len(df_temp)} part records")
-                print(f"[DEBUG] Part Issue columns: {df_temp.columns.tolist()}")
-                
-                # Find the correct column names (handle variations)
-                ro_col = None
-                cost_col = None
-                billable_col = None
-                
-                for col in df_temp.columns:
-                    col_lower = col.lower().strip()
-                    if 'ro' in col_lower and 'number' in col_lower:
-                        ro_col = col
-                    elif 'landed' in col_lower and 'cost' in col_lower:
-                        cost_col = col
-                    elif 'billable' in col_lower and 'type' in col_lower:
-                        billable_col = col
-                
-                print(f"[DEBUG] Found columns: RO={ro_col}, Cost={cost_col}, Billable={billable_col}")
-                
-                # If we found the columns, use them
-                if ro_col and cost_col:
-                    df_landed_cost = df_temp.groupby(ro_col)[cost_col].sum().reset_index()
-                    df_landed_cost.columns = ['RO Number', 'Landed Cost']
-                    
-                    if billable_col:
-                        df_billable_type = df_temp.groupby(ro_col)[billable_col].first().reset_index()
-                        df_billable_type.columns = ['RO Number', 'Billable Type']
-                    else:
-                        df_billable_type = pd.DataFrame({'RO Number': df_landed_cost['RO Number'], 'Billable Type': '-'})
-                    
-                    print(f"[OK] Aggregated {len(df_landed_cost)} unique RO Numbers with landed cost")
-                    print(f"[OK] Extracted billable type for {len(df_billable_type)} RO Numbers")
-                    
-                    # Merge into main dataframe
-                    df_global = df_global.merge(df_landed_cost, left_on='RO ID', right_on='RO Number', how='left')
-                    df_global = df_global.merge(df_billable_type, left_on='RO ID', right_on='RO Number', how='left')
-                    
-                    # Fill NAs (using proper pandas syntax)
-                    df_global['Landed Cost'] = df_global['Landed Cost'].fillna(0)
-                    df_global['Billable Type'] = df_global['Billable Type'].fillna('-')
-                    
-                    print(f"[OK] Merged landed cost and billable type data into main dataframe")
-                else:
-                    print(f"⚠ Could not find required columns in Part Issue file")
-                    print(f"⚠ Available columns: {df_temp.columns.tolist()}")
-                    df_global['Landed Cost'] = 0
-                    df_global['Billable Type'] = '-'
-                    
-            except Exception as e:
-                print(f"⚠ Error processing Part Issue file: {e}")
-                df_global['Landed Cost'] = 0
-                df_global['Billable Type'] = '-'
-        
-        print("[OK] Data loading complete")
+            df_parts = pd.read_excel(parts_file)
+            
+            df_landed_cost = df_parts.groupby('RO Number')['Landed Cost (Total)'].sum().reset_index()
+            df_landed_cost.columns = ['RO ID', 'total_landed_cost']
+            
+            df_billable_type = df_parts.groupby('RO Number')['Billable Type'].first().reset_index()
+            df_billable_type.columns = ['RO ID', 'billable_type']
+            
+            df_global = df_global.merge(df_landed_cost, on='RO ID', how='left')
+            df_global['total_landed_cost'] = df_global['total_landed_cost'].fillna(0)
+            
+            df_global = df_global.merge(df_billable_type, on='RO ID', how='left')
+            df_global['billable_type'] = df_global['billable_type'].fillna('Not Billed')
+            
+            print(f"[OK] Merged landed cost data")
         
     except Exception as e:
-        print(f"[ERROR] Error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"[ERROR] Error: {str(e)}")
         df_global = pd.DataFrame()
         df_landed_cost = pd.DataFrame()
         df_billable_type = pd.DataFrame()
-        ro_remark_codes = []
-
-
-# ==================== INITIALIZE DATA ====================
 
 load_data()
 
-# ==================== FASTAPI APP ====================
+# ==================== APP ====================
 
 app = FastAPI()
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -345,205 +258,271 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ==================== FILTER OPTIONS WITH RO REMARK CODE ====================
 
-# ==================== API ENDPOINTS ====================
-
-@app.get("/api/filter-options/{service_category}")
-def get_filter_options(service_category: str, branch: str = "All"):
-    """Get available filter options for a service category"""
-    if df_global.empty:
+@app.get("/api/filter-options/{category}")
+async def get_filter_options(category: str, branch: Optional[str] = Query("All")):
+    """Get filter options including RO Remark Code"""
+    try:
+        if df_global.empty:
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "segments": ["All"], "billable_types": ["All"], "sa_names": ["All"], "ro_remark_codes": ["All"]}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        
+        if branch and branch != "All":
+            df_branch = df[df['Branch'] == branch]
+            sa_names = ['All'] + sorted([str(x) for x in df_branch['Service Adviser Name'].dropna().unique().tolist()])
+        else:
+            sa_names = ['All'] + sorted([str(x) for x in df['Service Adviser Name'].dropna().unique().tolist()])
+        
+        if 'segment' in df.columns:
+            segments = ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist() if x != 'Unknown'])
+        else:
+            segments = ['All', 'Unknown']
+        
         return {
-            'branches': [],
-            'statuses': [],
-            'age_buckets': [],
-            'segments': [],
-            'billable_types': [],
-            'sa_names': [],
-            'service_types': [],
-            'ro_remark_codes': []
+            "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
+            "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
+            "age_buckets": ["All"] + sorted([str(x) for x in df['Age Bucket'].unique().tolist()]),
+            "segments": segments,
+            "billable_types": ['All'] + sorted([str(x) for x in df['billable_type'].dropna().unique().tolist()]),
+            "sa_names": sa_names,
+            "ro_remark_codes": ['All'] + sorted(ro_remark_codes)  # NEW
         }
-    
-    df = df_global.copy()
-    
-    # Filter by service category first
-    df = filter_by_service_category(df, service_category)
-    
-    # Then filter by branch if specified
-    if branch != 'All':
-        df = df[df['Branch'] == branch]
-    
-    return {
-        'branches': ['All'] + sorted([str(x) for x in df['Branch'].dropna().unique().tolist()]),
-        'statuses': ['All'] + sorted([str(x) for x in df['RO Status'].dropna().unique().tolist()]),
-        'age_buckets': ['All'] + sorted([str(x) for x in df['Age Bucket'].dropna().unique().tolist()]),
-        'segments': ['All'] + sorted([str(x) for x in df['segment'].dropna().unique().tolist()]),
-        'billable_types': ['All'] + sorted([str(x) for x in df['Billable Type'].dropna().unique().tolist()]),
-        'sa_names': ['All'] + sorted([str(x) for x in df['Service Adviser Name'].dropna().unique().tolist()]),
-        'service_types': ['All'] + sorted([str(x) for x in df['SERVC_TYPE_DESC'].dropna().unique().tolist()]),
-        'ro_remark_codes': ['All'] + sorted(ro_remark_codes)
-    }
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "segments": ["All"], "billable_types": ["All"], "sa_names": ["All"], "ro_remark_codes": ["All"]}
 
+# ==================== VEHICLE ENDPOINTS WITH RO REMARK CODE ====================
 
-@app.get("/api/vehicles/{service_category}")
-def get_vehicles(
-    service_category: str,
-    skip: int = 0,
-    limit: int = 50,
-    branch: str = "All",
-    ro_status: str = "All",
-    age_bucket: str = "All",
-    segment: str = "All",
-    billable_type: str = "All",
-    sa_name: str = "All",
-    service_type: str = "All",
-    ro_remark_code: str = "All"
+@app.get("/api/vehicles/mechanical")
+async def get_mechanical(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
+    sa_name: Optional[str] = Query("All"),
+    segment: Optional[str] = Query("All"),
+    ro_remark_code: Optional[str] = Query("All"),  # NEW
+    skip: int = Query(0),
+    limit: int = Query(50)
 ):
-    """Get paginated vehicle list with filters"""
-    if df_global.empty:
-        return {'vehicles': [], 'total': 0}
-    
-    df = apply_filters(df_global, service_category, branch, ro_status, age_bucket, segment, 
-                       billable_type, sa_name, service_type, ro_remark_code)
-    
-    total = len(df)
-    vehicles = [convert_row(row, service_category) for _, row in df.iloc[skip:skip+limit].iterrows()]
-    
-    return {'vehicles': vehicles, 'total': total}
+    """Get mechanical vehicles"""
+    try:
+        if df_global.empty:
+            return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, sa_name=sa_name, segment=segment, ro_remark_code=ro_remark_code)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
 
+@app.get("/api/vehicles/bodyshop")
+async def get_bodyshop(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
+    sa_name: Optional[str] = Query("All"),
+    segment: Optional[str] = Query("All"),
+    ro_remark_code: Optional[str] = Query("All"),  # NEW
+    skip: int = Query(0),
+    limit: int = Query(50)
+):
+    """Get bodyshop vehicles"""
+    try:
+        if df_global.empty:
+            return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, sa_name=sa_name, segment=segment, ro_remark_code=ro_remark_code)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+
+@app.get("/api/vehicles/accessories")
+async def get_accessories(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
+    sa_name: Optional[str] = Query("All"),
+    segment: Optional[str] = Query("All"),
+    ro_remark_code: Optional[str] = Query("All"),  # NEW
+    skip: int = Query(0),
+    limit: int = Query(50)
+):
+    """Get accessories vehicles"""
+    try:
+        if df_global.empty:
+            return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, sa_name=sa_name, segment=segment, ro_remark_code=ro_remark_code)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+
+@app.get("/api/vehicles/presale")
+async def get_presale(
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
+    sa_name: Optional[str] = Query("All"),
+    segment: Optional[str] = Query("All"),
+    ro_remark_code: Optional[str] = Query("All"),  # NEW
+    skip: int = Query(0),
+    limit: int = Query(50)
+):
+    """Get Pre-Sale/PDI vehicles"""
+    try:
+        if df_global.empty:
+            return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+        
+        df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI'].copy()
+        total = len(df)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, sa_name=sa_name, segment=segment, ro_remark_code=ro_remark_code)
+        filtered = len(df)
+        df = df.iloc[skip:skip + limit]
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        return {"total_count": total, "filtered_count": filtered, "vehicles": vehicles}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"total_count": 0, "filtered_count": 0, "vehicles": []}
+
+# ==================== REMAINING ENDPOINTS (kept from original) ====================
 
 @app.get("/api/dashboard/statistics")
-def get_statistics():
-    """Get overall dashboard statistics"""
-    if df_global.empty:
+async def statistics():
+    try:
+        if df_global.empty:
+            return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
+        
         return {
-            'total_ros': 0,
-            'mechanical': 0,
-            'bodyshop': 0,
-            'accessories': 0,
-            'presale': 0,
-            'part_issued_value': '₹0'
+            "total_vehicles": int(len(df_global)),
+            "mechanical_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])])),
+            "bodyshop_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop'])),
+            "accessories_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories'])),
+            "presale_count": int(len(df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI'])),
+            "total_landed_cost": float(df_global['total_landed_cost'].sum())
         }
-    
-    df = df_global.copy()
-    
-    return {
-        'total_ros': len(df),
-        'mechanical': len(filter_by_service_category(df, 'mechanical')),
-        'bodyshop': len(filter_by_service_category(df, 'bodyshop')),
-        'accessories': len(filter_by_service_category(df, 'accessories')),
-        'presale': len(filter_by_service_category(df, 'presale')),
-        'part_issued_value': f"₹{df['Landed Cost'].sum():,.2f}"
-    }
-
-
-@app.get("/api/dashboard/statistics/filtered")
-def get_filtered_statistics(
-    service_category: str = "All",
-    branch: str = "All",
-    ro_status: str = "All",
-    age_bucket: str = "All",
-    segment: str = "All",
-    billable_type: str = "All",
-    sa_name: str = "All",
-    service_type: str = "All",
-    ro_remark_code: str = "All"
-):
-    """Get filtered statistics"""
-    if df_global.empty:
-        return {'total': 0, 'part_issued_value': '₹0'}
-    
-    df = apply_filters(df_global, service_category, branch, ro_status, age_bucket, segment, 
-                       billable_type, sa_name, service_type, ro_remark_code)
-    
-    return {
-        'total': len(df),
-        'part_issued_value': f"₹{df['Landed Cost'].sum():,.2f}"
-    }
-
+    except Exception as e:
+        return {"total_vehicles": 0, "mechanical_count": 0, "bodyshop_count": 0, "accessories_count": 0, "presale_count": 0, "total_landed_cost": 0.0}
 
 @app.get("/api/dashboard/division-stats-v2")
-def get_division_stats(service_category: str = "All"):
-    """Get division-wise statistics"""
-    if df_global.empty:
-        return {'branches': []}
-    
-    df = df_global.copy()
-    
-    # Filter by service category
-    df = filter_by_service_category(df, service_category)
-    
-    # Group by branch
-    branch_stats = df.groupby('Branch').agg({
-        'RO ID': 'count',
-        'Landed Cost': 'sum'
-    }).reset_index()
-    
-    branch_stats.columns = ['branch', 'count', 'value']
-    
-    return {
-        'branches': branch_stats.to_dict('records')
-    }
+async def division_stats_v2(service_category: str = Query("mechanical")):
+    try:
+        if df_global.empty:
+            return {"divisions": [], "total_open": 0, "total_closed_not_billed": 0}
+        
+        if service_category == "mechanical":
+            df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        elif service_category == "bodyshop":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        elif service_category == "accessories":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
+        elif service_category == "presale":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
+        else:
+            df = df_global
+        
+        branches = df['Branch'].unique()
+        divisions = []
+        total_open = 0
+        total_closed_not_billed = 0
+        
+        for branch in sorted(branches):
+            df_branch = df[df['Branch'] == branch]
+            open_count = len(df_branch[df_branch['RO Status'] == 'Open'])
+            closed_not_billed_count = len(df_branch[df_branch['RO Status'] == 'Closed but not billed'])
+            
+            total_open += open_count
+            total_closed_not_billed += closed_not_billed_count
+            
+            divisions.append({
+                'branch': branch,
+                'open_count': open_count,
+                'closed_not_billed_count': closed_not_billed_count,
+                'total': open_count + closed_not_billed_count
+            })
+        
+        divisions = sorted(divisions, key=lambda x: x['total'], reverse=True)
+        
+        return {
+            "service_category": service_category,
+            "total_open": total_open,
+            "total_closed_not_billed": total_closed_not_billed,
+            "divisions": divisions
+        }
+    except Exception as e:
+        return {"service_category": service_category, "total_open": 0, "total_closed_not_billed": 0, "divisions": []}
 
-
-@app.get("/api/export/{service_category}")
-def export_data(
-    service_category: str,
-    branch: str = "All",
-    ro_status: str = "All",
-    age_bucket: str = "All",
-    segment: str = "All",
-    billable_type: str = "All",
-    sa_name: str = "All",
-    service_type: str = "All",
-    ro_remark_code: str = "All"
+@app.get("/api/export/{category}")
+async def export_data(
+    category: str,
+    branch: Optional[str] = Query("All"),
+    ro_status: Optional[str] = Query("All"),
+    age_bucket: Optional[str] = Query("All"),
+    billable_type: Optional[str] = Query("All"),
+    sa_name: Optional[str] = Query("All"),
+    segment: Optional[str] = Query("All"),
+    ro_remark_code: Optional[str] = Query("All")  # NEW
 ):
-    """Export filtered data to CSV"""
-    if df_global.empty:
-        return {"message": "No data to export"}
-    
-    df = apply_filters(df_global, service_category, branch, ro_status, age_bucket, segment, 
-                       billable_type, sa_name, service_type, ro_remark_code)
-    
-    if df.empty:
-        return {"message": "No filtered data to export"}
-    
-    # Select relevant columns based on service category
-    if service_category == 'bodyshop':
-        columns = ['RO ID', 'Landed Cost', 'RO Date', 'Branch', 'RO Status', 'Service Adviser Name',
-                  'Reg. Number', 'model_group_name', 'segment', 'VIN', 'ro_remark_code', 'mjob', 
-                  'TAR', 'RO Remarks', 'PENDNCY_RESN_DESC']
-    else:
-        columns = ['RO ID', 'Landed Cost', 'RO Date', 'Branch', 'RO Status', 'Service Adviser Name',
-                  'Reg. Number', 'model_group_name', 'segment', 'VIN', 'ro_remark_code', 'RO Remarks', 
-                  'PENDNCY_RESN_DESC']
-    
-    # Keep only columns that exist
-    columns = [col for col in columns if col in df.columns]
-    export_df = df[columns].copy()
-    
-    # Create CSV
-    csv_buffer = BytesIO()
-    export_df.to_csv(csv_buffer, index=False, encoding='utf-8')
-    csv_buffer.seek(0)
-    
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"RO_Export_{service_category}_{timestamp}.csv"
-    
-    return StreamingResponse(
-        iter([csv_buffer.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
-
+    try:
+        if df_global.empty:
+            return {"vehicles": []}
+        
+        if category == "mechanical":
+            df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
+        elif category == "bodyshop":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Bodyshop']
+        elif category == "accessories":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Accessories']
+        elif category == "presale":
+            df = df_global[df_global['SERVC_CATGRY_DESC'] == 'Pre-Sale/PDI']
+        else:
+            df = df_global
+        
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, sa_name=sa_name, segment=segment, ro_remark_code=ro_remark_code)
+        vehicles = [convert_row(row) for _, row in df.iterrows()]
+        
+        return {"vehicles": vehicles}
+    except Exception as e:
+        return {"vehicles": []}
 
 @app.get("/")
-def read_root():
-    """Serve dashboard HTML"""
-    if os.path.exists('dashboard.html'):
-        return FileResponse('dashboard.html', media_type='text/html')
-    return {"message": "Open RO Dashboard"}
+async def dashboard():
+    path = os.path.join(os.path.dirname(__file__), "dashboard.html")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+    return {"error": "dashboard.html not found"}
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "records": len(df_global) if not df_global.empty else 0}
 
 if __name__ == "__main__":
     import uvicorn
+    print(f"Running on http://0.0.0.0:{PORT}")
     uvicorn.run(app, host=HOST, port=PORT)
