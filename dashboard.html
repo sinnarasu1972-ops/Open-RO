@@ -639,6 +639,12 @@
                     <label>Reg. Number (Search)</label>
                     <input type="text" id="regNumber" placeholder="Enter registration number..." onkeyup="onFilterChange()">
                 </div>
+                <div class="filter-group" id="pendingReasonFilter" style="display:none;">
+                    <label>Pending Reason</label>
+                    <select id="pendingReason" onchange="onFilterChange()">
+                        <option value="All">All</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -1012,6 +1018,7 @@
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
+                const pendingReason = document.getElementById('pendingReason') ? document.getElementById('pendingReason').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
 
@@ -1027,6 +1034,7 @@
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
                 if (roRemark !== 'All') params.append('ro_remark', roRemark);
+                if (pendingReason !== 'All') params.append('pending_reason', pendingReason);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
 
@@ -1079,6 +1087,16 @@
                     const saNameHTML = '<option>All</option>' +
                         data.sa_names.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                     document.getElementById('saName').innerHTML = saNameHTML;
+                }
+
+                // Add Pending Reason filter (only for mechanical)
+                const pendingReasonFilter = document.getElementById('pendingReasonFilter');
+                if (currentTab === 'mechanical') {
+                    pendingReasonFilter.style.display = 'block';
+                    const pendingReasonOptions = data.pending_reasons || ['All'];
+                    document.getElementById('pendingReason').innerHTML = pendingReasonOptions.map(pr => `<option value="${pr}">${pr}</option>`).join('');
+                } else {
+                    pendingReasonFilter.style.display = 'none';
                 }
 
                 // Add RO Remarks filter
@@ -1205,6 +1223,7 @@
             if (document.getElementById('serviceType')) document.getElementById('serviceType').value = 'All';
             if (document.getElementById('saName')) document.getElementById('saName').value = 'All';
             if (document.getElementById('roRemark')) document.getElementById('roRemark').value = 'All';
+            if (document.getElementById('pendingReason')) document.getElementById('pendingReason').value = 'All';
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
@@ -1259,6 +1278,7 @@
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
+                const pendingReason = document.getElementById('pendingReason') ? document.getElementById('pendingReason').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value, 10);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
@@ -1270,6 +1290,7 @@
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
                 if (roRemark !== 'All') url += `&ro_remark=${encodeURIComponent(roRemark)}`;
+                if (pendingReason !== 'All' && currentTab === 'mechanical') url += `&pending_reason=${encodeURIComponent(pendingReason)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
@@ -1479,6 +1500,7 @@
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
                 const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
+                const pendingReason = document.getElementById('pendingReason') ? document.getElementById('pendingReason').value : 'All';
 
                 const btn = evt.target;
                 const originalText = btn.textContent;
@@ -1501,6 +1523,8 @@
                 if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (roRemark !== 'All') url += `${separator}ro_remark=${encodeURIComponent(roRemark)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (pendingReason !== 'All' && currentTab === 'mechanical') url += `${separator}pending_reason=${encodeURIComponent(pendingReason)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') {
