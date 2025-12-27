@@ -435,6 +435,238 @@
             border-radius: 3px; 
             font-size: 11px;
         }
+        
+        /* ==================== MODAL POPUP ==================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-overlay.show { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+        
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 15px;
+            box-shadow: 0 20px 60px var(--card-shadow);
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            position: relative;
+            color: var(--text-primary);
+        }
+        
+        @keyframes slideUp { 
+            from { transform: translateY(50px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+        
+        .modal-header {
+            padding: 18px 20px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            gap: 10px;
+        }
+        
+        .modal-header h2 { 
+            margin: 0; 
+            font-size: 18px; 
+            font-weight: 700; 
+        }
+        
+        .modal-close {
+            background: rgba(255,255,255,0.18);
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+            font-weight: 700;
+        }
+        
+        .modal-close:hover { 
+            background: rgba(255,255,255,0.28); 
+        }
+        
+        .modal-body { 
+            padding: 18px 20px; 
+        }
+        
+        .modal-body h3 {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-top: 0;
+            margin-bottom: 12px;
+            text-align: center;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+        
+        .division-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: var(--bg-secondary);
+            transition: all 0.2s ease;
+        }
+        
+        .division-item:hover { 
+            background: var(--bg-primary);
+            border-color: #667eea; 
+            transform: translateX(5px); 
+        }
+        
+        .division-name { 
+            font-weight: 600; 
+            color: var(--text-primary); 
+            font-size: 13px; 
+        }
+        
+        .division-count { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .count-label { 
+            font-size: 10px; 
+            font-weight: 600; 
+            color: var(--text-secondary); 
+            text-transform: uppercase; 
+            margin-bottom: 4px; 
+        }
+        
+        .count-value { 
+            font-weight: 700; 
+            font-size: 16px; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            min-width: 60px; 
+            text-align: center; 
+        }
+        
+        .count-open { 
+            background: #fff3cd; 
+            color: #e67e22; 
+        }
+        
+        .count-closed { 
+            background: #e8f5e9; 
+            color: #27ae60; 
+        }
+        
+        .modal-footer {
+            display: none;
+            padding: 16px 20px;
+            border-top: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 0 0 15px 15px;
+        }
+        
+        .footer-stats { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 16px; 
+        }
+        
+        .footer-stat { 
+            text-align: center; 
+        }
+        
+        .footer-stat-label { 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: var(--text-secondary); 
+            text-transform: uppercase; 
+            margin-bottom: 6px; 
+            display: block; 
+        }
+        
+        .footer-stat-value { 
+            font-size: 26px; 
+            font-weight: 800; 
+            color: var(--text-primary); 
+            display: block; 
+        }
+        
+        .footer-stat.open .footer-stat-value { 
+            color: #e67e22; 
+        }
+        
+        .footer-stat.closed .footer-stat-value { 
+            color: #27ae60; 
+        }
+        
+        .empty-state { 
+            text-align: center; 
+            padding: 22px 10px; 
+            color: var(--text-secondary); 
+            font-size: 13px; 
+        }
+        
+        .modal-loading { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 24px 10px; 
+        }
+        
+        .spinner { 
+            width: 22px; 
+            height: 22px; 
+            border: 3px solid #f3f3f3; 
+            border-top: 3px solid #667eea; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+        }
+        
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        .modal::-webkit-scrollbar { width: 8px; }
+        .modal::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 10px; }
+        .modal::-webkit-scrollbar-thumb { background: #667eea; border-radius: 10px; }
+        .modal::-webkit-scrollbar-thumb:hover { background: #764ba2; }
+        
+        @media (max-width: 768px) {
+            .modal { width: 95%; max-height: 90vh; }
+            .modal-header h2 { font-size: 16px; }
+            .modal-body { padding: 16px; }
+            .division-item { grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; padding: 10px; margin-bottom: 10px; }
+            .division-name { font-size: 12px; }
+            .count-value { font-size: 15px; padding: 4px 10px; }
+            .footer-stat-value { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
@@ -523,10 +755,10 @@
                     <select id="saName" onchange="applyFilters()"></select>
                 </div>
             </div>
-            <div class="filters-grid" style="margin-top: 15px;">
-                <div class="filter-group" style="grid-column: 1 / -1;">
+            <div class="filters-grid">
+                <div class="filter-group">
                     <label>Reg. Number (Search)</label>
-                    <input type="text" id="regNumber" placeholder="Enter registration number" onkeyup="applyFilters()">
+                    <input type="text" id="regNumber" placeholder="Enter reg number" onkeyup="applyFilters()">
                 </div>
             </div>
         </div>
@@ -548,7 +780,30 @@
         </div>
     </div>
 
-    <script>
+    <!-- Modal Popup -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="divisionModal">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <button class="modal-close" onclick="closeModal()">Close</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="modal-loading"><div class="spinner"></div></div>
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <div class="footer-stats">
+                    <div class="footer-stat open">
+                        <span class="footer-stat-label">Total Open ROs</span>
+                        <span class="footer-stat-value" id="footerOpenTotal"></span>
+                    </div>
+                    <div class="footer-stat closed">
+                        <span class="footer-stat-label">Total Closed But Not Billed</span>
+                        <span class="footer-stat-value" id="footerClosedTotal"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
         const API_URL = window.location.origin;
         let currentTab = 'mechanical';
         let allData = [];
@@ -717,6 +972,7 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             loadFilters();
+            openModal();
         }
 
         function clearAllFilters() {
@@ -773,8 +1029,85 @@
             }
         }
 
-        // Initialize on load
-        window.addEventListener('load', init);
+        // ==================== MODAL FUNCTIONS ====================
+        function openModal() {
+            const categoryNames = { mechanical: 'Mechanical', bodyshop: 'Bodyshop', accessories: 'Accessories', presale: 'Pre-Sale/PDI' };
+            document.getElementById('modalTitle').textContent = `${categoryNames[currentTab] || 'Category'} - Division Wise ROs`;
+            document.getElementById('modalOverlay').classList.add('show');
+
+            document.getElementById('modalFooter').style.display = 'none';
+            document.getElementById('footerOpenTotal').textContent = '';
+            document.getElementById('footerClosedTotal').textContent = '';
+            document.getElementById('modalBody').innerHTML = `<div class="modal-loading"><div class="spinner"></div></div>`;
+            loadDivisionStats();
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        async function loadDivisionStats() {
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/division-stats-v2?service_category=${currentTab}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                const modalBody = document.getElementById('modalBody');
+
+                if (!data.divisions || data.divisions.length === 0) {
+                    modalBody.innerHTML = `<div class="empty-state">No ROs found for this category</div>`;
+                    document.getElementById('footerOpenTotal').textContent = '0';
+                    document.getElementById('footerClosedTotal').textContent = '0';
+                    document.getElementById('modalFooter').style.display = 'block';
+                    return;
+                }
+
+                let totalOpen = 0;
+                let totalClosedNB = 0;
+
+                let html = `<h3>Division-Wise Breakdown</h3>`;
+                data.divisions.forEach(div => {
+                    const openCnt = Number(div.open_count || 0);
+                    const closedCnt = Number(div.closed_not_billed_count || 0);
+                    totalOpen += openCnt;
+                    totalClosedNB += closedCnt;
+
+                    html += `
+                        <div class="division-item">
+                            <div class="division-name">${div.branch}</div>
+                            <div class="division-count">
+                                <div class="count-label">Open</div>
+                                <div class="count-value count-open">${openCnt}</div>
+                            </div>
+                            <div class="division-count">
+                                <div class="count-label">Closed Not Billed</div>
+                                <div class="count-value count-closed">${closedCnt}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                modalBody.innerHTML = html;
+
+                const apiOpen = (data.total_open !== undefined && data.total_open !== null) ? data.total_open : totalOpen;
+                const apiClosed = (data.total_closed_not_billed !== undefined && data.total_closed_not_billed !== null) ? data.total_closed_not_billed : totalClosedNB;
+
+                document.getElementById('footerOpenTotal').textContent = String(apiOpen);
+                document.getElementById('footerClosedTotal').textContent = String(apiClosed);
+                document.getElementById('modalFooter').style.display = 'block';
+            } catch (error) {
+                document.getElementById('modalBody').innerHTML = `<div class="empty-state">Error loading division stats: ${error.message}</div>`;
+                document.getElementById('footerOpenTotal').textContent = '0';
+                document.getElementById('footerClosedTotal').textContent = '0';
+                document.getElementById('modalFooter').style.display = 'block';
+            }
+        }
+
+        // ==================== END MODAL FUNCTIONS ====================
     </script>
 </body>
 </html>
