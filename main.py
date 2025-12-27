@@ -314,7 +314,7 @@ def convert_row(row) -> Dict[str, Any]:
         print(f"Error converting row: {str(e)}")
         raise
 
-def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None, service_type=None, sa_name=None, segment=None, ro_remark=None):
+def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=None, reg_number=None, service_type=None, sa_name=None, segment=None, ro_remark=None, pending_reason=None):
     """Apply filters to dataframe"""
     result = df.copy()
     
@@ -341,6 +341,9 @@ def apply_filters(df, branch, ro_status, age_bucket, mjob=None, billable_type=No
     
     if ro_remark and ro_remark != "All":
         result = result[result['ro_remark_mapped'] == ro_remark]
+    
+    if pending_reason and pending_reason != "All":
+        result = result[result['PENDNCY_RESN_DESC'] == pending_reason]
     
     if mjob and mjob != "All":
         if mjob == "Not Categorized":
@@ -523,7 +526,8 @@ async def filtered_statistics(
     reg_number: Optional[str] = Query(""),
     sa_name: Optional[str] = Query("All"),
     segment: Optional[str] = Query("All"),
-    ro_remark: Optional[str] = Query("All")
+    ro_remark: Optional[str] = Query("All"),
+    pending_reason: Optional[str] = Query("All")
 ):
     """Dashboard statistics - with dynamic filtering by service category"""
     try:
@@ -567,6 +571,9 @@ async def filtered_statistics(
         
         if ro_remark and ro_remark != "All":
             filtered_df = filtered_df[filtered_df['ro_remark_mapped'] == ro_remark]
+        
+        if pending_reason and pending_reason != "All":
+            filtered_df = filtered_df[filtered_df['PENDNCY_RESN_DESC'] == pending_reason]
         
         if mjob and mjob != "All":
             if mjob == "Not Categorized":
@@ -612,7 +619,7 @@ async def mech_filters(branch: Optional[str] = Query("All")):
     """Mechanical filters - SA Names and Segments filtered by branch"""
     try:
         if df_global.empty:
-            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_types": ["All"], "sa_names": ["All"], "segments": ["All"], "ro_remarks": ["All"]}
+            return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_types": ["All"], "sa_names": ["All"], "segments": ["All"], "ro_remarks": ["All"], "pending_reasons": ["All"]}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
         
@@ -645,6 +652,10 @@ async def mech_filters(branch: Optional[str] = Query("All")):
         # Get RO Remarks (use dynamic loader to get latest from Excel file)
         ro_remarks = ['All'] + get_all_ro_remarks_for_dropdown()
         
+        # Get Pending Reasons
+        pending_reasons_raw = df['PENDNCY_RESN_DESC'].dropna().unique().tolist()
+        pending_reasons = ['All'] + sorted([str(x) for x in pending_reasons_raw if str(x).strip() not in ['-', '', 'nan']])
+        
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
             "ro_statuses": ["All"] + sorted([str(x) for x in df['RO Status'].unique().tolist()]),
@@ -653,11 +664,12 @@ async def mech_filters(branch: Optional[str] = Query("All")):
             "service_types": service_types,
             "sa_names": sa_names,
             "segments": segments,
-            "ro_remarks": ro_remarks
+            "ro_remarks": ro_remarks,
+            "pending_reasons": pending_reasons
         }
     except Exception as e:
         print(f"Error in mech_filters: {str(e)}")
-        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_types": ["All"], "sa_names": ["All"], "segments": ["All"], "ro_remarks": ["All"]}
+        return {"branches": ["All"], "ro_statuses": ["All"], "age_buckets": ["All"], "billable_types": ["All"], "service_types": ["All"], "sa_names": ["All"], "segments": ["All"], "ro_remarks": ["All"], "pending_reasons": ["All"]}
 
 @app.get("/api/filter-options/bodyshop")
 async def bs_filters(branch: Optional[str] = Query("All")):
@@ -816,18 +828,19 @@ async def get_mechanical(
     sa_name: Optional[str] = Query("All"),
     segment: Optional[str] = Query("All"),
     ro_remark: Optional[str] = Query("All"),
+    pending_reason: Optional[str] = Query("All"),
     reg_number: Optional[str] = Query(""),
     skip: int = Query(0),
     limit: int = Query(50)
 ):
-    """Get mechanical vehicles with SA Name, Segment, RO Remark and Reg. Number filtering"""
+    """Get mechanical vehicles with SA Name, Segment, RO Remark, Pending Reason and Reg. Number filtering"""
     try:
         if df_global.empty:
             return {"total_count": 0, "filtered_count": 0, "vehicles": []}
         
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])].copy()
         total = len(df)
-        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_type=service_type, sa_name=sa_name, reg_number=reg_number, segment=segment, ro_remark=ro_remark)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_type=service_type, sa_name=sa_name, reg_number=reg_number, segment=segment, ro_remark=ro_remark, pending_reason=pending_reason)
         filtered = len(df)
         df = df.iloc[skip:skip + limit]
         vehicles = [convert_row(row) for _, row in df.iterrows()]
@@ -936,6 +949,7 @@ async def export_mech(
     sa_name: Optional[str] = Query("All"),
     segment: Optional[str] = Query("All"),
     ro_remark: Optional[str] = Query("All"),
+    pending_reason: Optional[str] = Query("All"),
     reg_number: Optional[str] = Query("")
 ):
     """Export mechanical vehicles"""
@@ -943,7 +957,7 @@ async def export_mech(
         if df_global.empty:
             return {"vehicles": []}
         df = df_global[df_global['SERVC_CATGRY_DESC'].isin(['Repair', 'Paid Service', 'Free Service'])]
-        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_type=service_type, sa_name=sa_name, reg_number=reg_number, segment=segment, ro_remark=ro_remark)
+        df = apply_filters(df, branch, ro_status, age_bucket, billable_type=billable_type, service_type=service_type, sa_name=sa_name, reg_number=reg_number, segment=segment, ro_remark=ro_remark, pending_reason=pending_reason)
         vehicles = [convert_row(row) for _, row in df.iterrows()]
         return {"vehicles": vehicles}
     except Exception as e:
