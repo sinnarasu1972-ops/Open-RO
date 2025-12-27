@@ -51,6 +51,12 @@
         .tab-button.active { background: #667eea; color: white; }
         .tab-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
 
+        .controls-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         .clear-all-btn {
             padding: 10px 16px;
             border: none;
@@ -65,6 +71,28 @@
         }
         .clear-all-btn:hover { background: #c0392b; }
 
+        .theme-toggle-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 45px;
+            height: 45px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
         @media (max-width: 768px) {
             header { padding: 15px; gap: 10px; margin-bottom: 15px; }
             h1 { font-size: 22px; }
@@ -72,6 +100,8 @@
             .tabs { gap: 6px; }
             .tab-button { padding: 8px 12px; font-size: 12px; min-width: 80px; }
             .clear-all-btn { padding: 8px 12px; font-size: 12px; width: 100%; }
+            .controls-right { width: 100%; gap: 8px; }
+            .theme-toggle-btn { width: 100%; }
         }
 
         .stats-grid {
@@ -366,16 +396,148 @@
             .count-value { font-size: 15px; padding: 4px 10px; }
             .footer-stat-value { font-size: 22px; }
         }
+
+        /* ==================== DARK MODE STYLES ==================== */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+        body.dark-mode header {
+            background: #2d3561;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        body.dark-mode h1 { color: #e0e0e0; }
+        body.dark-mode .stat-card {
+            background: #2d3561;
+            color: #e0e0e0;
+        }
+        body.dark-mode .stat-value { color: #667eea; }
+        body.dark-mode .stat-label { color: #a0a0a0; }
+        body.dark-mode .stat-card.landed-cost-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        body.dark-mode .filters-section {
+            background: #2d3561;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        body.dark-mode .filter-group label { color: #e0e0e0; }
+        body.dark-mode select,
+        body.dark-mode input[type="text"] {
+            background: #3a4575;
+            color: #e0e0e0;
+            border-color: #4a5585;
+        }
+        body.dark-mode input[type="text"]::placeholder { color: #7a7a8a; }
+        body.dark-mode .table-section {
+            background: #2d3561;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        body.dark-mode .table-wrapper {
+            background: #2d3561;
+        }
+        body.dark-mode .table-header {
+            background: #3a4575;
+            border-bottom-color: #4a5585;
+        }
+        body.dark-mode .table-info { color: #a0a0a0; }
+        body.dark-mode table {
+            background: #2d3561;
+            color: #e0e0e0;
+        }
+        body.dark-mode thead {
+            background: #3a4575;
+            border-bottom-color: #4a5585;
+        }
+        body.dark-mode th { color: #e0e0e0; }
+        body.dark-mode th:hover { background: #4a5585; }
+        body.dark-mode td { border-bottom-color: #3a4575; color: #d0d0d0; }
+        body.dark-mode tr:hover { background: #3a4575; }
+        body.dark-mode .records-select {
+            background: #3a4575;
+            color: #e0e0e0;
+            border-color: #4a5585;
+        }
+        body.dark-mode .export-btn { background: #27ae60; }
+        body.dark-mode .export-btn:hover { background: #229954; }
+        body.dark-mode .modal {
+            background: #2d3561;
+            color: #e0e0e0;
+        }
+        body.dark-mode .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom-color: #667eea;
+        }
+        body.dark-mode .modal-body {
+            background: #2d3561;
+        }
+        body.dark-mode .modal-body h3 {
+            color: #e0e0e0;
+            background: rgba(102, 126, 234, 0.2);
+        }
+        body.dark-mode .modal-footer {
+            background: #3a4575;
+            border-top-color: #4a5585;
+        }
+        body.dark-mode .division-item {
+            background: #3a4575;
+            border-color: #4a5585;
+        }
+        body.dark-mode .division-item:hover {
+            background: #445588;
+            border-color: #667eea;
+        }
+        body.dark-mode .division-name { color: #e0e0e0; }
+        body.dark-mode .count-label { color: #a0a0a0; }
+        body.dark-mode .landed-cost-cell {
+            background: rgba(102, 126, 234, 0.2);
+            color: #9ec4ff;
+        }
+        body.dark-mode .vehicle-ready-date-cell {
+            background: rgba(245, 124, 0, 0.2);
+            color: #ffb347;
+        }
+        body.dark-mode .tat-current-cell {
+            background: rgba(46, 125, 50, 0.2);
+            color: #66bb6a;
+        }
+        body.dark-mode .badge {
+            background: #3a4575;
+        }
+        body.dark-mode .badge-open { background: rgba(230, 126, 34, 0.3); color: #ffb347; }
+        body.dark-mode .badge-closed { background: rgba(46, 125, 50, 0.3); color: #66bb6a; }
+        body.dark-mode .mjob-badge {
+            background: rgba(102, 126, 234, 0.3);
+            color: #9ec4ff;
+        }
+        body.dark-mode .segment-badge {
+            background: rgba(123, 31, 162, 0.3);
+            color: #ba68c8;
+        }
+        body.dark-mode .branch-abbr {
+            background: rgba(102, 126, 234, 0.3);
+            color: #9ec4ff;
+        }
+        body.dark-mode .error {
+            background: rgba(195, 51, 51, 0.2);
+            color: #ff8888;
+        }
+        body.dark-mode .loading { color: #667eea; }
+        body.dark-mode .modal::-webkit-scrollbar-track { background: #3a4575; }
+        body.dark-mode .modal::-webkit-scrollbar-thumb { background: #667eea; }
+        body.dark-mode .table-wrapper::-webkit-scrollbar-track { background: #3a4575; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <img id="companyLogo" src="./logo.jpg" alt="Company Logo"
-                     style="height: 60px; object-fit: contain; display: none;"
-                     onerror="this.style.display='none';">
-                <h1>Unnati Motors Open RO Dashboard</h1>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <img id="companyLogo" src="./logo.jpg" alt="Company Logo"
+                         style="height: 60px; object-fit: contain; display: none;"
+                         onerror="this.style.display='none';">
+                    <h1>Unnati Motors Open RO Dashboard</h1>
+                </div>
+                <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark Mode" onclick="toggleTheme()">🌙</button>
             </div>
             <div class="header-wrapper">
                 <div class="tabs">
@@ -384,7 +546,9 @@
                     <button class="tab-button" onclick="switchTab(event, 'accessories')">Accessories</button>
                     <button class="tab-button" onclick="switchTab(event, 'presale')">Pre-Sale/PDI</button>
                 </div>
-                <button class="clear-all-btn" onclick="clearAllFilters()">Clear All</button>
+                <div class="controls-right">
+                    <button class="clear-all-btn" onclick="clearAllFilters()">Clear All</button>
+                </div>
             </div>
         </header>
 
@@ -457,6 +621,12 @@
                     <label>SA Name</label>
                     <select id="saName" onchange="onFilterChange()">
                         <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="roRemarkFilter" style="display:none;">
+                    <label>RO Remark</label>
+                    <select id="roRemark" onchange="onFilterChange()">
+                        <option value="All">All</option>
                     </select>
                 </div>
                 <div class="filter-group" id="mjobFilter" style="display:none;">
@@ -560,6 +730,37 @@
             'KOLHAPUR_SH': 'KOL'
         };
 
+        // ==================== THEME TOGGLE ==================== 
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('themeToggle');
+            
+            body.classList.toggle('dark-mode');
+            
+            // Save theme preference
+            const isDarkMode = body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            
+            // Update button icon
+            themeBtn.textContent = isDarkMode ? '☀️' : '🌙';
+            themeBtn.title = isDarkMode ? 'Toggle Light Mode' : 'Toggle Dark Mode';
+        }
+
+        // Load saved theme on page load
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const isDarkMode = savedTheme === 'dark';
+            
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggle').textContent = '☀️';
+                document.getElementById('themeToggle').title = 'Toggle Light Mode';
+            } else {
+                document.getElementById('themeToggle').textContent = '🌙';
+                document.getElementById('themeToggle').title = 'Toggle Dark Mode';
+            }
+        }
+
         function abbreviateBranch(branch) {
             if (!branch) return '-';
             return branchAbbreviations[branch] || branch.substring(0, 3).toUpperCase();
@@ -583,6 +784,7 @@
         }
 
         window.onload = function() {
+            initTheme();
             loadStats();
             loadFilters();
             loadData();
@@ -809,6 +1011,7 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
                 const mjob = currentTab === 'bodyshop' ? document.getElementById('mjob').value : 'All';
                 const regNumber = document.getElementById('regNumber') ? document.getElementById('regNumber').value : '';
 
@@ -823,6 +1026,7 @@
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
+                if (roRemark !== 'All') params.append('ro_remark', roRemark);
                 if (mjob !== 'All') params.append('mjob', mjob);
                 if (regNumber && regNumber.trim() !== '') params.append('reg_number', regNumber);
 
@@ -875,6 +1079,16 @@
                     const saNameHTML = '<option>All</option>' +
                         data.sa_names.filter(s => s !== 'All').map(s => `<option>${s}</option>`).join('');
                     document.getElementById('saName').innerHTML = saNameHTML;
+                }
+
+                // Add RO Remarks filter
+                const roRemarkFilter = document.getElementById('roRemarkFilter');
+                if (currentTab === 'mechanical' || currentTab === 'bodyshop' || currentTab === 'accessories' || currentTab === 'presale') {
+                    roRemarkFilter.style.display = 'block';
+                    const roRemarkOptions = data.ro_remarks || ['All'];
+                    document.getElementById('roRemark').innerHTML = roRemarkOptions.map(rr => `<option value="${rr}">${rr}</option>`).join('');
+                } else {
+                    roRemarkFilter.style.display = 'none';
                 }
 
                 const billableTypeFilter = document.getElementById('billableTypeFilter');
@@ -990,14 +1204,12 @@
             if (document.getElementById('billableType')) document.getElementById('billableType').value = 'All';
             if (document.getElementById('serviceType')) document.getElementById('serviceType').value = 'All';
             if (document.getElementById('saName')) document.getElementById('saName').value = 'All';
+            if (document.getElementById('roRemark')) document.getElementById('roRemark').value = 'All';
             if (currentTab === 'bodyshop') {
                 document.getElementById('mjob').value = 'All';
                 document.getElementById('billableType').value = 'All';
             }
             if (document.getElementById('regNumber')) document.getElementById('regNumber').value = '';
-
-            // Keep sorting state as-is OR reset if you want:
-            // sortState = { key: null, dir: null }; updateSortIcons();
 
             loadStats();
             loadData();
@@ -1007,12 +1219,8 @@
             return document.getElementById('status').value === 'Closed but not billed';
         }
 
-        // Apply sort by calling API with sort params (preferred) OR local sort fallback
         function buildSortParams() {
             if (!sortState.key || !sortState.dir) return '';
-            // Your backend may support different param names. We will send:
-            // sort_by=landed_cost or ro_date
-            // sort_dir=asc or desc
             return `&sort_by=${encodeURIComponent(sortState.key)}&sort_dir=${encodeURIComponent(sortState.dir)}`;
         }
 
@@ -1050,6 +1258,7 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
                 const recordsPerPage = parseInt(document.getElementById('recordsPerPage').value, 10);
 
                 let url = `${API_URL}/api/vehicles/${currentTab}?skip=0&limit=${recordsPerPage}`;
@@ -1060,6 +1269,7 @@
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
+                if (roRemark !== 'All') url += `&ro_remark=${encodeURIComponent(roRemark)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') url += `&reg_number=${encodeURIComponent(regNumber)}`;
@@ -1070,7 +1280,6 @@
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
                 }
 
-                // Add sorting to API call
                 url += buildSortParams();
 
                 const response = await fetch(url);
@@ -1082,7 +1291,6 @@
                     return;
                 }
 
-                // If backend ignores sort params, apply local sort fallback
                 const vehiclesSorted = applyLocalSortIfNeeded(data.vehicles || []);
                 allData = vehiclesSorted;
 
@@ -1257,9 +1465,6 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            // Keep sortState as-is (so sorting works across tabs). If you want reset on tab change, uncomment below:
-            // sortState = { key: null, dir: null }; updateSortIcons();
-
             loadFilters();
             openModal();
         }
@@ -1273,6 +1478,7 @@
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
+                const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
 
                 const btn = evt.target;
                 const originalText = btn.textContent;
@@ -1293,6 +1499,8 @@
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
                 separator = (url.includes('?')) ? '&' : '?';
                 if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
+                separator = (url.includes('?')) ? '&' : '?';
+                if (roRemark !== 'All') url += `${separator}ro_remark=${encodeURIComponent(roRemark)}`;
 
                 const regNumber = document.getElementById('regNumber').value;
                 if (regNumber && regNumber.trim() !== '') {
@@ -1308,7 +1516,6 @@
                     if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
                 }
 
-                // Add sorting to export also
                 url += (url.includes('?') ? '&' : '?') + buildSortParams().replace(/^&/, '');
 
                 const response = await fetch(url);
@@ -1323,7 +1530,6 @@
                     return;
                 }
 
-                // Local sort fallback for export
                 exportData = applyLocalSortIfNeeded(exportData);
 
                 const isClosedNB = status === 'Closed but not billed';
@@ -1334,7 +1540,6 @@
                     });
                 }
 
-                // Export date format
                 exportData = exportData.map(row => {
                     return {
                         ...row,
