@@ -187,21 +187,66 @@ def load_data():
         df_landed_cost = pd.DataFrame()
         df_billable_type = pd.DataFrame()
 
+def load_ro_remarks_dynamically():
+    """Load RO remarks dynamically from Excel file - returns latest remarks"""
+    try:
+        remark_file = None
+        for fn in ['RO Remark.xlsx', 'RO_Remark.xlsx', 'ro_remark.xlsx']:
+            if os.path.exists(fn):
+                remark_file = fn
+                break
+        
+        if remark_file:
+            df_remarks = pd.read_excel(remark_file)
+            remarks_col = df_remarks.columns[0]
+            remarks = [str(x).strip() for x in df_remarks[remarks_col].dropna().unique()]
+            return remarks
+        else:
+            return []
+    except Exception as e:
+        print(f"⚠ Error loading RO remarks dynamically: {e}")
+        return []
+
+def get_all_ro_remarks_for_dropdown():
+    """Get all RO remarks for dropdown - both standard and those found in data"""
+    try:
+        # Load standard remarks from file (latest ones)
+        standard_remarks = load_ro_remarks_dynamically()
+        
+        # Also get remarks from the mapped column in data
+        if not df_global.empty and 'ro_remark_mapped' in df_global.columns:
+            mapped_remarks = [str(x) for x in df_global['ro_remark_mapped'].dropna().unique() if x != 'Not Assigned']
+            # Combine and deduplicate
+            all_remarks = list(set(standard_remarks + mapped_remarks))
+            return sorted(all_remarks)
+        else:
+            return sorted(standard_remarks) if standard_remarks else ['All']
+    except Exception as e:
+        print(f"⚠ Error getting all RO remarks: {e}")
+        return ['All']
+
 def map_ro_remark(remark):
     """
     Map RO Remarks to standard codes (case-insensitive)
     Searches for any standard remark code within the remarks text
     Returns the first match found, or "Not Assigned" if no match
+    
+    NOW SUPPORTS DYNAMIC LOADING - automatically picks up new remarks from Excel!
     """
     global ro_remarks_list
     
     if pd.isna(remark) or str(remark).strip() == '' or str(remark).strip() == '-':
         return 'Not Assigned'
     
+    # Load latest remarks from file
+    remarks_list = load_ro_remarks_dynamically()
+    if not remarks_list:
+        remarks_list = ro_remarks_list  # Fallback to cached list from startup
+    
     remark_str = str(remark).strip().upper()
     
     # Search for each standard remark in the text (case-insensitive)
-    for standard_remark in ro_remarks_list:
+    for standard_remark in remarks_list:
         standard_upper = standard_remark.upper()
         if standard_upper in remark_str:
             return standard_remark
@@ -597,8 +642,8 @@ async def mech_filters(branch: Optional[str] = Query("All")):
             print(f"⚠ WARNING: segment column not found in mechanical filter")
             segments = ['All', 'Unknown']
         
-        # Get RO Remarks (mapped)
-        ro_remarks = ['All'] + sorted([str(x) for x in df['ro_remark_mapped'].dropna().unique().tolist()])
+        # Get RO Remarks (use dynamic loader to get latest from Excel file)
+        ro_remarks = ['All'] + get_all_ro_remarks_for_dropdown()
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -654,8 +699,8 @@ async def bs_filters(branch: Optional[str] = Query("All")):
             print(f"⚠ WARNING: segment column not found in bodyshop filter")
             segments = ['All', 'Unknown']
         
-        # Get RO Remarks (mapped)
-        ro_remarks = ['All'] + sorted([str(x) for x in df['ro_remark_mapped'].dropna().unique().tolist()])
+        # Get RO Remarks (use dynamic loader to get latest from Excel file)
+        ro_remarks = ['All'] + get_all_ro_remarks_for_dropdown()
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -700,8 +745,8 @@ async def acc_filters(branch: Optional[str] = Query("All")):
             print(f"⚠ WARNING: segment column not found in accessories filter")
             segments = ['All', 'Unknown']
         
-        # Get RO Remarks (mapped)
-        ro_remarks = ['All'] + sorted([str(x) for x in df['ro_remark_mapped'].dropna().unique().tolist()])
+        # Get RO Remarks (use dynamic loader to get latest from Excel file)
+        ro_remarks = ['All'] + get_all_ro_remarks_for_dropdown()
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
@@ -745,8 +790,8 @@ async def presale_filters(branch: Optional[str] = Query("All")):
             print(f"⚠ WARNING: segment column not found in presale filter")
             segments = ['All', 'Unknown']
         
-        # Get RO Remarks (mapped)
-        ro_remarks = ['All'] + sorted([str(x) for x in df['ro_remark_mapped'].dropna().unique().tolist()])
+        # Get RO Remarks (use dynamic loader to get latest from Excel file)
+        ro_remarks = ['All'] + get_all_ro_remarks_for_dropdown()
         
         return {
             "branches": ["All"] + sorted([str(x) for x in df['Branch'].unique().tolist()]),
