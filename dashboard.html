@@ -57,7 +57,15 @@
             transition: all 0.3s ease;
         }
         
-        h1 { color: var(--text-primary); font-size: 28px; margin: 0; }
+        h1 { 
+            color: var(--text-primary); 
+            font-size: 28px; 
+            margin: 0;
+            max-width: calc(100% - 90px);
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
         #companyLogo { height: 50px; object-fit: contain; max-width: 200px; }
 
         /* ==================== THEME TOGGLE SLIDING SWITCH ==================== */
@@ -177,13 +185,78 @@
         .clear-all-btn:hover { background: #c0392b; }
 
         @media (max-width: 768px) {
-            header { padding: 15px; gap: 10px; margin-bottom: 15px; }
-            h1 { font-size: 22px; }
-            .theme-toggle-container { top: 15px; right: 15px; }
-            .header-wrapper { flex-direction: column; align-items: stretch; }
-            .tabs { gap: 6px; }
-            .tab-button { padding: 8px 12px; font-size: 12px; min-width: 80px; }
-            .clear-all-btn { padding: 8px 12px; font-size: 12px; width: 100%; }
+            body { padding: 8px; }
+            header { 
+                padding: 12px 55px 12px 12px; 
+                gap: 10px; 
+                margin-bottom: 15px; 
+                min-height: auto;
+                flex-wrap: wrap;
+            }
+            h1 { 
+                font-size: 17px; 
+                font-weight: 700; 
+                line-height: 1.3; 
+                word-break: break-word;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                flex: 1 1 auto;
+                min-width: 0;
+                max-width: 100%;
+            }
+            #companyLogo { height: 35px; display: none; }
+            .theme-toggle-container { 
+                position: absolute;
+                top: 10px; 
+                right: 8px; 
+                gap: 4px; 
+            }
+            .theme-label { font-size: 9px; display: none; }
+            .toggle-switch { width: 48px; height: 26px; }
+            .toggle-slider { width: 22px; height: 22px; font-size: 11px; }
+            .toggle-switch.active .toggle-slider { left: 24px; }
+            .header-wrapper { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
+            .tabs { gap: 4px; flex-wrap: wrap; }
+            .tab-button { padding: 7px 10px; font-size: 11px; min-width: 65px; flex: 1 1 auto; }
+            .clear-all-btn { padding: 7px 12px; font-size: 11px; width: 100%; }
+        }
+        
+        /* Extra small mobile devices */
+        @media (max-width: 480px) {
+            body { padding: 6px; }
+            .container { max-width: 100%; }
+            header { 
+                padding: 10px 48px 10px 10px; 
+                gap: 8px; 
+                border-radius: 6px;
+                flex-wrap: wrap;
+            }
+            h1 { 
+                font-size: 15px; 
+                font-weight: 700;
+                line-height: 1.25;
+                word-break: break-word;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                flex: 1 1 auto;
+                min-width: 0;
+                max-width: 100%;
+            }
+            #companyLogo { display: none; }
+            .theme-toggle-container { 
+                position: absolute;
+                top: 8px; 
+                right: 6px;
+                gap: 3px;
+            }
+            .theme-label { display: none; }
+            .toggle-switch { width: 42px; height: 22px; }
+            .toggle-slider { width: 19px; height: 19px; font-size: 10px; }
+            .toggle-switch.active .toggle-slider { left: 20px; }
+            .header-wrapper { gap: 6px; width: 100%; }
+            .tabs { gap: 3px; }
+            .tab-button { padding: 6px 8px; font-size: 10px; min-width: 55px; }
+            .clear-all-btn { padding: 6px 10px; font-size: 10px; }
         }
 
         .stats-grid {
@@ -221,6 +294,13 @@
             .stat-card { padding: 12px; }
             .stat-label { font-size: 10px; margin-bottom: 6px; }
             .stat-value { font-size: 20px; }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+            .stat-card { padding: 10px; }
+            .stat-label { font-size: 9px; margin-bottom: 4px; }
+            .stat-value { font-size: 18px; }
         }
 
         .filters-section {
@@ -271,6 +351,13 @@
             .filters-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .filter-group label { font-size: 11px; margin-bottom: 5px; }
             select, input[type="text"] { padding: 6px; font-size: 12px; }
+        }
+        
+        @media (max-width: 480px) {
+            .filters-section { padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+            .filters-grid { grid-template-columns: 1fr; gap: 8px; }
+            .filter-group label { font-size: 10px; margin-bottom: 4px; }
+            select, input[type="text"] { padding: 5px; font-size: 11px; }
         }
 
         .table-section {
@@ -336,6 +423,13 @@
             .export-btn { padding: 6px 12px; font-size: 10px; width: 100%; }
             .records-select { width: 100%; padding: 6px; font-size: 11px; }
         }
+        
+        @media (max-width: 480px) {
+            .table-header { padding: 8px; gap: 6px; }
+            .table-info { font-size: 10px; }
+            .export-btn { padding: 5px 10px; font-size: 9px; }
+            .records-select { width: 100%; padding: 5px; font-size: 10px; }
+        }
 
         table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
         
@@ -359,6 +453,13 @@
         
         body.dark-mode th:hover { background: #444444; }
         
+        @media (max-width: 480px) {
+            th {
+                padding: 8px 5px;
+                font-size: 9px;
+            }
+        }
+        
         td {
             padding: 12px 8px;
             border-bottom: 1px solid var(--border-color);
@@ -367,6 +468,13 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             vertical-align: top;
+        }
+        
+        @media (max-width: 480px) {
+            td {
+                padding: 8px 5px;
+                font-size: 10px;
+            }
         }
 
         .landed-cost-cell { background: #f0f7ff; color: #1967d2; font-weight: 600; }
