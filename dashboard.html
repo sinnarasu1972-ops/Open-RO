@@ -746,9 +746,13 @@
                     <label>Billable Type</label>
                     <select id="billableType" onchange="applyFilters()"></select>
                 </div>
-                <div class="filter-group">
+                <div class="filter-group" id="serviceTypeFilter" style="display: none;">
                     <label>Service Type</label>
-                    <select id="serviceType" onchange="applyFilters()" style="display: none;"></select>
+                    <select id="serviceType" onchange="applyFilters()"></select>
+                </div>
+                <div class="filter-group" id="mJobFilter" style="display: none;">
+                    <label>M Job</label>
+                    <select id="mJob" onchange="applyFilters()"></select>
                 </div>
                 <div class="filter-group">
                     <label>SA Name</label>
@@ -855,25 +859,35 @@
                 populateDropdown('branch', options.branches || []);
                 populateDropdown('status', options.statuses || []);
                 populateDropdown('age', options.age_buckets || []);
+                populateDropdown('segment', options.segments || []);
+                populateDropdown('billableType', options.billable_types || []);
+                populateDropdown('saName', options.sa_names || []);
                 
-                // Hide RO Remark filter for Bodyshop, show for others
+                // Show/Hide RO Remark filter (hide on Bodyshop, show on others)
                 const roRemarkFilter = document.getElementById('roRemarkFilter');
                 if (currentTab === 'bodyshop') {
                     roRemarkFilter.style.display = 'none';
                 } else {
                     roRemarkFilter.style.display = 'block';
                 }
-                
                 populateDropdown('roRemark', options.ro_remarks || []);
-                populateDropdown('segment', options.segments || []);
-                populateDropdown('billableType', options.billable_types || []);
-                populateDropdown('saName', options.sa_names || []);
                 
+                // Show/Hide Service Type filter (show only on Mechanical)
+                const serviceTypeFilter = document.getElementById('serviceTypeFilter');
                 if (currentTab === 'mechanical') {
-                    document.getElementById('serviceType').style.display = 'block';
+                    serviceTypeFilter.style.display = 'block';
                     populateDropdown('serviceType', options.service_types || []);
                 } else {
-                    document.getElementById('serviceType').style.display = 'none';
+                    serviceTypeFilter.style.display = 'none';
+                }
+                
+                // Show/Hide M Job filter (show only on Bodyshop)
+                const mJobFilter = document.getElementById('mJobFilter');
+                if (currentTab === 'bodyshop') {
+                    mJobFilter.style.display = 'block';
+                    populateDropdown('mJob', options.m_job || []);
+                } else {
+                    mJobFilter.style.display = 'none';
                 }
                 
                 loadTableHeader();
@@ -928,8 +942,11 @@
             const billableType = document.getElementById('billableType').value;
             const saName = document.getElementById('saName').value;
             const regNumber = document.getElementById('regNumber').value;
+            
+            // M Job only for Bodyshop
+            const mJob = currentTab === 'bodyshop' ? document.getElementById('mJob').value : 'All';
 
-            let url = `${API_URL}/api/vehicles/${currentTab}?branch=${encodeURIComponent(branch)}&ro_status=${encodeURIComponent(status)}&age_bucket=${encodeURIComponent(age)}&ro_remark=${encodeURIComponent(roRemark)}&segment=${encodeURIComponent(segment)}&billable_type=${encodeURIComponent(billableType)}&sa_name=${encodeURIComponent(saName)}`;
+            let url = `${API_URL}/api/vehicles/${currentTab}?branch=${encodeURIComponent(branch)}&ro_status=${encodeURIComponent(status)}&age_bucket=${encodeURIComponent(age)}&ro_remark=${encodeURIComponent(roRemark)}&segment=${encodeURIComponent(segment)}&billable_type=${encodeURIComponent(billableType)}&sa_name=${encodeURIComponent(saName)}&m_job=${encodeURIComponent(mJob)}`;
             
             if (regNumber) url += `&reg_number=${encodeURIComponent(regNumber)}`;
 
@@ -985,6 +1002,7 @@
             document.getElementById('segment').value = 'All';
             document.getElementById('billableType').value = 'All';
             document.getElementById('saName').value = 'All';
+            document.getElementById('mJob').value = 'All';
             document.getElementById('regNumber').value = '';
             applyFilters();
         }
