@@ -6,25 +6,129 @@
     <title>Unnati Motors Open RO Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* ==================== THEME VARIABLES ==================== */
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            --accent-color: #667eea;
+        }
+        
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --bg-primary: #0f3460;
+            --bg-secondary: #1a1a2e;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #444444;
+            --card-shadow: rgba(0, 0, 0, 0.3);
+            --accent-color: #667eea;
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
             padding: 20px;
+            transition: background 0.3s ease;
+            color: var(--text-primary);
         }
+        
         .container { max-width: 1400px; margin: 0 auto; }
+        
         header {
-            background: white;
+            background: var(--bg-primary);
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px var(--card-shadow);
             display: flex;
             flex-direction: column;
             gap: 15px;
+            position: relative;
+            transition: all 0.3s ease;
         }
-        h1 { color: #333; font-size: 28px; margin: 0; }
+        
+        h1 { color: var(--text-primary); font-size: 28px; margin: 0; }
         #companyLogo { height: 50px; object-fit: contain; max-width: 200px; }
+
+        /* ==================== THEME TOGGLE SLIDING SWITCH ==================== */
+        .theme-toggle-container {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .theme-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #ccc;
+            border-radius: 32px;
+            cursor: pointer;
+            border: none;
+            transition: background 0.3s ease;
+            padding: 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+        
+        .toggle-switch.active {
+            background: #667eea;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .toggle-switch.active .toggle-slider {
+            left: 31px;
+        }
+        
+        .toggle-switch:hover {
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Light mode icon */
+        .toggle-slider::before {
+            content: '☀️';
+            font-size: 14px;
+        }
+        
+        .toggle-switch.active .toggle-slider::before {
+            content: '🌙';
+        }
 
         .header-wrapper {
             display: flex;
@@ -48,8 +152,15 @@
             position: relative;
             transition: all 0.2s ease;
         }
+        
+        body.dark-mode .tab-button {
+            background: #333333;
+            color: var(--text-primary);
+            border: 1px solid #444444;
+        }
+        
         .tab-button.active { background: #667eea; color: white; }
-        .tab-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        .tab-button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--card-shadow); }
 
         .clear-all-btn {
             padding: 10px 16px;
@@ -68,6 +179,7 @@
         @media (max-width: 768px) {
             header { padding: 15px; gap: 10px; margin-bottom: 15px; }
             h1 { font-size: 22px; }
+            .theme-toggle-container { top: 15px; right: 15px; }
             .header-wrapper { flex-direction: column; align-items: stretch; }
             .tabs { gap: 6px; }
             .tab-button { padding: 8px 12px; font-size: 12px; min-width: 80px; }
@@ -80,16 +192,21 @@
             gap: 15px;
             margin-bottom: 20px;
         }
+        
         .stat-card {
-            background: white;
+            background: var(--bg-primary);
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px var(--card-shadow);
             text-align: center;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); }
+        
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px var(--card-shadow); }
         .stat-label { color: #999; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; }
+        
+        body.dark-mode .stat-label { color: #aaa; }
+        
         .stat-value { font-size: 24px; font-weight: bold; color: #667eea; transition: all 0.3s ease; }
 
         .stat-card.landed-cost-card {
@@ -107,31 +224,46 @@
         }
 
         .filters-section {
-            background: white;
+            background: var(--bg-primary);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px var(--card-shadow);
+            transition: all 0.3s ease;
         }
+        
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
         }
+        
         .filter-group label {
             display: block;
             font-size: 12px;
             font-weight: 600;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 6px;
         }
+        
         select, input[type="text"] {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 5px;
             font-size: 13px;
+            background: white;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
+        
+        body.dark-mode select,
+        body.dark-mode input[type="text"] {
+            background: #333333;
+            color: var(--text-primary);
+            border-color: #444444;
+        }
+        
         input[type="text"]::placeholder { color: #999; }
 
         @media (max-width: 768px) {
@@ -142,11 +274,13 @@
         }
 
         .table-section {
-            background: white;
+            background: var(--bg-primary);
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px var(--card-shadow);
             margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
+        
         .table-wrapper {
             overflow-x: scroll !important;
             overflow-y: auto;
@@ -156,6 +290,7 @@
             scroll-behavior: smooth;
             padding-bottom: 5px;
         }
+        
         .table-wrapper::-webkit-scrollbar { width: 15px; height: 15px; }
         .table-wrapper::-webkit-scrollbar-track { background: #e8e8e8; border-radius: 10px; margin: 0 5px; }
         .table-wrapper::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; min-height: 40px; }
@@ -163,15 +298,16 @@
 
         .table-header {
             padding: 12px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #ddd;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
         }
-        .table-info { font-size: 12px; color: #666; }
+        
+        .table-info { font-size: 12px; color: var(--text-secondary); }
 
         .export-btn {
             background: #27ae60;
@@ -187,7 +323,12 @@
         .export-btn:hover { background: #229954; }
         .export-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
 
-        .records-select { width: 110px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
+        .records-select { width: 110px; padding: 6px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 12px; }
+        
+        body.dark-mode .records-select {
+            background: #333333;
+            color: var(--text-primary);
+        }
 
         @media (max-width: 768px) {
             .table-header { padding: 10px; gap: 8px; flex-direction: column; align-items: stretch; }
@@ -197,13 +338,15 @@
         }
 
         table { width: 100%; border-collapse: collapse; min-width: 2600px; table-layout: fixed; }
-        thead { background: #f8f9fa; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
+        
+        thead { background: var(--bg-secondary); border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
+        
         th {
             padding: 12px 8px;
             text-align: left;
             font-size: 11px;
             font-weight: 700;
-            color: #333;
+            color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -211,23 +354,35 @@
             position: relative;
             user-select: none;
         }
+        
         th:hover { background: #e9ecef; }
+        
+        body.dark-mode th:hover { background: #444444; }
+        
         td {
             padding: 12px 8px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             font-size: 12px;
-            color: #555;
+            color: var(--text-secondary);
             word-wrap: break-word;
             overflow-wrap: break-word;
             vertical-align: top;
         }
 
         .landed-cost-cell { background: #f0f7ff; color: #1967d2; font-weight: 600; }
+        body.dark-mode .landed-cost-cell { background: #1a3a52; color: #87ceeb; }
+        
         .vehicle-ready-date-cell { background: #fff3e0; color: #f57c00; font-weight: 600; }
+        body.dark-mode .vehicle-ready-date-cell { background: #332a1a; color: #ffb74d; }
+        
         .tat-current-cell { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+        body.dark-mode .tat-current-cell { background: #1a3a1a; color: #66bb6a; }
 
         tr:hover { background: #f9f9f9; }
+        body.dark-mode tr:hover { background: #1a1a2e; }
+        
         tbody tr { height: auto; }
+        
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge-open { background: #fef3e2; color: #e67e22; }
         .badge-closed { background: #e8f5e9; color: #27ae60; }
@@ -235,20 +390,27 @@
         .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
 
         .mjob-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #e8f0fe; color: #1967d2; }
+        body.dark-mode .mjob-badge { background: #1a3a52; color: #87ceeb; }
+        
+        .remark-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #fce8f3; color: #c2185b; }
+        body.dark-mode .remark-badge { background: #3a1a2e; color: #ff69b4; }
+        
         .segment-badge { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; background: #f3e5f5; color: #7b1fa2; }
+        body.dark-mode .segment-badge { background: #2a1a3a; color: #ba68c8; }
 
         .tat-alert { background: #c0392b; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .tat-normal { background: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 5px; }
         .branch-abbr { font-weight: bold; background: #e3f2fd; padding: 2px 6px; border-radius: 3px; }
+        body.dark-mode .branch-abbr { background: #1a3a52; color: #87ceeb; }
 
         .loading { text-align: center; padding: 40px; color: #667eea; }
         .stat-updating { animation: pulse 0.5s ease-in-out; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* Sort indicators */
         .sort-indicator { font-size: 11px; margin-left: 6px; opacity: 0.9; }
         .sortable { cursor: pointer; }
         .sortable:hover { background: #e9ecef; }
+        body.dark-mode .sortable:hover { background: #444444; }
 
         /* ==================== MODAL STYLES ==================== */
         .modal-overlay {
@@ -263,7 +425,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .modal {
-            background: white;
+            background: var(--bg-primary);
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 600px;
@@ -300,16 +462,21 @@
         }
         .modal-close:hover { background: rgba(255,255,255,0.28); }
 
-        .modal-body { padding: 18px 20px; }
+        .modal-body { padding: 18px 20px; color: var(--text-primary); }
         .modal-body h3 {
             font-size: 13px;
-            color: #333;
+            color: var(--text-primary);
             margin-top: 0;
             margin-bottom: 12px;
             text-align: center;
             padding: 10px;
             background: #f0f7ff;
             border-radius: 8px;
+        }
+        
+        body.dark-mode .modal-body h3 {
+            background: #1a3a52;
+            color: #87ceeb;
         }
 
         .division-item {
@@ -318,16 +485,24 @@
             align-items: center;
             gap: 12px;
             padding: 12px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             margin-bottom: 10px;
             background: #fafafa;
             transition: all 0.2s ease;
         }
+        
+        body.dark-mode .division-item {
+            background: #1a1a2e;
+            border-color: #444444;
+        }
+        
         .division-item:hover { background: #f0f7ff; border-color: #667eea; transform: translateX(5px); }
-        .division-name { font-weight: 600; color: #333; font-size: 13px; }
+        body.dark-mode .division-item:hover { background: #0f3460; border-color: #667eea; }
+        
+        .division-name { font-weight: 600; color: var(--text-primary); font-size: 13px; }
         .division-count { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .count-label { font-size: 10px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+        .count-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; }
         .count-value { font-weight: 700; font-size: 16px; padding: 6px 12px; border-radius: 20px; min-width: 60px; text-align: center; }
         .count-open { background: #fef3e2; color: #e67e22; }
         .count-closed { background: #e8f5e9; color: #27ae60; }
@@ -335,18 +510,18 @@
         .modal-footer {
             display: none;
             padding: 16px 20px;
-            border-top: 2px solid #e0e0e0;
-            background: #f9f9f9;
+            border-top: 2px solid var(--border-color);
+            background: var(--bg-secondary);
             border-radius: 0 0 15px 15px;
         }
         .footer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .footer-stat { text-align: center; }
-        .footer-stat-label { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .footer-stat-value { font-size: 26px; font-weight: 800; color: #333; display: block; }
+        .footer-stat-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .footer-stat-value { font-size: 26px; font-weight: 800; color: var(--text-primary); display: block; }
         .footer-stat.open .footer-stat-value { color: #e67e22; }
         .footer-stat.closed .footer-stat-value { color: #27ae60; }
 
-        .empty-state { text-align: center; padding: 22px 10px; color: #777; font-size: 13px; }
+        .empty-state { text-align: center; padding: 22px 10px; color: var(--text-secondary); font-size: 13px; }
 
         .modal-loading { display: flex; justify-content: center; align-items: center; padding: 24px 10px; }
         .spinner { width: 22px; height: 22px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -354,6 +529,7 @@
 
         .modal::-webkit-scrollbar { width: 8px; }
         .modal::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        body.dark-mode .modal::-webkit-scrollbar-track { background: #333333; }
         .modal::-webkit-scrollbar-thumb { background: #667eea; border-radius: 10px; }
         .modal::-webkit-scrollbar-thumb:hover { background: #764ba2; }
 
@@ -371,6 +547,14 @@
 <body>
     <div class="container">
         <header>
+            <!-- Theme Toggle Sliding Switch -->
+            <div class="theme-toggle-container">
+                <span class="theme-label">Mode</span>
+                <button class="toggle-switch" id="themeToggle" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+                    <div class="toggle-slider"></div>
+                </button>
+            </div>
+            
             <div style="display: flex; align-items: center; gap: 20px;">
                 <img id="companyLogo" src="./logo.jpg" alt="Company Logo"
                      style="height: 60px; object-fit: contain; display: none;"
@@ -433,6 +617,12 @@
                     <label>Age Bucket</label>
                     <select id="age" onchange="onFilterChange()">
                         <option>All</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="roRemarkFilter" style="display:block !important;">
+                    <label>RO Remark</label>
+                    <select id="roRemark" onchange="onFilterChange()">
+                        <option value="All">All</option>
                     </select>
                 </div>
                 <div class="filter-group" id="segmentFilter" style="display:block !important;">
@@ -500,6 +690,7 @@
                             <th>Segment</th>
                             <th>Chassis</th>
                             <th>MJob</th>
+                            <th>RO Remark</th>
                             <th>TAT</th>
                             <th>Remarks</th>
                             <th>Pending Reason</th>
@@ -539,6 +730,29 @@
     </div>
 
     <script>
+        /* ==================== THEME MANAGEMENT ==================== */
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                updateThemeButton();
+            }
+        }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeButton();
+        }
+        
+        function updateThemeButton() {
+            const btn = document.getElementById('themeToggle');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            btn.classList.toggle('active', isDarkMode);
+            btn.title = isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+        }
+
         const API_URL = window.location.origin;
 
         let currentTab = 'mechanical';
@@ -583,6 +797,7 @@
         }
 
         window.onload = function() {
+            initializeTheme();
             loadStats();
             loadFilters();
             loadData();
@@ -806,6 +1021,7 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const segment = document.getElementById('segment').value;
+                const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
@@ -820,6 +1036,7 @@
                 if (status !== 'All') params.append('ro_status', status);
                 if (age !== 'All') params.append('age_bucket', age);
                 if (segment !== 'All') params.append('segment', segment);
+                if (roRemark !== 'All') params.append('ro_remark', roRemark);
                 if (billableType !== 'All' && billableType !== undefined) params.append('billable_type', billableType);
                 if (serviceType !== 'All' && serviceType !== undefined) params.append('service_type', serviceType);
                 if (saName !== 'All') params.append('sa_name', saName);
@@ -865,6 +1082,11 @@
                 let sortedAgeBuckets = sortAgeBuckets(ageBucketsFiltered);
                 document.getElementById('age').innerHTML = '<option>All</option>' +
                     sortedAgeBuckets.map(a => `<option>${a}</option>`).join('');
+
+                if (data.ro_remarks) {
+                    const roRemarkHTML = data.ro_remarks.map(r => `<option value="${r}">${r}</option>`).join('');
+                    document.getElementById('roRemark').innerHTML = roRemarkHTML;
+                }
 
                 if (data.segments) {
                     const segmentHTML = data.segments.map(s => `<option value="${s}">${s}</option>`).join('');
@@ -987,6 +1209,7 @@
             document.getElementById('status').value = 'All';
             document.getElementById('age').value = 'All';
             document.getElementById('segment').value = 'All';
+            document.getElementById('roRemark').value = 'All';
             if (document.getElementById('billableType')) document.getElementById('billableType').value = 'All';
             if (document.getElementById('serviceType')) document.getElementById('serviceType').value = 'All';
             if (document.getElementById('saName')) document.getElementById('saName').value = 'All';
@@ -996,9 +1219,6 @@
             }
             if (document.getElementById('regNumber')) document.getElementById('regNumber').value = '';
 
-            // Keep sorting state as-is OR reset if you want:
-            // sortState = { key: null, dir: null }; updateSortIcons();
-
             loadStats();
             loadData();
         }
@@ -1007,12 +1227,8 @@
             return document.getElementById('status').value === 'Closed but not billed';
         }
 
-        // Apply sort by calling API with sort params (preferred) OR local sort fallback
         function buildSortParams() {
             if (!sortState.key || !sortState.dir) return '';
-            // Your backend may support different param names. We will send:
-            // sort_by=landed_cost or ro_date
-            // sort_dir=asc or desc
             return `&sort_by=${encodeURIComponent(sortState.key)}&sort_dir=${encodeURIComponent(sortState.dir)}`;
         }
 
@@ -1047,6 +1263,7 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const segment = document.getElementById('segment').value;
+                const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
@@ -1057,6 +1274,7 @@
                 if (status !== 'All') url += `&ro_status=${encodeURIComponent(status)}`;
                 if (age !== 'All') url += `&age_bucket=${encodeURIComponent(age)}`;
                 if (segment !== 'All') url += `&segment=${encodeURIComponent(segment)}`;
+                if (roRemark !== 'All') url += `&ro_remark=${encodeURIComponent(roRemark)}`;
                 if (billableType !== 'All' && billableType !== undefined) url += `&billable_type=${encodeURIComponent(billableType)}`;
                 if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `&service_type=${encodeURIComponent(serviceType)}`;
                 if (saName !== 'All') url += `&sa_name=${encodeURIComponent(saName)}`;
@@ -1070,7 +1288,6 @@
                     if (billableType !== 'All') url += `&billable_type=${encodeURIComponent(billableType)}`;
                 }
 
-                // Add sorting to API call
                 url += buildSortParams();
 
                 const response = await fetch(url);
@@ -1082,7 +1299,6 @@
                     return;
                 }
 
-                // If backend ignores sort params, apply local sort fallback
                 const vehiclesSorted = applyLocalSortIfNeeded(data.vehicles || []);
                 allData = vehiclesSorted;
 
@@ -1111,6 +1327,7 @@
                         const tat = calculateTAT(v.ro_date);
                         const tatStyle = getTATStyle(mjob, tat);
                         const saNameDisp = v.service_adviser || '-';
+                        const roRemarkDisp = v.ro_remark_mapped || 'Not Assigned';
 
                         let rowHTML = `
                             <tr>
@@ -1135,6 +1352,7 @@
                                 <td>${v.segment || 'Unknown'}</td>
                                 <td>${chassis}</td>
                                 <td><span class="mjob-badge">${mjob}</span></td>
+                                <td><span class="remark-badge">${roRemarkDisp}</span></td>
                                 <td><span class="${tatStyle}">${tat} days</span></td>
                                 <td style="font-size:11px; white-space: normal;">${v.ro_remarks || '-'}</td>
                                 <td style="font-size:11px; white-space: normal;">${v.pendncy_resn_desc || '-'}</td>
@@ -1142,6 +1360,8 @@
                         `;
                         tbody.innerHTML += rowHTML;
                     } else {
+                        const roRemarkDisp = v.ro_remark_mapped || 'Not Assigned';
+
                         let rowHTML = `
                             <tr>
                                 <td><strong>${v.ro_id}</strong></td>
@@ -1161,7 +1381,9 @@
                                 <td><span class="badge ${statusClass}">${v.ro_status}</span></td>
                                 <td>${v.service_adviser || '-'}</td>
                                 <td><strong>${v.reg_number || '-'}</strong></td>
-                                <td>${v.model_group || '-'}</td>`;
+                                <td>${v.model_group || '-'}</td>
+                                <td>${v.segment || 'Unknown'}</td>
+                                <td style="font-size:11px;"><span class="remark-badge">${roRemarkDisp}</span></td>`;
 
                         if (currentTab === 'mechanical') {
                             rowHTML += `<td>${v.service_type || '-'}</td>`;
@@ -1213,6 +1435,7 @@
                     <th title="Segment">Segment</th>
                     <th title="Last 8 Digits of Chassis Number">Chassis</th>
                     <th title="MJob Category">MJob</th>
+                    <th title="RO Remark Mapped">RO Remark</th>
                     <th title="Turn Around Time in Days">TAT</th>
                     <th title="RO Remarks">Remarks</th>
                     <th title="Pending Reason Description">Pending Reason</th>
@@ -1235,7 +1458,9 @@
                     <th title="RO Status">Status</th>
                     <th title="Service Adviser Name">SA Name</th>
                     <th title="Vehicle Registration Number">Reg Number</th>
-                    <th title="Model Group">Model Group</th>`;
+                    <th title="Model Group">Model Group</th>
+                    <th title="Segment">Segment</th>
+                    <th title="RO Remark Mapped">RO Remark</th>`;
 
                 if (currentTab === 'mechanical') {
                     headers += `<th title="Service Type">Service Type</th>`;
@@ -1257,9 +1482,6 @@
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
-            // Keep sortState as-is (so sorting works across tabs). If you want reset on tab change, uncomment below:
-            // sortState = { key: null, dir: null }; updateSortIcons();
-
             loadFilters();
             openModal();
         }
@@ -1270,6 +1492,7 @@
                 const status = document.getElementById('status').value;
                 const age = document.getElementById('age').value;
                 const segment = document.getElementById('segment').value;
+                const roRemark = document.getElementById('roRemark') ? document.getElementById('roRemark').value : 'All';
                 const billableType = document.getElementById('billableType') ? document.getElementById('billableType').value : 'All';
                 const serviceType = document.getElementById('serviceType') ? document.getElementById('serviceType').value : 'All';
                 const saName = document.getElementById('saName') ? document.getElementById('saName').value : 'All';
@@ -1280,36 +1503,25 @@
                 btn.disabled = true;
 
                 let url = `${API_URL}/api/export/${currentTab}`;
-                if (branch !== 'All') url += `?branch=${encodeURIComponent(branch)}`;
-                let separator = (branch !== 'All') ? '&' : '?';
-                if (status !== 'All') url += `${separator}ro_status=${encodeURIComponent(status)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (age !== 'All') url += `${separator}age_bucket=${encodeURIComponent(age)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (segment !== 'All') url += `${separator}segment=${encodeURIComponent(segment)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (billableType !== 'All' && billableType !== undefined) url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') url += `${separator}service_type=${encodeURIComponent(serviceType)}`;
-                separator = (url.includes('?')) ? '&' : '?';
-                if (saName !== 'All') url += `${separator}sa_name=${encodeURIComponent(saName)}`;
+                let params = [];
+                if (branch !== 'All') params.push(`branch=${encodeURIComponent(branch)}`);
+                if (status !== 'All') params.push(`ro_status=${encodeURIComponent(status)}`);
+                if (age !== 'All') params.push(`age_bucket=${encodeURIComponent(age)}`);
+                if (segment !== 'All') params.push(`segment=${encodeURIComponent(segment)}`);
+                if (roRemark !== 'All') params.push(`ro_remark=${encodeURIComponent(roRemark)}`);
+                if (billableType !== 'All' && billableType !== undefined) params.push(`billable_type=${encodeURIComponent(billableType)}`);
+                if (serviceType !== 'All' && serviceType !== undefined && currentTab === 'mechanical') params.push(`service_type=${encodeURIComponent(serviceType)}`);
+                if (saName !== 'All') params.push(`sa_name=${encodeURIComponent(saName)}`);
 
                 const regNumber = document.getElementById('regNumber').value;
-                if (regNumber && regNumber.trim() !== '') {
-                    separator = (url.includes('?')) ? '&' : '?';
-                    url += `${separator}reg_number=${encodeURIComponent(regNumber)}`;
-                }
+                if (regNumber && regNumber.trim() !== '') params.push(`reg_number=${encodeURIComponent(regNumber)}`);
 
                 if (currentTab === 'bodyshop') {
                     const mjob = document.getElementById('mjob').value;
-                    separator = (url.includes('?')) ? '&' : '?';
-                    if (mjob !== 'All') url += `${separator}mjob=${encodeURIComponent(mjob)}`;
-                    separator = (url.includes('?')) ? '&' : '?';
-                    if (billableType !== 'All') url += `${separator}billable_type=${encodeURIComponent(billableType)}`;
+                    if (mjob !== 'All') params.push(`mjob=${encodeURIComponent(mjob)}`);
                 }
 
-                // Add sorting to export also
-                url += (url.includes('?') ? '&' : '?') + buildSortParams().replace(/^&/, '');
+                if (params.length > 0) url += '?' + params.join('&');
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1323,7 +1535,6 @@
                     return;
                 }
 
-                // Local sort fallback for export
                 exportData = applyLocalSortIfNeeded(exportData);
 
                 const isClosedNB = status === 'Closed but not billed';
@@ -1334,7 +1545,6 @@
                     });
                 }
 
-                // Export date format
                 exportData = exportData.map(row => {
                     return {
                         ...row,
