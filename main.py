@@ -6,6 +6,9 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, Dict, Any
 from datetime import datetime
+import os
+print("Current working directory:", os.getcwd())
+print("Files in current directory:", os.listdir('.'))
 
 # ==================== CONFIGURATION ====================
 
