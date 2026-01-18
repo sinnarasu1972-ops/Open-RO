@@ -1,40 +1,383 @@
-services:
-  - type: web
-    name: unnati-motors-ro-dashboard
-    env: python
-    plan: free
-    
-    # Build configuration
-    buildCommand: pip install -r requirements.txt
-    
-    # Start command
-    startCommand: python main.py
-    
-    # Environment variables
-    envVars:
-      - key: PORT
-        value: "8000"
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: RENDER
-        value: "true"
-    
-    # Root directory where main.py is located
-    rootDir: ./
-    
-    # Health check
-    healthCheckPath: /health
-    healthCheckStartupTimeout: 30
-    
-    # Auto-deploy on push to main branch
-    autoDeploy: true
-    
-    # Build cache
-    headers:
-      - path: "/**"
-        name: "Cache-Control"
-        value: "max-age=3600"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unnati Motors Open RO Dashboard</title>
 
-# Supported Python versions on Render
-# If using Python 3.11, add to root directory:
-# runtime.txt with content: python-3.11.7
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .tabs { display:flex; gap:10px; margin-bottom:15px; }
+    .tab { padding:10px 14px; border:1px solid #ccc; cursor:pointer; border-radius:6px; }
+    .tab.active { background:#4c6fff; color:#fff; border-color:#4c6fff; }
+    .filters { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+    .filters label { font-size:12px; display:block; margin-bottom:4px; }
+    select, input { padding:8px; min-width:160px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .btn { padding:10px 14px; border:0; background:#1f9d55; color:white; border-radius:6px; cursor:pointer; }
+    .btn.red { background:#e74c3c; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; font-size:13px; }
+    th { background:#f7f7f7; }
+    .small { font-size:12px; color:#555; }
+  </style>
+</head>
+
+<body>
+
+<h2>Unnati Motors Open RO Dashboard</h2>
+
+<div class="tabs">
+  <div class="tab active" data-cat="mechanical">Mechanical</div>
+  <div class="tab" data-cat="bodyshop">Bodyshop</div>
+  <div class="tab" data-cat="accessories">Accessories</div>
+  <div class="tab" data-cat="presale">Pre-Sale/PDI</div>
+  <button class="btn red" id="clearAllBtn" type="button">Clear All</button>
+</div>
+
+<div class="filters">
+  <div>
+    <label>Branch</label>
+    <select id="branch">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>RO Status</label>
+    <select id="ro_status">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Age Bucket</label>
+    <select id="age_bucket">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Segment</label>
+    <select id="segment">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>From Date</label>
+    <input id="from_date" type="date" />
+  </div>
+
+  <div>
+    <label>To Date</label>
+    <input id="to_date" type="date" />
+  </div>
+
+  <div>
+    <label>Billable Type</label>
+    <select id="billable_type">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Service Type</label>
+    <select id="service_type">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>SA Name</label>
+    <select id="sa_name">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>RO Remark</label>
+    <select id="ro_remark">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Pending Reason</label>
+    <select id="pending_reason">
+      <option>All</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Reg. Number (Search)</label>
+    <input id="reg_number" type="text" placeholder="Enter registration number"/>
+  </div>
+
+  <!-- Bodyshop MJob only (kept here; ignored for other tabs) -->
+  <div>
+    <label>MJob (Bodyshop)</label>
+    <select id="mjob">
+      <option>All</option>
+      <option>Not Categorized</option>
+      <option>M1</option>
+      <option>M2</option>
+      <option>M3</option>
+      <option>M4</option>
+      <option>M/4</option>
+    </select>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="small" id="countInfo">Showing 0 of 0 vehicles (Total: 0)</div>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <select id="recordLimit">
+      <option value="50" selected>50 Records</option>
+      <option value="100">100 Records</option>
+      <option value="200">200 Records</option>
+      <option value="0">&gt;50 Records</option>
+    </select>
+
+    <button class="btn" id="exportBtn" type="button">Export Filtered Data to Excel</button>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>RO ID</th>
+      <th>Landed Cost</th>
+      <th>RO Date</th>
+      <th>Branch</th>
+      <th>Status</th>
+      <th>SA Name</th>
+      <th>Reg Number</th>
+      <th>Model Group</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<script>
+  let activeCategory = "mechanical"; // mechanical/bodyshop/accessories/presale/all
+  let lastTableData = [];            // holds current table vehicles for export quick check
+
+  function qs(id){ return document.getElementById(id); }
+
+  function getSelectedLimit(){
+    const v = String(qs("recordLimit").value || "").trim();
+    const n = parseInt(v, 10);
+    return isNaN(n) ? 50 : n; // 0 means ALL
+  }
+
+  function getFilters(){
+    return {
+      branch: qs("branch").value,
+      ro_status: qs("ro_status").value,
+      age_bucket: qs("age_bucket").value,
+      segment: qs("segment").value,
+      from_date: qs("from_date").value,
+      to_date: qs("to_date").value,
+      billable_type: qs("billable_type").value,
+      service_type: qs("service_type").value,
+      sa_name: qs("sa_name").value,
+      ro_remark: qs("ro_remark").value,
+      pending_reason: qs("pending_reason").value,
+      reg_number: qs("reg_number").value,
+      mjob: qs("mjob").value
+    };
+  }
+
+  function buildQuery(params){
+    const sp = new URLSearchParams();
+    Object.keys(params).forEach(k=>{
+      const val = params[k];
+      if(val !== undefined && val !== null && String(val).trim() !== ""){
+        sp.set(k, val);
+      }
+    });
+    return sp.toString();
+  }
+
+  function setTabsActive(){
+    document.querySelectorAll(".tab").forEach(t=>{
+      t.classList.toggle("active", t.dataset.cat === activeCategory);
+    });
+  }
+
+  async function loadVehicles(){
+    const limit = getSelectedLimit();   // 0 => ALL
+    const skip = 0;
+
+    const filters = getFilters();
+    const params = {
+      service_category: activeCategory,
+      ...filters,
+      skip: skip,
+      limit: limit
+    };
+
+    const url = "/api/vehicles?" + buildQuery(params);
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const total = data.total_count || 0;
+    const filtered = data.filtered_count || 0;
+    const vehicles = data.vehicles || [];
+
+    lastTableData = vehicles;
+
+    qs("countInfo").textContent = `Showing ${vehicles.length} of ${filtered} vehicles (Total: ${filtered})`;
+
+    const tb = qs("tableBody");
+    tb.innerHTML = "";
+
+    vehicles.forEach(v=>{
+      const tr = document.createElement("tr");
+
+      const landed = (v.total_landed_cost !== undefined) ? v.total_landed_cost : 0;
+
+      tr.innerHTML = `
+        <td>${v.ro_id || "-"}</td>
+        <td>${Number(landed).toLocaleString("en-IN", {style:"currency", currency:"INR"})}</td>
+        <td>${formatDateDDMMYYYY(v.ro_date)}</td>
+        <td>${v.branch || "-"}</td>
+        <td>${v.ro_status || "-"}</td>
+        <td>${v.service_adviser || "-"}</td>
+        <td>${v.reg_number || "-"}</td>
+        <td>${v.model_group || "-"}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  function formatDateDDMMYYYY(iso){
+    if(!iso || iso === "-") return "-";
+    // iso expected YYYY-MM-DD
+    const parts = iso.split("-");
+    if(parts.length !== 3) return iso;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  async function exportToExcel(){
+    const limit = getSelectedLimit(); // 0 => ALL (dropdown >50)
+    const skip = 0;
+
+    const filters = getFilters();
+    const params = {
+      service_category: activeCategory,
+      ...filters,
+      skip: skip,
+      limit: limit
+    };
+
+    const url = "/api/export?" + buildQuery(params);
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const rows = data.vehicles || [];
+
+    // Convert to excel columns
+    const out = rows.map(r => ({
+      "RO ID": r.ro_id,
+      "Branch": r.branch,
+      "RO Status": r.ro_status,
+      "Age Bucket": r.age_bucket,
+      "RO Date": formatDateDDMMYYYY(r.ro_date),
+      "Vehicle Ready Date": formatDateDDMMYYYY(r.vehicle_ready_date),
+      "Reg. Number": r.reg_number,
+      "Model Group": r.model_group,
+      "Segment": r.segment,
+      "Service Type": r.service_type,
+      "Service Category": r.service_category,
+      "SA Name": r.service_adviser,
+      "Pending Reason": r.pendncy_resn_desc,
+      "RO Remarks": r.ro_remarks,
+      "RO Remark (Mapped)": r.ro_remark_mapped,
+      "Billable Type": r.billable_type,
+      "Landed Cost": r.total_landed_cost,
+      "VIN": r.vin,
+      "KM": r.km,
+      "Days": r.days
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(out);
+    XLSX.utils.book_append_sheet(wb, ws, "Export");
+
+    const catName =
+      activeCategory === "mechanical" ? "Mechanical" :
+      activeCategory === "bodyshop" ? "Bodyshop" :
+      activeCategory === "accessories" ? "Accessories" :
+      activeCategory === "presale" ? "PreSale_PDI" : "All";
+
+    const fileName = `Open_RO_${catName}_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  }
+
+  function resetFilters(){
+    qs("branch").value = "All";
+    qs("ro_status").value = "All";
+    qs("age_bucket").value = "All";
+    qs("segment").value = "All";
+    qs("from_date").value = "";
+    qs("to_date").value = "";
+    qs("billable_type").value = "All";
+    qs("service_type").value = "All";
+    qs("sa_name").value = "All";
+    qs("ro_remark").value = "All";
+    qs("pending_reason").value = "All";
+    qs("reg_number").value = "";
+    qs("mjob").value = "All";
+  }
+
+  // ==================== EVENTS ====================
+
+  document.querySelectorAll(".tab").forEach(tab=>{
+    tab.addEventListener("click", ()=>{
+      activeCategory = tab.dataset.cat;
+      setTabsActive();
+      loadVehicles();
+    });
+  });
+
+  qs("clearAllBtn").addEventListener("click", ()=>{
+    activeCategory = "all"; // IMPORTANT for clear all export/table
+    setTabsActive();
+    resetFilters();
+    loadVehicles();
+  });
+
+  // reload table on filter change
+  [
+    "branch","ro_status","age_bucket","segment","from_date","to_date",
+    "billable_type","service_type","sa_name","ro_remark","pending_reason",
+    "reg_number","mjob","recordLimit"
+  ].forEach(id=>{
+    const el = qs(id);
+    if(!el) return;
+    el.addEventListener("change", loadVehicles);
+    if(id === "reg_number") el.addEventListener("keyup", ()=>{
+      // small debounce
+      clearTimeout(window.__regTimer);
+      window.__regTimer = setTimeout(loadVehicles, 300);
+    });
+  });
+
+  qs("exportBtn").addEventListener("click", exportToExcel);
+
+  // ==================== INIT ====================
+
+  setTabsActive();
+  loadVehicles();
+
+</script>
+
+</body>
+</html>
